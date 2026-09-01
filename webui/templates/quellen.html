@@ -1,0 +1,868 @@
+{% extends "base.html" %}
+{% block title %}Quellen — MARLEI Boot{% endblock %}
+
+{% block content %}
+
+{# Vier Karten, eine je Herkunft. Sie stehen in der Reihenfolge, die unten
+   rechts in jeder Ueberschrift eingetragen ist -- dieselbe Bedienung wie
+   bei den Gruppen unter Systeme, und dieselbe Ablage
+   (/var/lib/pxeweb/gruppen.yaml).
+
+   Das Formular steht ausserhalb der Karten: es umspannt alle vier, und ein
+   <form> um mehrere <section> wuerde sie in einen gemeinsamen Kasten
+   zwingen. Die Felder haengen sich ueber ihr form-Attribut daran. #}
+<form id="seite" method="post" action="/quellen/speichern"></form>
+
+{# Der Speichern-Knopf gehoert der Seite, nicht einer Karte -- deshalb steht
+   er oben in der ersten. Das war richtig, solange die Seite kurz war: Wer
+   unten bei Kali den Namen aendert, scrollt sonst zurueck an den Anfang,
+   um ihn zu speichern.
+
+   Die Leiste ist kein zweiter Knopf, sondern derselbe an einer zweiten
+   Stelle -- sie haengt am selben Formular. Sichtbar wird sie erst, wenn es
+   etwas zu speichern gibt: eine Leiste, die immer dasteht, nimmt unten
+   Platz weg und sagt nichts.
+
+   Ohne JavaScript bleibt sie versteckt, und es gilt wie bisher der Knopf
+   oben. #}
+<div id="speicherleiste" hidden>
+  <span id="speicherzahl" class="muted small"></span>
+  <button type="submit" form="seite">Speichern</button>
+</div>
+
+{% for karte in karten %}
+<section id="{{ karte.name | lower }}">
+  <div class="kartenkopf">
+    <h2>{{ karte.name }}</h2>
+    <label class="folge">
+      Reihenfolge
+      <input type="text" inputmode="numeric" name="folge:{{ karte.name }}"
+             form="seite" value="{{ karte.stelle }}" size="2"
+             data-war="{{ karte.stelle }}"
+             title="Stelle dieser Karte auf der Seite">
+    </label>
+    {# Ein Knopf fuer die ganze Seite, nicht einer je Karte: gespeichert
+       werden ohnehin immer alle Felder. #}
+    {% if loop.first %}
+    <button type="submit" form="seite" class="folgeknopf"
+            title="Alles auf dieser Seite speichern — Reihenfolge wie Namen">Speichern</button>
+    {% endif %}
+    <a class="kartenhilfe" href="/hilfe#{{ karte.hilfe }}"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+
+  {% include karte.vorlage %}
+</section>
+{% endfor %}
+
+<script>
+// Jede Adresse einzeln pruefen, damit die Ampeln nacheinander umspringen
+// statt alle zusammen nach einer halben Minute. Geprueft wird, was im Feld
+// steht -- nicht, was gespeichert ist: so sieht man vor dem Speichern, ob
+// eine Adresse taugt.
+(function () {
+  function befundfeld(formular) {
+    return formular.querySelector(".befund");
+  }
+
+  function pruefe(formular) {
+    var feld = befundfeld(formular);
+    var adresse = formular.querySelector('[name="adresse"]');
+    var version = formular.querySelector('[name="version"]');
+    var url = formular.querySelector('[name="url"]').value;
+    var ziel;
+
+    if (adresse) {
+      ziel = "/quellen/ausgabe/pruefen?adresse=" + encodeURIComponent(adresse.value)
+           + "&version=" + encodeURIComponent(version ? version.value : "")
+           + "&url=" + encodeURIComponent(url);
+    } else {
+      // Eine Quelle ohne Ausgaben: der Name steht an der Karte.
+      var karte = formular.closest(".quellenkarte");
+      ziel = "/quellen/" + encodeURIComponent(karte.dataset.name) + "/pruefen";
+    }
+
+    feld.className = "muted small befund";
+    feld.textContent = "wird geprüft …";
+    return fetch(ziel)
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        feld.className = "small befund" + (d.ok ? "" : " warnung");
+        feld.textContent = (d.ok ? "✓ " : "✗ ") + d.meldung;
+        // Bei Basisadressen und Weiterleitungen zeigen, was wirklich
+        // abgefragt wurde -- sonst raetselt man bei einem Fehlschlag.
+        var wirklich = d.ziel || d.geprueft;
+        if (wirklich && wirklich !== url) {
+          feld.textContent += " (" + wirklich + ")";
+        }
+      })
+      .catch(function () {
+        feld.className = "small befund warnung";
+        feld.textContent = "✗ Prüfung fehlgeschlagen";
+      });
+  }
+
+  document.querySelectorAll(".pruefen").forEach(function (knopf) {
+    knopf.addEventListener("click", function () {
+      pruefe(knopf.closest("form"));
+    });
+  });
+
+  // Eine weitere Ausgabe aufnehmen. Die Adresse wird aus dem Muster
+  // vorgeschlagen, sobald die Nummer dasteht -- tippen muss man nur sie.
+  document.querySelectorAll(".neue-ausgabe").forEach(function (knopf) {
+    // Nicht ueber parentNode suchen: der Knopf steht in einer eigenen
+    // Zeile neben "Nach neueren sehen", das Formular daneben in der Karte.
+    var formular = knopf.closest(".quellenkarte").querySelector("form.neue");
+    if (!formular) { return; }
+    knopf.addEventListener("click", function () {
+      formular.hidden = false;
+      knopf.hidden = true;
+      formular.querySelector('[name="version"]').focus();
+    });
+    var nummer = formular.querySelector('[name="version"]');
+    var adresse = formular.querySelector('[name="url"]');
+    nummer.addEventListener("input", function () {
+      var muster = formular.dataset.muster || "";
+      // Nur vorschlagen, solange niemand die Adresse selbst angefasst hat.
+      if (!adresse.dataset.angefasst) {
+        adresse.value = muster.replace(/\{version\}/g, nummer.value.trim());
+      }
+    });
+    adresse.addEventListener("input", function () {
+      adresse.dataset.angefasst = "1";
+    });
+  });
+
+  // Beim Anbieter nachsehen. Die gefundenen Nummern erscheinen als
+  // Knoepfe: ein Klick traegt eine davon in die neue Zeile ein, samt
+  // Adresse aus dem Muster. Eingetragen wird sie damit noch nicht --
+  // erst "Aufnehmen" speichert.
+  document.querySelectorAll(".nachsehen").forEach(function (knopf) {
+    var karte = knopf.closest(".quellenkarte");
+    var befund = karte.querySelector(".nachsehen-befund");
+    var neueZeile = karte.querySelector("form.neue");
+    var neuKnopf = karte.querySelector(".neue-ausgabe");
+
+    knopf.addEventListener("click", function () {
+      knopf.disabled = true;
+      befund.className = "muted small nachsehen-befund";
+      befund.textContent = "sieht nach …";
+      fetch("/quellen/ausgabe/neuere?adresse=" + encodeURIComponent(karte.dataset.name))
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          knopf.disabled = false;
+          befund.className = "small nachsehen-befund" + (d.ok ? "" : " warnung");
+          befund.textContent = (d.ok ? "" : "✗ ") + d.meldung;
+          if (!d.neu || !d.neu.length) { return; }
+          // Zum Anklicken anbieten, statt zum Abtippen hinzuschreiben.
+          befund.textContent = d.meldung.split(":")[0] + ": ";
+          d.neu.slice(0, 8).forEach(function (nummer) {
+            var w = document.createElement("button");
+            w.type = "button";
+            w.className = "ghost";
+            w.textContent = nummer;
+            w.title = "Diese Nummer in die neue Zeile eintragen";
+            w.addEventListener("click", function () {
+              neueZeile.hidden = false;
+              if (neuKnopf) { neuKnopf.hidden = true; }
+              var feld = neueZeile.querySelector('[name="version"]');
+              feld.value = nummer;
+              feld.dispatchEvent(new Event("input"));
+              feld.focus();
+            });
+            befund.appendChild(w);
+            befund.appendChild(document.createTextNode(" "));
+          });
+        })
+        .catch(function () {
+          knopf.disabled = false;
+          befund.className = "small nachsehen-befund warnung";
+          befund.textContent = "✗ Nachsehen fehlgeschlagen";
+        });
+    });
+  });
+
+  // Die drei Fragen in ihrer Reihenfolge, untereinander. Frueher waren
+  // das drei bis vier Knoepfe nebeneinander, und keiner sagte, welcher
+  // zuerst dran ist.
+  document.querySelectorAll(".durchleuchten").forEach(function (knopf) {
+    var karte = knopf.closest(".quellenkarte");
+    var liste = karte.querySelector(".befundliste");
+    var neueZeile = karte.querySelector("form.neue");
+    var neuKnopf = karte.querySelector(".neue-ausgabe");
+
+    function zeile(zeichen, text, art, adresse) {
+      var li = document.createElement("li");
+      li.className = art || "";
+      li.textContent = zeichen + "  " + text;
+      // Wo genau nachgesehen wurde. Das ist selten die Adresse, die in
+      // der Karte steht: Bei einer Basisadresse haengt die Pruefdatei
+      // dran, und gesucht wird ganz woanders -- bei GParted sogar auf
+      // einem anderen Rechner. Kommt "nichts gefunden" heraus, sieht man
+      // so sofort, WO nichts gefunden wurde.
+      if (adresse) {
+        var wo = document.createElement("div");
+        wo.className = "muted small befundort";
+        wo.textContent = adresse;
+        li.appendChild(wo);
+      }
+      liste.appendChild(li);
+      return li;
+    }
+
+    knopf.addEventListener("click", function () {
+      knopf.disabled = true;
+      liste.hidden = false;
+      liste.textContent = "";
+      zeile("…", "wird geprüft");
+      fetch("/quellen/" + encodeURIComponent(karte.dataset.name) + "/durchleuchten",
+            {method: "POST"})
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          knopf.disabled = false;
+          liste.textContent = "";
+          zeile(d.verbindung.ok ? "✓" : "✗",
+                d.verbindung.ok
+                  ? "Verbindung zum Anbieter besteht"
+                  : d.verbindung.meldung,
+                d.verbindung.ok ? "" : "warnung",
+                d.verbindung.wurzel);
+          if (!d.verbindung.ok) { return; }
+
+          // Eine Zeile je eingetragener Ausgabe. "Adresse gültig" als
+          // ein Satz waere eine Behauptung ueber alle, waehrend nur die
+          // erste geprueft waere.
+          var etwas_repariert = false;
+          (d.adressen || []).forEach(function (a) {
+            var was = a.version ? "Ausgabe " + a.version : "Adresse";
+            if (a.repariert) {
+              etwas_repariert = true;
+              zeile("+", was + " — Dateiname hatte sich geändert, "
+                         + "Adresse berichtigt (" + a.meldung + ")",
+                    "", a.url);
+              return;
+            }
+            zeile(a.ok ? "✓" : "✗",
+                  a.ok ? was + " gültig — " + a.meldung
+                       : was + " nicht mehr gültig — " + a.meldung,
+                  a.ok ? "" : "warnung",
+                  a.geprueft || a.url);
+          });
+          if (etwas_repariert) {
+            setTimeout(function () { window.location.reload(); }, 3000);
+          }
+
+          if (d.aufgenommen) {
+            zeile("+", "Ausgabe " + d.aufgenommen.version
+                       + " aufgenommen — Dateien fehlen noch",
+                  "", d.aufgenommen.url);
+            // Die Zeile dafuer entsteht beim naechsten Aufbau der Seite.
+            setTimeout(function () { window.location.reload(); }, 2500);
+          }
+          var neuere = d.neuere || {};
+          var offen = (neuere.neu || []);
+          if (!neuere.ok) {
+            zeile("·", neuere.meldung || "keine Auskunft über Ausgaben",
+                  "", neuere.geprueft);
+          } else if (!offen.length) {
+            zeile("✓", neuere.meldung, "", neuere.geprueft);
+          } else {
+            var li = zeile("!", neuere.meldung + " — noch nicht eingetragen: ",
+                           "", neuere.geprueft);
+            offen.slice(0, 5).forEach(function (v) {
+              var w = document.createElement("button");
+              w.type = "button";
+              w.className = "ghost";
+              w.textContent = v + " aufnehmen";
+              w.addEventListener("click", function () {
+                neueZeile.hidden = false;
+                if (neuKnopf) { neuKnopf.hidden = true; }
+                var feld = neueZeile.querySelector('[name="version"]');
+                feld.value = v;
+                feld.dispatchEvent(new Event("input"));
+                feld.focus();
+              });
+              li.appendChild(w);
+              li.appendChild(document.createTextNode(" "));
+            });
+          }
+        })
+        .catch(function () {
+          knopf.disabled = false;
+          liste.textContent = "";
+          zeile("✗", "Prüfen fehlgeschlagen", "warnung");
+        });
+    });
+  });
+
+  var alleKnopf = document.getElementById("alle-pruefen");
+  if (alleKnopf) {
+    alleKnopf.addEventListener("click", function () {
+      var formulare = Array.prototype.slice.call(
+        document.querySelectorAll(".quellenkarte form:not(.neue)"));
+      var stand  = document.getElementById("pruef-stand");
+      alleKnopf.disabled = true;
+      var fertig = 0;
+
+      // Nacheinander, nicht alle auf einmal: sonst laufen ein Dutzend
+      // Verbindungen gleichzeitig und die langsamste blockiert die Anzeige.
+      (function weiter() {
+        var formular = formulare.shift();
+        if (!formular) {
+          stand.textContent = fertig + " geprüft.";
+          alleKnopf.disabled = false;
+          return;
+        }
+        stand.textContent = "noch " + (formulare.length + 1) + " …";
+        pruefe(formular).then(function () { fertig++; weiter(); });
+      })();
+    });
+  }
+})();
+</script>
+
+<script>
+// Der Upload laeuft absichtlich nicht ueber ein Formular, sondern als roher
+// PUT: nur so meldet der Browser den Fortschritt, und der Server kann die
+// Daten direkt auf die Platte schreiben statt sie erst zu sammeln.
+(function () {
+  var datei = document.getElementById("iso-datei");
+  var knopf = document.getElementById("iso-start");
+
+  // Zwei Karten, zwei Anzeigen. Was vom Arbeitsplatz kommt, meldet sich in
+  // der Upload-Karte, was der Server von einer Adresse holt, in der Karte
+  // darunter -- sonst laeuft ein Download in einer Karte mit, in der er
+  // gar nicht stattfindet.
+  function anzeige(meldungId, balkenId) {
+    var meldung = document.getElementById(meldungId);
+    var balken  = document.getElementById(balkenId);
+    return {
+      zeige: function (text) {
+        if (!meldung) { return; }
+        meldung.hidden = false;
+        meldung.textContent = text;
+      },
+      // Ohne Prozentwert verschwindet der Balken -- lieber keiner als
+      // einer, der auf null steht und nach Stillstand aussieht.
+      fortschritt: function (prozent) {
+        if (!balken) { return; }
+        if (prozent === null) { balken.hidden = true; return; }
+        balken.hidden = false;
+        balken.value = prozent;
+      }
+    };
+  }
+
+  var karteUpload   = anzeige("iso-meldung", "iso-fortschritt");
+  var karteDownload = anzeige("holen-meldung", "holen-fortschritt");
+
+  // Laeuft gerade eine Uebertragung aus DIESEM Browser? Dann darf die
+  // Seite nicht neu laden: das braeche sie ab, und das halbe Abbild waere
+  // umsonst gewesen.
+  var uebertraegt = false;
+
+  // Den gewaehlten Namen anzeigen -- das erledigte sonst der eingebaute
+  // Knopf, den wir durch einen eigenen ersetzt haben.
+  var name = document.getElementById("iso-name");
+  if (datei && name) {
+    datei.addEventListener("change", function () {
+      var f = datei.files[0];
+      name.textContent = f ? f.name : "Keine ausgewählt";
+    });
+  }
+
+  // Vor dem Uebertragen nachsehen, ob es die Kennung schon gibt. Erst
+  // danach entscheidet der Mensch davor, ob ersetzt oder danebengelegt
+  // wird -- danach zu fragen hiesse, sechs Gigabyte umsonst zu schicken.
+  var frage     = document.getElementById("iso-frage");
+  var fragetext = document.getElementById("iso-frage-text");
+
+  function grosse(bytes) {
+    return (bytes / 1073741824).toFixed(2) + " GB";
+  }
+
+  function fragen(name) {
+    return fetch("/uploads/vorhanden?datei=" + encodeURIComponent(name))
+      .then(function (r) { return r.json(); });
+  }
+
+  function beschreibe(d) {
+    var v = d.vorhanden;
+    return "Unter der Kennung " + v.slug + " liegt schon ein Abbild"
+      + (v.datei ? " (" + v.datei : " (")
+      + (v.groesse ? ", " + grosse(v.groesse) : "")
+      + (v.erkannt ? ", erkannt als „" + v.erkannt + "“" : "")
+      + "). Ersetzen — oder als neue Ausgabe " + d.naechste + " aufnehmen?";
+  }
+
+  knopf.addEventListener("click", function () {
+    var f = datei.files[0];
+    if (!f) { karteUpload.zeige("Erst eine Datei auswählen."); return; }
+
+    knopf.disabled = true;
+    fragen(f.name).then(function (d) {
+      if (!d.vorhanden) { hochladen(f, false); return; }
+      fragetext.textContent = beschreibe(d);
+      frage.hidden = false;
+    }).catch(function () {
+      // Keine Antwort auf die Frage: dann NICHT uebertragen. Vorher ging
+      // es hier blind weiter -- ein verschluckter Fehler ersetzte damit
+      // ein fertiges Abbild, ohne dass jemand gefragt worden waere.
+      knopf.disabled = false;
+      karteUpload.zeige("Der Server hat auf die Nachfrage nicht geantwortet. "
+                        + "Nichts übertragen — bitte noch einmal.");
+    });
+  });
+
+  document.getElementById("iso-ersetzen").addEventListener("click", function () {
+    frage.hidden = true;
+    hochladen(datei.files[0], false);
+  });
+  document.getElementById("iso-daneben").addEventListener("click", function () {
+    frage.hidden = true;
+    hochladen(datei.files[0], true);
+  });
+  document.getElementById("iso-abbrechen").addEventListener("click", function () {
+    frage.hidden = true;
+    knopf.disabled = false;
+    karteUpload.zeige("Nichts übertragen.");
+  });
+
+  function hochladen(f, daneben) {
+    knopf.disabled = true;
+    uebertraegt = true;
+    karteUpload.fortschritt(0);
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("PUT", "/uploads/" + encodeURIComponent(f.name)
+                    + (daneben ? "?neu=1" : ""));
+    xhr.upload.addEventListener("progress", function (e) {
+      if (!e.lengthComputable) { return; }
+      var anteil = Math.round(e.loaded / e.total * 100);
+      karteUpload.fortschritt(anteil);
+      karteUpload.zeige("Übertragen: " + anteil + " % von "
+                        + (e.total / 1073741824).toFixed(2) + " GB");
+    });
+    xhr.addEventListener("load", function () {
+      knopf.disabled = false;
+      uebertraegt = false;
+      karteUpload.fortschritt(null);
+      if (xhr.status === 201) {
+        karteUpload.zeige("Übertragen. Der Server sieht sich das Abbild jetzt an …");
+        verfolgen(karteUpload, vomArbeitsplatz);
+      } else {
+        karteUpload.zeige("Fehlgeschlagen (" + xhr.status + "): " + xhr.responseText);
+      }
+    });
+    xhr.addEventListener("error", function () {
+      knopf.disabled = false;
+      uebertraegt = false;
+      karteUpload.fortschritt(null);
+      karteUpload.zeige("Die Verbindung ist abgebrochen.");
+    });
+    xhr.send(f);
+  }
+
+  // Von einer Adresse holen: derselbe Ablauf wie eine Karte hoeher -- erst
+  // die Frage nach der Kennung, dann losschicken, dann zusehen. Nur traegt
+  // hier der Server statt des Browsers, und deshalb kommt der Fortschritt
+  // nicht aus der Uebertragung, sondern aus /uploads.json.
+  (function () {
+    var formular = document.getElementById("holen");
+    if (!formular) { return; }
+    var feld   = document.getElementById("holen-url");
+    var neu    = document.getElementById("holen-neu");
+    var kasten = document.getElementById("holen-frage");
+    var text   = document.getElementById("holen-frage-text");
+    var start  = formular.querySelector("button[type=submit]");
+
+    // Nicht erst nachsehen, ob die Kennung belegt ist, sondern losschicken
+    // und auf die Antwort hoeren. Der Server sagt entweder "geht los" oder
+    // "da liegt schon was, entscheide" -- damit haengt die Rueckfrage an
+    // ihm und nicht daran, dass der Browser vorher nachgesehen hat. Beim
+    // Upload geht das nicht: dort muss vor den Gigabyte gefragt werden.
+    formular.addEventListener("submit", function (e) {
+      e.preventDefault();
+      holen("");
+    });
+
+    document.getElementById("holen-ersetzen").addEventListener("click", function () {
+      kasten.hidden = true;
+      holen("ersetzen");
+    });
+    document.getElementById("holen-daneben").addEventListener("click", function () {
+      kasten.hidden = true;
+      holen("daneben");
+    });
+    document.getElementById("holen-abbrechen").addEventListener("click", function () {
+      kasten.hidden = true;
+      start.disabled = false;
+      karteDownload.zeige("Nichts geholt.");
+    });
+
+    function holen(entscheidung) {
+      if (!feld.value.trim()) {
+        karteDownload.zeige("Erst eine Adresse eintragen.");
+        return;
+      }
+      neu.value = entscheidung === "daneben" ? "1" : "";
+      start.disabled = true;
+      karteDownload.zeige("Die Adresse ist beim Server …");
+      // "Accept: application/json" heisst: die Antwort gehoert hierher und
+      // nicht auf eine neu geladene Seite. Ohne JavaScript kommt dieses
+      // fetch nie zustande -- dann traegt das Formular seinen Weg wie
+      // bisher, und der Server schickt zurueck auf /quellen.
+      fetch("/uploads/holen", {
+        method: "POST",
+        headers: { "Accept": "application/json" },
+        body: new URLSearchParams({
+          url: feld.value,
+          neu: neu.value,
+          ersetzen: entscheidung === "ersetzen" ? "1" : ""
+        })
+      }).then(function (r) {
+        return r.json().then(function (d) { return { code: r.status, antwort: d }; });
+      }).then(function (a) {
+        // 409: Die Kennung ist belegt. Der Server hat nichts angefangen
+        // und schickt mit, was dort liegt.
+        if (a.code === 409) {
+          start.disabled = false;
+          text.textContent = beschreibe(a.antwort);
+          kasten.hidden = false;
+          karteDownload.zeige("Die Kennung ist schon vergeben — entscheide unten.");
+          return;
+        }
+        if (a.code !== 202) {
+          start.disabled = false;
+          karteDownload.zeige("Fehlgeschlagen: "
+                              + (a.antwort.detail || "unbekannter Grund"));
+          return;
+        }
+        karteDownload.zeige("Der Server lädt …");
+        // Nur diesen einen Vorgang verfolgen: laeuft nebenher noch ein
+        // zweiter Download, gehoert dessen Fortschritt nicht in diese
+        // Zeile.
+        verfolgen(karteDownload, function (u) { return u.slug === a.antwort.slug; });
+      }).catch(function () {
+        start.disabled = false;
+        karteDownload.zeige("Die Verbindung ist abgebrochen.");
+      });
+    }
+  })();
+
+  // Nach dem Upload -- und waehrend der Server von einer Adresse laedt --
+  // laeuft im Hintergrund noch das Laden, Erkennen und Entpacken. Solange
+  // nachfragen, bis nichts mehr in Arbeit ist, dann die Seite neu laden.
+  function inArbeit(u) {
+    return u.status === "laedt" || u.status === "empfangen"
+           || u.status === "entpacken";
+  }
+
+  // Woher ein Vorgang kam, entscheidet, welche Karte ihn anzeigt: mit
+  // Adresse gehoert er in die Download-Karte, ohne in die des Uploads.
+  function vomArbeitsplatz(u) { return !u.quelle; }
+  function vonAdresse(u) { return !!u.quelle; }
+
+  function verfolgen(karte, gehoert) {
+    fetch("/uploads.json").then(function (r) { return r.json(); }).then(function (d) {
+      var laeuft = d.uploads.filter(inArbeit);
+      var meins  = laeuft.filter(gehoert);
+      if (meins.length) {
+        karte.zeige(meins.map(function (u) {
+          return u.datei + ": " + (u.meldung || u.zustand_text);
+        }).join(" · "));
+        // Der Balken gehoert dem ersten Vorgang. Mehr als einer ist die
+        // Ausnahme, und zwei Balken uebereinander erklaeren nichts. Ohne
+        // bekannte Gesamtgroesse -- der Server nennt sie nur beim Holen --
+        // bleibt er weg.
+        var u = meins[0];
+        karte.fortschritt(u.gesamt ? Math.round(u.groesse / u.gesamt * 100) : null);
+        setTimeout(function () { verfolgen(karte, gehoert); }, 2000);
+        return;
+      }
+      karte.fortschritt(null);
+      // Fertig, aber der Browser schickt noch: Neuladen braeche die
+      // Uebertragung ab. Dann meldet sich stattdessen deren eigene
+      // Verfolgung, sobald auch sie durch ist.
+      if (uebertraegt) {
+        karte.zeige("Fertig. Die Seite lädt neu, sobald auch die Übertragung durch ist.");
+        return;
+      }
+      location.reload();
+    }).catch(function () {
+      setTimeout(function () { verfolgen(karte, gehoert); }, 5000);
+    });
+  }
+
+  // Ausgabe des Abgleichs mitlesen. Laeuft keiner, wird trotzdem alle zehn
+  // Sekunden nachgesehen -- der Lauf kann ja von einem anderen Browser aus
+  // angestossen worden sein.
+  (function () {
+    var feld = document.getElementById("syncausgabe");
+    if (!feld) { return; }
+    function sehen() {
+      if (document.hidden) { setTimeout(sehen, 5000); return; }
+      fetch("/sync.txt").then(function (r) { return r.text(); }).then(function (t) {
+        if (t !== feld.textContent) {
+          var unten = feld.scrollHeight - feld.scrollTop - feld.clientHeight < 40;
+          feld.textContent = t;
+          if (unten) { feld.scrollTop = feld.scrollHeight; }
+        }
+        setTimeout(sehen, t.indexOf("läuft:") === 0 ? 2000 : 10000);
+      }).catch(function () { setTimeout(sehen, 15000); });
+    }
+    setTimeout(sehen, 2000);
+  })();
+
+  // Wird beim Oeffnen der Seite gerade geladen oder entpackt? Mitverfolgen
+  // -- jedes in der Karte, in die es gehoert. Wer die Seite waehrend eines
+  // Downloads neu laedt, sieht ihn danach wieder dort, wo er ihn
+  // angestossen hat.
+  fetch("/uploads.json").then(function (r) { return r.json(); }).then(function (d) {
+    var laeuft = d.uploads.filter(inArbeit);
+    if (laeuft.some(vomArbeitsplatz)) { verfolgen(karteUpload, vomArbeitsplatz); }
+    if (laeuft.some(vonAdresse)) { verfolgen(karteDownload, vonAdresse); }
+  }).catch(function () {});
+})();
+</script>
+
+<script>
+// Je Bauart andere Felder. Ohne JavaScript sind schlicht alle sichtbar --
+// ausgewertet wird ohnehin nur, was zur gewaehlten Bauart passt.
+(function () {
+  var wahl = document.getElementById("bauart");
+  var bloecke = document.querySelectorAll(".bauart-felder");
+  if (!wahl) { return; }
+  function zeigen() {
+    bloecke.forEach(function (b) { b.hidden = b.dataset.bauart !== wahl.value; });
+  }
+  wahl.addEventListener("change", zeigen);
+  zeigen();
+
+  // Ein bekannter Spiegel fuellt Spiegel und Suite in einem Zug.
+  document.querySelectorAll(".vorlage").forEach(function (v) {
+    v.addEventListener("change", function () {
+      if (!v.value) { return; }
+      var teile = v.value.split("|");
+      var block = v.closest(".bauart-felder");
+      block.querySelector("[name=spiegel]").value = teile[0];
+      block.querySelector("[name=suite]").value = teile[1];
+    });
+  });
+
+  // Pruefen, bevor etwas angelegt wird: ein Byte je Datei.
+  var knopf = document.getElementById("eintrag-pruefen");
+  var befund = document.getElementById("eintrag-befund");
+  if (!knopf) { return; }
+
+  // Aus dem Befund die Ankreuzliste bauen. Die eingefuegte Ausgabe ist
+  // angehakt und laesst sich nicht abwaehlen -- sie ist die, deren Adresse
+  // gerade geprueft wurde. Die anderen sind Angebot, keine Vorauswahl:
+  // Wer drei Ausgaben will, kreuzt drei an; wer eine will, laesst sie.
+  var wahlbereich = document.getElementById("ausgabenwahl");
+  var kaesten = document.getElementById("ausgabenkaesten");
+  var versionenFeld = document.getElementById("versionen");
+
+  function versionenSammeln() {
+    var gewaehlt = [];
+    kaesten.querySelectorAll("input[type=checkbox]").forEach(function (k) {
+      if (k.checked) { gewaehlt.push(k.value); }
+    });
+    // Nur wenn es wirklich mehrere sind: Ein einzelner Eintrag soll den
+    // Weg von frueher nehmen, sonst haenge an jedem Eintrag ploetzlich
+    // eine Ausgabe, die niemand vergeben hat.
+    versionenFeld.value = gewaehlt.length > 1 ? gewaehlt.join(" ") : "";
+  }
+
+  function ausgabenAnbieten(ausgabe) {
+    kaesten.textContent = "";
+    versionenFeld.value = "";
+    if (!ausgabe || !ausgabe.andere.length) {
+      wahlbereich.hidden = true;
+      return;
+    }
+    [ausgabe.version].concat(ausgabe.andere).forEach(function (v, i) {
+      var lab = document.createElement("label");
+      var box = document.createElement("input");
+      box.type = "checkbox";
+      box.value = v;
+      box.checked = i === 0;
+      box.disabled = i === 0;
+      box.addEventListener("change", versionenSammeln);
+      lab.appendChild(box);
+      lab.appendChild(document.createTextNode(" " + v));
+      kaesten.appendChild(lab);
+    });
+    wahlbereich.hidden = false;
+    versionenSammeln();
+  }
+
+  knopf.addEventListener("click", function () {
+    var block = document.querySelector(".bauart-felder[data-bauart=" + wahl.value + "]");
+    var werte = { bauart: wahl.value };
+    ["spiegel", "suite", "basis", "kernel_url", "initrd_url"].forEach(function (feld) {
+      var f = block ? block.querySelector("[name=" + feld + "]") : null;
+      if (f) { werte[feld] = f.value; }
+    });
+    knopf.disabled = true;
+    befund.className = "muted small";
+    befund.textContent = "wird geprüft …";
+
+    fetch("/quellen/eintrag/pruefen?" + new URLSearchParams(werte))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        knopf.disabled = false;
+        if (d.meldung) {
+          befund.className = "small warnung";
+          befund.textContent = "✗ " + d.meldung;
+          return;
+        }
+        befund.className = "small" + (d.ok ? "" : " warnung");
+        befund.textContent = d.dateien.map(function (f) {
+          return (f.ok ? "✓ " : "✗ ") + f.url.split("/").pop() + ": " + f.meldung;
+        }).join("  ·  ");
+
+        // Und die zweite Antwort desselben Knopfes: Steckt in der Adresse
+        // eine Ausgabe? Als eigene Zeile darunter, nicht angehaengt -- die
+        // Dateizeile beantwortet "liegt es dort", diese "gibt es mehr
+        // davon". Zwei Fragen, zwei Zeilen.
+        if (d.ausgabe) {
+          var zeile = document.createElement("div");
+          zeile.className = "muted small";
+          var text = "Ausgabe erkannt: " + d.ausgabe.version
+                   + " (" + d.ausgabe.warum + ")";
+          if (d.ausgabe.andere.length) {
+            text += " · beim Anbieter liegen ausserdem: "
+                  + d.ausgabe.andere.join(", ");
+          } else if (d.ausgabe.meldung) {
+            // Kein Verzeichnisindex, kaputte Verbindung: Der Vorschlag
+            // bleibt stehen, aber ungeprueft -- und das steht auch da.
+            text += " · nicht gegengeprueft: " + d.ausgabe.meldung;
+          } else {
+            text += " · beim Anbieter liegt keine weitere";
+          }
+          zeile.textContent = text;
+          befund.appendChild(zeile);
+          ausgabenAnbieten(d.ausgabe);
+        } else {
+          ausgabenAnbieten(null);
+        }
+      })
+      .catch(function () {
+        knopf.disabled = false;
+        befund.className = "small warnung";
+        befund.textContent = "✗ Prüfung fehlgeschlagen";
+      });
+  });
+})();
+</script>
+
+<script>
+// Ein Verweis von Server Health zeigt auf die Quelle, an der etwas nicht
+// stimmt -- seit die Karten zuklappen, landete der Sprung richtig und
+// zeigte nichts. Beim Laden und bei jedem weiteren Sprung aufklappen.
+(function () {
+  function aufklappen() {
+    if (!location.hash) { return; }
+    var ziel = document.getElementById(location.hash.slice(1));
+    if (ziel && ziel.tagName === "DETAILS") {
+      ziel.open = true;
+      // Erst nach dem Aufklappen scrollen: Vorher steht die Karte noch
+      // zusammengefaltet da, und der Browser zielt auf die falsche Hoehe.
+      ziel.scrollIntoView({ block: "start" });
+    }
+  }
+  aufklappen();
+  window.addEventListener("hashchange", aufklappen);
+})();
+</script>
+
+<script>
+// Der Knopf der Seite: grau, solange nichts anders dasteht als beim
+// Aufbau. Ausgeliefert wird er aktiv, damit ohne JavaScript ueberhaupt
+// gespeichert werden kann.
+(function () {
+  var felder = document.querySelectorAll(
+    '.folge input[name^="folge:"], .bezeichnung input[name^="name:"],'
+    + ' .bezeichnung input[name^="version:"], .angaben input[name^="info:"]');
+  var knoepfe = document.querySelectorAll(".folgeknopf");
+  if (!felder.length) { return; }
+
+  var leiste = document.getElementById("speicherleiste");
+  var zahl = document.getElementById("speicherzahl");
+
+  function pruefen() {
+    // Gezaehlt statt nur gefragt: "3 Änderungen" sagt mehr als ein Knopf,
+    // der angeht -- vor allem, wenn die Aenderungen ueber eine lange Seite
+    // verteilt sind und man die erste laengst nicht mehr sieht.
+    var geaendert = Array.prototype.filter.call(felder, function (f) {
+      return f.value.trim() !== f.dataset.war;
+    }).length;
+    var offen = geaendert > 0;
+
+    Array.prototype.forEach.call(knoepfe, function (k) {
+      k.disabled = !offen;
+      k.title = offen
+        ? "Alles auf dieser Seite speichern — Reihenfolge wie Namen"
+        : "Nichts geändert — es gibt nichts zu speichern";
+    });
+
+    if (leiste) {
+      leiste.hidden = !offen;
+      zahl.textContent = geaendert === 1
+        ? "1 Änderung" : geaendert + " Änderungen";
+    }
+  }
+
+  Array.prototype.forEach.call(felder, function (f) {
+    f.addEventListener("input", pruefen);
+  });
+  pruefen();
+
+  // Mitrechnen, waehrend getippt wird: Name und Version teilen sich eine
+  // Spalte, sind einzeln also erlaubt und zusammen womoeglich zu lang --
+  // das kann maxlength nicht abfangen. Der Vermerk sitzt in der Kopfzeile,
+  // damit man ihn auch an einer zugeklappten Karte sieht.
+  document.querySelectorAll(".eintragskarte").forEach(function (karte) {
+    var marke = karte.querySelector(".gekuerzt");
+    if (!marke) { return; }
+    var maxZeile = parseInt(marke.dataset.maxZeile, 10);
+    var maxInfo = parseInt(marke.dataset.maxInfo, 10);
+    var name = karte.querySelector("input.name");
+    var version = karte.querySelector("input.version");
+    var info = karte.querySelector("input.menueinfo");
+
+    function nachrechnen() {
+      var n = name ? name.value.trim() : "";
+      var v = version ? version.value.trim() : "";
+      var zeile = (n && v) ? (n + " " + v) : (n || v);
+      var i = info ? info.value.trim() : "";
+      var zuviel = zeile.length > maxZeile || i.length > maxInfo;
+      marke.hidden = !zuviel;
+      marke.title = "Name und Version: " + zeile.length + " von " + maxZeile
+        + " Zeichen" + (info ? ", Menü-Info: " + i.length + " von " + maxInfo : "")
+        + " — im Bootmenü wird abgeschnitten, was nicht mehr auf die Zeile passt";
+    }
+
+    [name, version, info].forEach(function (feld) {
+      if (feld) { feld.addEventListener("input", nachrechnen); }
+    });
+    nachrechnen();
+  });
+
+  // Das Namensfeld ist die Ueberschrift einer aufklappbaren Karte. Ein
+  // Klick hinein wuerde sie sonst zuklappen, waehrend man tippen will --
+  // und die Leertaste im Feld ebenso.
+  document.querySelectorAll(
+    ".eintragskarte > summary input, .eintragskarte > summary button").forEach(
+    function (feld) {
+      feld.addEventListener("click", function (e) { e.stopPropagation(); });
+      feld.addEventListener("keydown", function (e) {
+        if (e.key === " " || e.key === "Spacebar") { e.stopPropagation(); }
+      });
+    });
+})();
+</script>
+
+{% endblock %}

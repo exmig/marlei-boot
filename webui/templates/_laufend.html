@@ -1,0 +1,27 @@
+{% if laufend %}
+<table>
+  <thead>
+    <tr><th>Rechner</th><th>Läuft gerade</th><th>Verbindung</th><th>Gestartet</th></tr>
+  </thead>
+  <tbody>
+    {% for l in laufend %}
+    <tr>
+      <td>
+        <strong>{{ l.name }}</strong><br>
+        <code>{{ l.ip }}</code>
+      </td>
+      <td>
+        {{ l.system }}
+        {% if l.gruppe %}<div class="muted small">{{ l.gruppe }}</div>{% endif %}
+      </td>
+      <td class="nowrap">
+        {% for weg in l.wege %}<span class="badge ok">{{ weg }}</span> {% endfor %}
+      </td>
+      <td class="nowrap muted small">{{ l.seit }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{# Laeuft nichts, steht hier nichts: die Zahl in der Zeile darueber sagt es
+   schon, und ein Satz, der nur "nichts los" bedeutet, kostet Platz. #}

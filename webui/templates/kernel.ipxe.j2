@@ -1,0 +1,33 @@
+#!ipxe
+# ---------------------------------------------------------------------------
+# Standardfall: Kernel und Initrd per HTTP laden und starten.
+#
+# In der Kommandozeile aus catalog.yaml duerfen ${base}, ${assets} und
+# ${srvip} verwendet werden -- iPXE setzt sie hier unten ein.
+# ---------------------------------------------------------------------------
+{% set raw_initrd = entry.initrd | default([]) %}
+{%- set initrds = raw_initrd if raw_initrd is not string else [raw_initrd] %}
+set base {{ base }}
+set assets {{ base }}/assets
+# Nackte Server-Adresse, fuer Angaben, die keine URL sind (z.B. nfsroot=).
+set srvip {{ srvip }}
+
+echo
+echo   Lade {{ entry.name }} ...
+echo
+
+kernel ${assets}/{{ entry.kernel }} {{ entry.cmdline }} || goto fehler
+{% for img in initrds %}
+initrd ${assets}/{{ img }} || goto fehler
+{%- endfor %}
+
+boot || goto fehler
+
+:fehler
+echo
+echo   {{ entry.name }} konnte nicht gestartet werden.
+echo   Fehlt eine Datei? Auf dem Server pruefen:
+echo     ls -l /srv/pxe/assets/{{ entry.kernel }}
+echo
+prompt --timeout 20000 Taste druecken fuer das Menue...
+chain ${base}/menu.ipxe?mac={{ mac }}&platform=${platform}&arch=${buildarch} || shell

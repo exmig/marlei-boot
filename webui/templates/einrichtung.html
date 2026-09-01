@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+{% block title %}Einrichtung — MARLEI Boot{% endblock %}
+
+{% block content %}
+
+{# Was hier stand und jetzt woanders steht: die Belegung je Verzeichnis
+   (Server Health, "Speicherplatz -- Detailansicht", dort nach Eintraegen
+   aufgeschluesselt statt nach Ordnern) und die Dateien je Eintrag (in
+   jeder Eintragskarte unter Systeme, mit Pfad, Groesse und dem, was
+   fehlt). Was bleibt, aendert nichts und wird nur gelesen. #}
+
+<p class="muted">
+  Wie dieser Server eingerichtet ist. Zwei Fragen, die man beim Suchen
+  nach einem Fehler zuerst stellt: Wo erwartet die Anwendung was, und mit
+  welchen Werten läuft sie? Was ein Eintrag belegt und welche Dateien er
+  benutzt, steht unter <a href="/">Server Health</a> beziehungsweise in
+  seiner Karte unter <a href="/systeme">Systeme</a>.
+</p>
+
+{# Ganz oben, weil es die Frage vor allen anderen ist: Welcher Stand
+   redet hier eigentlich mit mir? Gestempelt hat ihn install.sh beim
+   Kopieren -- /opt/pxeweb ist eine rsync-Kopie ohne .git und kann
+   Git nicht selbst fragen. #}
+<section id="stand">
+  <div class="kartenkopf">
+    <h2>Stand</h2>
+    <a class="kartenhilfe" href="/hilfe#einrichtung-stand"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+  {% if stand.da %}
+  <p>
+    <strong>Version</strong> <code>{{ stand.stand }}</code>
+    &middot;
+    <strong>Letzte Aktualisierung</strong>
+    {{ stand.installiert or "unbekannt" }}
+  </p>
+  {# Beides steht nur da, wenn es etwas zu sagen gibt. Im Normalfall
+     traegt die Karte zwei Angaben und keinen Satz -- was sie bedeuten,
+     steht in der Hilfe unter Einrichtung. #}
+  {% if "-dirty" in stand.stand %}
+  <p class="muted small warnung">
+    Im Projektordner lag beim Installieren Ungespeichertes — dieser Stand
+    entspricht keinem Commit und lässt sich nicht wiederherstellen.
+  </p>
+  {% endif %}
+  {% if stand.zweig and stand.zweig != "main" %}
+  <p class="muted small">
+    Zweig <code>{{ stand.zweig }}</code> — nicht <code>main</code>. Keine
+    Störung, aber die häufigste Erklärung dafür, dass hier etwas anderes
+    steht als erwartet.
+  </p>
+  {% endif %}
+  {% else %}
+  <p class="muted">
+    Hier steht nichts — und das heißt nicht „Version 0“, sondern: Diese
+    Anwendung ist nicht über <code>install.sh</code> hierhergekommen. Auf
+    einem Server, der so aufgesetzt wurde, liegt der Stand in
+    <code>{{ stand.datei }}</code>. Geraten wird er nicht.
+  </p>
+  {% endif %}
+</section>
+
+<section id="ablageorte">
+  <div class="kartenkopf">
+    <h2>Ablageorte</h2>
+    <a class="kartenhilfe" href="/hilfe#einrichtung-ablageorte"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+  <table>
+    <thead>
+      <tr><th>Was</th><th>Pfad</th><th>Zustand</th></tr>
+    </thead>
+    <tbody>
+      {% for o in orte %}
+      <tr>
+        <td>
+          <strong>{{ o.was }}</strong>
+          {% if o.hinweis %}<div class="muted small">{{ o.hinweis }}</div>{% endif %}
+        </td>
+        <td><code>{{ o.pfad }}</code></td>
+        <td class="nowrap">
+          {% if o.zustand.da %}
+            <span class="badge ok">vorhanden</span>
+            {% if o.schreiben %}
+              {% if o.zustand.schreibbar %}
+                <div class="muted small">beschreibbar</div>
+              {% else %}
+                <div class="muted small warnung">nicht beschreibbar</div>
+              {% endif %}
+            {% endif %}
+          {% else %}
+            <span class="badge missing">fehlt</span>
+            {% if o.optional %}<div class="muted small">nur bei Bedarf</div>{% endif %}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section id="einstellungen">
+  <div class="kartenkopf">
+    <h2>Einstellungen</h2>
+    <a class="kartenhilfe" href="/hilfe#einrichtung-einstellungen"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+  <table>
+    <tbody>
+      {% for e in einstellungen %}
+      <tr>
+        <td class="nowrap"><code>{{ e.name }}</code></td>
+        <td>
+          {% if e.wert %}<code>{{ e.wert }}</code>{% else %}<span class="muted">leer</span>{% endif %}
+          <div class="muted small">{{ e.wofuer }}</div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {# Fusszeile der Karte: woher die Werte stammen. Dass die Datei ein
+     Update uebersteht und was nach dem Aendern zu tun ist, stand bis zum
+     27.08.2026 hier und steht jetzt in der Hilfe unter Einrichtung. #}
+  <p class="kartenfuss">
+    Gelesen aus <code>/etc/pxeweb.env</code> beim Start des Dienstes.
+  </p>
+</section>
+
+{# Zuletzt, und mit Absicht ganz unten: Wer die Seite überfliegt, soll
+   nicht als Erstes über einen Knopf stolpern, der alles löscht.
+
+   Drei Schritte, und keiner davon findet nur im Browser statt. Das
+   Eingabefeld steht leer und trägt das Wort als grauen Hinweis — wäre es
+   vorbelegt, genügte ein Druck auf die Eingabetaste, und die Abfrage wäre
+   Zierde. Geprüft wird beide Male auf dem Server. #}
+<section id="ersteinrichtung">
+  <div class="kartenkopf">
+    <h2>Ersteinrichtung</h2>
+    <a class="kartenhilfe" href="/hilfe#einrichtung-ersteinrichtung"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+
+  {% if schritt != "sicher" %}
+  <p class="muted">
+    Setzt diesen Server auf den Zustand zurück, in dem er ausgeliefert
+    wurde: ohne Abbilder, ohne angemeldete Rechner, ohne eigene Adressen.
+    Gedacht für einen Server, der weitergegeben wird oder von vorn
+    anfangen soll.
+  </p>
+
+  {% if schritt not in ("wort", "ip") %}
+  {# Die Sprungmarke gehoert in die Adresse des Formulars: Ein GET-Formular
+     ersetzt beim Abschicken den Abfrageteil, den Anker laesst es stehen.
+     Ohne ihn beginnt die neue Seite ganz oben -- und diese Karte steht
+     unten, man muesste sich also jedes Mal zurueckscrollen. #}
+  <div class="row spaced">
+    <form method="get" action="/einrichtung#ersteinrichtung">
+      <input type="hidden" name="schritt" value="wort">
+      <button type="submit" class="danger">Werkseinstellung</button>
+    </form>
+    <form method="get" action="/einrichtung#ersteinrichtung">
+      <input type="hidden" name="schritt" value="ip">
+      <button type="submit" class="ghost">IP-Adresse übernehmen</button>
+    </form>
+  </div>
+  {# Der Befund selbst steht seit dem 28.08.2026 als Seitenkarte ueber
+     dieser Seite -- hier stuende er ein zweites Mal, zwei Handbreit
+     darunter. Was bleibt, ist der Arbeitsschritt: der Knopf oben und der
+     Befehl im Schritt "IP-Adresse uebernehmen". #}
+
+  {% elif schritt == "ip" %}
+  {# Bis August 2026 standen hier drei Eingabefelder: Diese Karte schrieb
+     die Adresse in /etc/network/interfaces. Sie tut es nicht mehr -- die
+     Netzkonfiguration des Hosts ist Sache des Betreibers. Uebrig bleibt
+     das Ablesen und der eine Befehl, der die abgelesene Adresse in die
+     vier Stellen des Bootservers uebernimmt.
+
+     Vollzogen wird weiterhin an der Konsole: Der Dienst laeuft mit
+     NoNewPrivileges und darf /etc nicht schreiben. #}
+  <h3>IP-Adresse übernehmen</h3>
+
+  {% if netz.fehler %}
+  <p class="hint">
+    Die Netzkonfiguration dieses Hosts ist nicht lesbar: {{ netz.fehler }}
+  </p>
+  {% else %}
+  <table class="eng">
+    <tbody>
+      <tr><td class="nowrap muted">Netzwerkkarte</td>
+        <td><code>{{ netz.karte }}</code></td></tr>
+      <tr><td class="nowrap muted">IP-Adresse</td>
+        <td><code>{{ netz.ip }}</code>{% if abweichung %}
+          <span class="badge missing">weicht ab</span>{% endif %}</td></tr>
+      <tr><td class="nowrap muted">Netzmaske</td>
+        <td><code>{{ netz.maske }}</code> <span class="muted small">(/{{ netz.praefix }})</span></td></tr>
+      <tr><td class="nowrap muted">Gateway</td>
+        <td><code>{{ netz.gateway }}</code></td></tr>
+      <tr><td class="nowrap muted">Herkunft</td>
+        <td class="muted">{% if netz.dynamisch %}vom Router vergeben — in Ordnung,
+          solange sie diesem Server reserviert ist{% else %}fest am Host
+          eingetragen{% endif %}</td></tr>
+    </tbody>
+  </table>
+  {% endif %}
+
+  <p class="hint">
+    <strong>Die Netzkonfiguration dieses Hosts ändert dieser Server
+    nicht.</strong> Sie gehört dem Betreiber — diese Karte liest sie nur ab.
+    Wer die Adresse ändern will, tut das auf dem Weg seines Systems; hier
+    wird sie danach übernommen.
+  </p>
+
+  {% if abweichung %}
+  <p class="muted">
+    Eingerichtet ist <code>{{ jetzige_ip }}</code>, der Host läuft unter
+    <code>{{ abweichung }}</code>. Auf dem Server ausführen:
+  </p>
+  {% else %}
+  <p class="muted">
+    Eingerichtet und tatsächlich sind dasselbe — es ist gerade nichts
+    nachzuziehen. Nach einer Änderung am Host auf dem Server ausführen:
+  </p>
+  {% endif %}
+
+  {# Kopieren statt abtippen: Der Befehl wird auf einer anderen Maschine
+     eingegeben, meist in einer SSH-Sitzung daneben. #}
+  <div class="befehlszeile">
+    <pre class="ipxe" id="uebernahme">{{ uebernehmen }}</pre>
+    <button type="button" class="kopierknopf" data-quelle="uebernahme"
+            title="Befehl kopieren" aria-label="Befehl kopieren">kopieren</button>
+  </div>
+
+  <p class="muted small">
+    Der Befehl liest die Adresse selbst von der Netzwerkkarte ab und
+    schreibt sie in dnsmasq, nginx, <code>pxeweb.env</code> und den
+    NFS-Export. Es ist derselbe Aufruf wie bei der Installation; ein
+    zweiter Lauf schadet nie.
+  </p>
+  <p class="muted small">
+    <a href="/einrichtung#ersteinrichtung">Schließen</a>
+  </p>
+
+  {% else %}
+  {# Enter im Feld schickt das Formular ab -- ein eigener Knopf daneben
+     wäre der zweite Weg für denselben Schritt. #}
+  <form method="post" action="/einrichtung/werkseinstellung" class="row">
+    <label for="losungswort" class="muted small">
+      Zum Fortfahren <strong>{{ losung }}</strong> eintippen:
+    </label>
+    <input type="text" id="losungswort" name="wort" autocomplete="off"
+           placeholder="{{ losung }}" size="12" autofocus>
+    <button type="submit" class="ghost">Weiter</button>
+  </form>
+  {% endif %}
+
+  {% else %}
+  <p class="hint">
+    <strong>Der Server wird auf Werkseinstellung zurückgesetzt.</strong>
+    Das lässt sich nicht rückgängig machen.
+  </p>
+  <p class="muted">Gelöscht wird:</p>
+  <ul class="muted">
+    <li>alle Abbilder unter <code>{{ assets_dir }}</code> — geholte
+      Systeme, hochgeladene ISOs, selbst angelegte Einträge</li>
+    <li>alle angemeldeten Rechner samt ihrer Vorauswahl und dem
+      Startverlauf</li>
+    <li>eigene Adressen und Ausgabenlisten, die Freigaben, die Reihenfolge
+      der Gruppen, eigene Namen und die Installationsprotokolle</li>
+  </ul>
+  <p class="muted">Erhalten bleibt:</p>
+  <ul class="muted">
+    <li>die Einrichtung des Servers selbst — <code>/etc/pxeweb.env</code>
+      mit Adresse und NFS-Pfad, der iPXE-Bootloader und der Katalog</li>
+    <li><code>wimboot</code>, das für Windows-Abbilder gebraucht wird —
+      es gehört zur Installation, nicht zur Ablage</li>
+  </ul>
+  <p class="muted small">
+    Danach steht der Server da wie nach einem frischen
+    <code>install.sh</code>: Unter <a href="/quellen">Quellen</a> trägt
+    <em>Prüfen</em> die aktuellen Ausgaben ein, und geholt wird von vorn.
+  </p>
+  <form method="post" action="/einrichtung/werkseinstellung/bestaetigen"
+        class="row"
+        onsubmit="return confirm('Wirklich alles löschen? Das lässt sich nicht rückgängig machen.')">
+    {# Das Wort noch einmal mit: Der Server prüft es auch hier, damit ein
+       einzelner Aufruf dieses Pfades nichts ausrichtet. #}
+    <input type="hidden" name="wort" value="{{ losung }}">
+    <button type="submit" class="danger">Bestätigen</button>
+    <a href="/einrichtung#ersteinrichtung" class="muted small">Abbrechen</a>
+  </form>
+  {% endif %}
+</section>
+
+{% endblock %}

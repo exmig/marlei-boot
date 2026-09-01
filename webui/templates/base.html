@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}MARLEI Boot{% endblock %}</title>
+  <!-- Der Anhang ist die Aenderungszeit der Datei: aendert sie sich, aendert
+       sich die Adresse und der Browser holt sie zwangslaeufig neu. -->
+  <link rel="stylesheet" href="/static/style.css?v={{ stil_version }}">
+  <!-- Zwei Zeilen, weil nicht jeder Browser SVG als Favicon nimmt: Wer kann,
+       nimmt das Zeichen und hat es in jeder Groesse scharf; die anderen die
+       .ico. Beide zeigen dasselbe -- nur "ex", denn fuenf Buchstaben sind im
+       Reiter ein Fleck. -->
+  <link rel="icon" href="/static/favicon.ico?v={{ marken_version }}" sizes="any">
+  <link rel="icon" type="image/svg+xml"
+        href="/static/exmig-zeichen.svg?v={{ marken_version }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="kopfzeile">
+      <h1>MARLEI Boot</h1>
+      <span class="muted small"><code>{{ base_url }}</code></span>
+      <!-- Die Marke steht am rechten Ende derselben Zeile. Breite und Hoehe
+           stehen dran, damit der Platz schon vor dem Laden stimmt und die
+           Zeile nicht springt; die sichtbare Groesse macht das Stylesheet. -->
+      <img class="marke" src="/static/exmig-logo.svg?v={{ marken_version }}"
+           width="1057" height="380" alt="Exmig">
+    </div>
+    <nav>
+      <a href="/"         class="{{ 'aktiv' if aktiv == 'serverhealth' }}">Server Health</a>
+      <a href="/clients"  class="{{ 'aktiv' if aktiv == 'clients' }}">Clients</a>
+      <a href="/systeme"  class="{{ 'aktiv' if aktiv == 'systeme' }}">Systeme</a>
+      <a href="/quellen"  class="{{ 'aktiv' if aktiv == 'quellen' }}">Quellen</a>
+      <a href="/einrichtung" class="{{ 'aktiv' if aktiv == 'einrichtung' }}">Einrichtung</a>
+      <a href="/history"  class="{{ 'aktiv' if aktiv == 'history' }}">History</a>
+      <a href="/hilfe"    class="{{ 'aktiv' if aktiv == 'hilfe' }}">Hilfe</a>
+    </nav>
+  </header>
+  <main>
+    {# Die einmalige Meldung steht zuerst: Sie ist die Antwort auf einen
+       Klick, den jemand gerade getan hat, und wer sie sucht, sucht sie
+       hier. Die Befunde darunter sind von anderer Art -- sie gelten,
+       solange sie gelten, und niemand hat nach ihnen gefragt. #}
+    {% if meldung %}<p class="hint meldung">{{ meldung }}</p>{% endif %}
+
+    {# Befunde, die dem Server gelten und nicht einer einzelnen Karte:
+       Fehler, Warnung, Info -- in dieser Reihenfolge, dringend zuerst.
+       Sie stehen hier und nicht in einem Reiter, weil sie nicht davon
+       abhaengen duerfen, welchen Reiter jemand geoeffnet hat.
+
+       Zugeklappt, auch der Fehler. Eine offene Fehlerkarte waere das
+       Erste, Groesste und oft Einzige auf der Seite; wer den Fehler
+       selbst gebaut hat, weiss ohnehin Bescheid, und wer nicht, soll
+       bewusst hinsehen statt vorbeizuscrollen.
+
+       Woher sie kommen: webui/befunde.py. Warum so: docs/gestaltung.md,
+       "Die Karte und ihre drei Bereiche". #}
+    {% for befund in befunde %}
+    <details class="seitenkarte stufe-{{ befund.stufe }}">
+      <summary><h2>{{ befund.titel }}</h2></summary>
+      {% include "befunde/" ~ befund.kennung ~ ".html" %}
+    </details>
+    {% endfor %}
+
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="muted">
+    <p>
+      Menü-Timeout {{ menu_timeout }} s &middot; Standardauswahl <code>{{ menu_default }}</code>
+      &middot; <a href="/health">Statusabfrage</a>
+    </p>
+  </footer>
+<script>
+// Einen Befehl in die Zwischenablage legen.
+//
+// navigator.clipboard gibt es nur im "secure context" -- also unter https
+// oder auf localhost. Dieser Server laeuft unter http auf einer LAN-Adresse;
+// dort ist die API schlicht nicht vorhanden, und ein Knopf, der nur auf dem
+// Entwicklungsrechner funktioniert, ist schlimmer als keiner. Deshalb der
+// alte Weg als Rueckfall: ein Feld ausserhalb des Bildes, markieren,
+// execCommand. Veraltet, aber es tut genau das hier und ueberall.
+(function () {
+  function ablegen(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    var feld = document.createElement("textarea");
+    feld.value = text;
+    feld.setAttribute("readonly", "");
+    feld.style.position = "fixed";
+    feld.style.left = "-9999px";
+    document.body.appendChild(feld);
+    feld.select();
+    var ging = false;
+    try { ging = document.execCommand("copy"); } catch (e) { ging = false; }
+    document.body.removeChild(feld);
+    return ging ? Promise.resolve() : Promise.reject();
+  }
+
+  document.addEventListener("click", function (ereignis) {
+    var knopf = ereignis.target.closest(".kopierknopf");
+    if (!knopf) { return; }
+    var quelle = document.getElementById(knopf.dataset.quelle);
+    if (!quelle) { return; }
+    // Der Knopf sagt selbst, ob es geklappt hat -- eine Meldung an anderer
+    // Stelle sucht man, und eine, die nichts sagt, waere schlimmer als
+    // nichts. Nach zwei Sekunden steht wieder da, was zu tun ist.
+    var vorher = knopf.textContent;
+    ablegen(quelle.textContent.trim()).then(function () {
+      knopf.textContent = "kopiert";
+    }, function () {
+      knopf.textContent = "ging nicht";
+    }).finally(function () {
+      setTimeout(function () { knopf.textContent = vorher; }, 2000);
+    });
+  });
+})();
+</script>
+</body>
+</html>

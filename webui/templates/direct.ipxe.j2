@@ -1,0 +1,21 @@
+#!ipxe
+# ---------------------------------------------------------------------------
+# Fuer diese MAC-Adresse wurde in der Weboberflaeche etwas vorausgewaehlt.
+# Kein Menue -- direkt durchstarten. Praktisch fuer Rechner ohne Monitor.
+# ---------------------------------------------------------------------------
+
+set base {{ base }}
+
+echo
+echo   Vorauswahl fuer {{ name }}:
+echo   >>> {{ entry.name }}
+echo
+echo   Abbrechen und Menue zeigen: Strg-C innerhalb von 5 Sekunden
+echo
+
+prompt --timeout 5000 --key 0x03 && goto menue ||
+
+chain ${base}/boot/{{ entry.slug }}.ipxe?mac={{ mac }} || goto menue
+
+:menue
+chain ${base}/menu.ipxe?mac={{ mac }}&platform=${platform}&arch=${buildarch}&nopreset=1 || shell

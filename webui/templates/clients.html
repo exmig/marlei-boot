@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+{% block title %}Clients — MARLEI Boot{% endblock %}
+
+{% block content %}
+
+<section id="registrierte-clients">
+  <div class="kartenkopf">
+    <h2>Registrierte Clients</h2>
+    <a class="kartenhilfe" href="/hilfe#clients-liste"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+  {% if clients %}
+  <!-- Beide Formulare stehen ausserhalb der Tabelle: ein <form> darf keine
+       <tr> umschliessen. Die Felder in den Zeilen haengen sich ueber ihr
+       form-Attribut an das passende an -- Name, Auswahl und Haken an
+       "sichern", die Kreuze der WOL-Spalte an "wol". -->
+  <form id="sichern" method="post" action="/clients/speichern"></form>
+  <form id="wol" method="post" action="/clients/wecken"></form>
+
+  <table class="eng">
+    <thead>
+      <tr>
+        <th>Client</th>
+        <th>Zuletzt gesehen</th>
+        <th>
+          <!-- Das Nebeneinander steht in einem eigenen Element, nicht am
+               <th> selbst: ein "display: flex" auf einer Kopfzelle nimmt
+               ihr das Kleben beim Scrollen wieder weg. -->
+          <div class="sichernspalte">
+            <span>Boot-Optionen</span>
+            <!-- Der Knopf gilt fuer die ganze Tabelle, also steht er auch
+                 dort und nicht in den Zeilen. Ausgeliefert wird er aktiv
+                 und erst vom Skript ausgegraut -- ohne JavaScript liesse
+                 sich sonst gar nichts mehr speichern. -->
+            <button type="submit" form="sichern" id="sichernknopf" class="sichern"
+                    title="Alle Änderungen in dieser Liste speichern — Namen wie Boot-Optionen">Speichern</button>
+            <span class="quittung" role="status" aria-live="polite"></span>
+          </div>
+        </th>
+        <th class="wolspalte">
+          <button type="submit" form="wol"
+                  title="Angekreuzte Rechner per Wake-on-LAN einschalten">WOL</button>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in clients %}
+      <tr data-mac="{{ c['mac'] }}">
+        <td>
+          <div class="namensfeld">
+            <input type="text" name="name:{{ c['mac'] }}" form="sichern"
+                   value="{{ c['name'] }}" size="16" placeholder="Name eintragen"
+                   title="Name des Rechners — wird mit Speichern übernommen">
+          </div>
+          <code>{{ c["mac"] }}</code>
+          {% if c["product"] %}<div class="muted small">{{ c["product"] }}</div>{% endif %}
+          <form method="post" action="/clients/{{ c['mac'] }}/delete" class="wegnehmen">
+            <button type="submit" class="danger">Löschen</button>
+          </form>
+        </td>
+        <td class="nowrap">
+          <span class="gesehen{% if not c['last_seen'] %} muted{% endif %}"
+                title="{{ c['last_seen'] or '' }}">
+            {{ (c["last_seen"] | zeit) if c["last_seen"] else "noch nie" }}
+          </span>
+          <div class="muted small herkunft">
+            {#- Leere Angaben weglassen statt "None" zu schreiben: ein von
+                Hand eingetragener Client hat noch keine Architektur, und wer
+                nie gebootet hat, auch keine Adresse. Dieselbe Regel wie in
+                der JSON-Fassung, die das Auffrischen liefert. -#}
+            {%- if c["last_seen"] -%}
+              {{ [c["last_ip"], c["last_arch"]] | select | join(" · ") }}
+            {%- endif -%}
+          </div>
+          <div class="muted small geweckt" title="{{ c['last_wake'] or '' }}">
+            {%- if c["last_wake"] %}geweckt {{ c["last_wake"] | zeit }}{% endif -%}
+          </div>
+        </td>
+        <td>
+          <div class="row">
+            <select name="entry:{{ c['mac'] }}" form="sichern">
+              <option value="">— Menü anzeigen —</option>
+              {# Angeboten wird, was unter Systeme fuer die Boot-Optionen
+                 freigegeben ist. Was dieser Rechner schon eingestellt hat,
+                 steht weiter dabei -- auch wenn die Freigabe inzwischen weg
+                 ist: die Auswahl soll zeigen, was gilt, und nicht etwas
+                 anderes. #}
+              {% for e in entries %}
+                {% if e.ready and (e.in_optionen or c["entry"] == e.slug) %}
+                <option value="{{ e.slug }}" {% if c["entry"] == e.slug %}selected{% endif %}>
+                  {{ e.name }}{% if not e.in_optionen %} (zurückgezogen){% endif %}
+                </option>
+                {% endif %}
+              {% endfor %}
+            </select>
+            <label class="inline" title="Gibt den nächsten Netzwerkstart dieses Rechners frei — ohne Haken bootet er von seiner Platte. Was dann passiert, sagt die Auswahl links. Nach dem Start setzt der Server die Zeile zurueck: Haken weg, Auswahl wieder auf Menue anzeigen.">
+              <input type="checkbox" name="pxe_aktiv:{{ c['mac'] }}" form="sichern"
+                     value="1" {% if c["pxe_aktiv"] %}checked{% endif %}>
+              PXE Boot aktiv
+            </label>
+          </div>
+
+          <!-- Der Stand beim Aufbau der Seite. Der Server schreibt nur, was
+               davon abweicht: zwischen Aufbau und Klick kann ein Rechner
+               gebootet und dabei seinen Haken verloren haben, und das
+               Speichern einer anderen Zeile darf ihn nicht wieder setzen. -->
+          <input type="hidden" form="sichern" name="war_name:{{ c['mac'] }}"
+                 value="{{ c['name'] }}">
+          <input type="hidden" form="sichern" name="war_entry:{{ c['mac'] }}"
+                 value="{{ c['entry'] or '' }}">
+          <input type="hidden" form="sichern" name="war_pxe:{{ c['mac'] }}"
+                 value="{{ 1 if c['pxe_aktiv'] else 0 }}">
+
+          {% set eigene = protokolle.get(c["mac"], []) %}
+          {% if eigene %}
+          <div class="muted small protokolle">
+            Protokolle:
+            {% for l in eigene %}
+              <a href="/logs/{{ l.mac_ordner }}/{{ l.datei }}"
+                 title="{{ l.zeit }}">{{ l.zeit | zeit }}</a>
+              <form method="post" action="/logs/{{ l.mac_ordner }}/{{ l.datei }}/delete" class="inline-form">
+                <button type="submit" class="weglassen" title="Protokoll löschen">×</button>
+              </form>{% if not loop.last %} &middot; {% endif %}
+            {% endfor %}
+          </div>
+          {% endif %}
+        </td>
+        <td class="wolspalte">
+          <input type="checkbox" name="mac" value="{{ c['mac'] }}" form="wol"
+                 title="Diesen Rechner mit dem WOL-Knopf oben einschalten">
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="hint">
+    Noch kein Client bekannt. Sobald einer per Netzwerk startet, erscheint er hier.
+  </p>
+  {% endif %}
+
+</section>
+
+<section id="manuelle-registrierung">
+  <div class="kartenkopf">
+    <h2>Manuelle Registrierung</h2>
+    <a class="kartenhilfe" href="/hilfe#clients-anmelden"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+  <form method="post" action="/clients/add" class="row spaced">
+    {# Das Muster laesst genau das durch, was normalise_mac() annimmt:
+       sechs Paare, getrennt durch Doppelpunkt oder Bindestrich. Bis zum
+       28.08.2026 stand hier "[0-9A-Fa-f:.-]{12,17}" -- das liess auch
+       Punkte und zwoelf Hexzeichen am Stueck durch, die der Server dann
+       mit einer nackten Fehlerseite abwies. Drei Ebenen, die
+       Verschiedenes erlaubten. #}
+    <input type="text" name="mac" placeholder="aa:bb:cc:dd:ee:ff" required
+           pattern="[0-9A-Fa-f]{2}([:-][0-9A-Fa-f]{2}){5}"
+           title="Sechs Paare, getrennt durch Doppelpunkt oder Bindestrich — aa:bb:cc:dd:ee:ff">
+    <input type="text" name="name" placeholder="Name (optional)">
+    <button type="submit">Client registrieren</button>
+  </form>
+  {# Fusszeile der Karte: wofuer sie da ist. Was zum Wecken am Zielrechner
+     stimmen muss, stand bis zum 27.08.2026 hier und steht vollstaendig in
+     der Hilfe -- an dieser Karte war es die Antwort auf eine Frage, die
+     erst spaeter kommt. #}
+  <p class="kartenfuss">
+    Hier können Rechner ohne Bootvorgang als Clients registriert werden.
+  </p>
+</section>
+
+<section id="installationsprotokolle">
+  <div class="kartenkopf">
+    <h2>Installationsprotokolle bei Abbruch</h2>
+    <a class="kartenhilfe" href="/hilfe#clients-protokolle"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+  {# Warum und wann man das braucht, steht in der Hilfe. Hier steht, was man
+     eintippt -- und was dabei eingesammelt wird, denn das entscheidet, ob
+     man den Befehl an einer fremden Maschine ueberhaupt ausfuehren will. #}
+  <p><code>curl -sf {{ base_url }}/logs.sh | sudo sh</code></p>
+  <p class="muted small">
+    Dieser Befehl muss auf dem per PXE gebooteten Client ausgeführt werden.
+  </p>
+
+  {% if verwaiste %}
+  <p class="muted small">
+    Protokolle ohne zugehörigen Rechner in der Liste:
+    {% for l in verwaiste %}
+      <a href="/logs/{{ l.mac_ordner }}/{{ l.datei }}" title="{{ l.zeit }}"><code>{{ l.mac }}</code> {{ l.zeit | zeit }}</a>{% if not loop.last %} &middot; {% endif %}
+    {% endfor %}
+  </p>
+  {% endif %}
+
+  {# Fusszeile: die Belegung gilt allen Protokollen zusammen, und darunter
+     der Weg in die Hilfe. Was eingepackt wird und wie zugeordnet, stand bis
+     zum 27.08.2026 hier und steht jetzt vollstaendig dort. #}
+  {% if protokolle_belegt %}
+  <p class="kartenfuss">
+    Alle Protokolle zusammen {{ "%.1f"|format(protokolle_belegt / 1048576) }} MB.
+  </p>
+  {% endif %}
+</section>
+
+<script>
+// Ein Knopf fuer die ganze Tabelle. Drei Aufgaben, ein Skript, weil alle
+// dasselbe wissen muessen: welche Zeile vom gespeicherten Stand abweicht.
+//
+// 1. Der Knopf ist grau, solange nichts abweicht, und nennt sonst die Zahl
+//    der offenen Rechner. Verglichen wird gegen die versteckten Felder
+//    "war_*", die den Stand beim Aufbau der Seite tragen -- dieselben
+//    Felder, an denen auch der Server entscheidet, was er schreibt. Ein
+//    Vergleichsmassstab statt zweier, die auseinanderlaufen koennen.
+//
+// 2. Gespeichert wird im Hintergrund, die Seite bleibt stehen. Sonst waeren
+//    angekreuzte WOL-Kaestchen nach jedem Speichern weg.
+//
+// 3. Die Seite frischt sich selbst auf. Der Server entfernt den Haken
+//    "PXE Boot aktiv", sobald ein Rechner sein Boot-Skript geholt hat --
+//    ohne Auffrischen stuende hier weiter ein Haken, den es nicht mehr
+//    gibt. Angefasst wird dabei nur, was niemand bearbeitet.
+(function () {
+  var formular = document.getElementById("sichern");
+  var knopf = document.getElementById("sichernknopf");
+  var tabelle = document.querySelector("table.eng");
+  var quittung = document.querySelector("th .quittung");
+  if (!formular || !knopf || !tabelle) { return; }
+
+  var beschriftung = knopf.textContent.trim();
+  var zeilen = {};
+
+  document.querySelectorAll("tr[data-mac]").forEach(function (reihe) {
+    var eintrag = {
+      reihe: reihe,
+      name: reihe.querySelector('input[name^="name:"]'),
+      entry: reihe.querySelector('select[name^="entry:"]'),
+      pxe: reihe.querySelector('input[name^="pxe_aktiv:"]'),
+      warName: reihe.querySelector('input[name^="war_name:"]'),
+      warEntry: reihe.querySelector('input[name^="war_entry:"]'),
+      warPxe: reihe.querySelector('input[name^="war_pxe:"]'),
+      wol: reihe.querySelector('.wolspalte input[type="checkbox"]'),
+    };
+    if (!eintrag.entry || !eintrag.warEntry) { return; }
+
+    eintrag.geaendert = function () {
+      return (eintrag.name && eintrag.name.value !== eintrag.warName.value) ||
+        eintrag.entry.value !== eintrag.warEntry.value ||
+        (eintrag.pxe.checked ? "1" : "0") !== eintrag.warPxe.value;
+    };
+
+    // "Offen" heisst: hier steht etwas, das ein Neuladen wegwerfen wuerde.
+    // Ein angekreuztes WOL-Kaestchen gehoert dazu, obwohl es nichts mit
+    // dem Speichern zu tun hat.
+    eintrag.offen = function () {
+      return eintrag.geaendert() || !!(eintrag.wol && eintrag.wol.checked);
+    };
+
+    zeilen[reihe.dataset.mac] = eintrag;
+  });
+
+  function offeneZeilen() {
+    return Object.keys(zeilen).filter(function (mac) {
+      return zeilen[mac].geaendert();
+    });
+  }
+
+  function pruefen() {
+    var offen = offeneZeilen();
+    knopf.disabled = offen.length === 0;
+    knopf.textContent = offen.length
+      ? beschriftung + " (" + offen.length + ")" : beschriftung;
+    knopf.title = offen.length === 0
+      ? "Nichts geändert — es gibt nichts zu speichern"
+      : (offen.length === 1 ? "Ein Rechner hat ungespeicherte Änderungen"
+                            : offen.length + " Rechner haben ungespeicherte Änderungen");
+    Object.keys(zeilen).forEach(function (mac) {
+      zeilen[mac].reihe.classList.toggle("offen", zeilen[mac].geaendert());
+    });
+  }
+
+  // Die Felder liegen in der Tabelle, das Formular steht daneben --
+  // Ereignisse steigen im Dokument auf, nicht am form-Attribut entlang.
+  // Gelauscht wird deshalb an der Tabelle.
+  tabelle.addEventListener("input", pruefen);
+  tabelle.addEventListener("change", pruefen);
+  pruefen();
+
+  formular.addEventListener("submit", function (ereignis) {
+    ereignis.preventDefault();
+    sichern();
+  });
+
+  function sichern() {
+    knopf.disabled = true;
+    fetch(formular.action, {
+      method: "POST",
+      headers: {"Accept": "application/json"},
+      body: new FormData(formular),
+    })
+      .then(function (r) {
+        if (!r.ok) { throw new Error(r.status); }
+        return r.json();
+      })
+      .then(function (d) {
+        uebernehmen(d.clients, true);
+        // Wie viele es waren, stand eben auf dem Knopf -- hier reicht,
+        // dass es geklappt hat. Kurz gehalten, damit die Spalte dadurch
+        // nicht breiter wird als der Platz, der dafuer freigehalten ist.
+        melden("Gespeichert", "gut");
+      })
+      .catch(function () {
+        pruefen();
+        melden("Nicht gespeichert", "schlecht");
+      });
+  }
+
+  // Ohne Neuladen passiert sichtbar nichts mehr -- also sagt es die Zeile
+  // neben dem Knopf, und zwar nur kurz.
+  var quittungsuhr = null;
+  function melden(text, art) {
+    if (!quittung) { return; }
+    quittung.textContent = text;
+    quittung.className = "quittung " + art;
+    clearTimeout(quittungsuhr);
+    quittungsuhr = setTimeout(function () {
+      quittung.textContent = "";
+      quittung.className = "quittung";
+    }, 4000);
+  }
+
+  function schreibe(element, text, titel) {
+    if (!element) { return; }
+    if (element.textContent.trim() !== text) { element.textContent = text; }
+    if (titel !== undefined) { element.title = titel; }
+  }
+
+  // Ein Feld bekommt den Stand des Servers nur, wenn dort nichts
+  // Angefangenes steht. Der Ausgangsstand daneben zieht dagegen immer mit:
+  // was der Rechner selbst geaendert hat, ist keine Eingabe des Benutzers
+  // und soll spaeter nicht als solche gespeichert werden. Wer gerade tippt,
+  // behaelt sein Feld -- und bleibt offen, weil sein Wert jetzt vom neuen
+  // Stand abweicht.
+  function setzen(feld, war, wert, erzwingen) {
+    if (!feld || !war) { return; }
+    var jetzt = feld.type === "checkbox" ? (feld.checked ? "1" : "0") : feld.value;
+    if (erzwingen || jetzt === war.value) {
+      if (feld.type === "checkbox") { feld.checked = wert === "1"; }
+      else if (feld.value !== wert) { feld.value = wert; }
+    }
+    war.value = wert;
+  }
+
+  function uebernehmen(liste, erzwingen) {
+    var fehlt = false;
+
+    liste.forEach(function (c) {
+      var reihe = document.querySelector('tr[data-mac="' + c.mac + '"]');
+      if (!reihe) { fehlt = true; return; }
+
+      // Zeiten gehoeren niemandem -- die immer.
+      schreibe(reihe.querySelector(".gesehen"), c.gesehen, c.gesehen_roh);
+      schreibe(reihe.querySelector(".herkunft"), c.herkunft);
+      schreibe(reihe.querySelector(".geweckt"), c.geweckt, c.geweckt_roh);
+
+      var eintrag = zeilen[c.mac];
+      if (!eintrag) { return; }
+      setzen(eintrag.name, eintrag.warName, c.name, erzwingen);
+      setzen(eintrag.entry, eintrag.warEntry, c.entry, erzwingen);
+      setzen(eintrag.pxe, eintrag.warPxe, c.pxe_aktiv ? "1" : "0", erzwingen);
+    });
+
+    pruefen();
+    return fehlt;
+  }
+
+  function etwasOffen() {
+    return Object.keys(zeilen).some(function (mac) {
+      return zeilen[mac].offen();
+    });
+  }
+
+  function auffrischen() {
+    if (document.hidden) { setTimeout(auffrischen, 5000); return; }
+
+    fetch("/clients.json")
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var fehlt = uebernehmen(d.clients, false);
+
+        // Rechner dazugekommen oder geloescht? Dann hilft nur neu laden --
+        // aber nicht, solange jemand etwas Ungespeichertes offen hat.
+        var anders = fehlt ||
+          document.querySelectorAll("tr[data-mac]").length !== d.clients.length;
+        if (anders && !etwasOffen()) { location.reload(); return; }
+
+        setTimeout(auffrischen, 5000);
+      })
+      .catch(function () { setTimeout(auffrischen, 15000); });
+  }
+
+  setTimeout(auffrischen, 5000);
+})();
+</script>
+
+{% endblock %}

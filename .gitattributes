@@ -1,0 +1,19 @@
+# Alles mit Unix-Zeilenenden (LF) ablegen UND auschecken -- auch unter Windows.
+#
+# Grund: Die Skripte und Konfigurationsdateien laufen auf der Linux-VM.
+# Mit Windows-Zeilenenden (CRLF) scheitert dort schon die erste Zeile mit
+# der wenig hilfreichen Meldung
+#     /usr/bin/env: 'bash\r': No such file or directory
+# Diese Datei macht das Verhalten unabhängig davon, wie core.autocrlf auf
+# dem jeweiligen Rechner eingestellt ist.
+* text=auto eol=lf
+
+# Auch für die Setup-Skripte gilt LF -- ausdrücklich, obwohl "* text=auto"
+# sie schon erfasst: Bei ihnen ist die Folge nicht Kosmetik, sondern ein
+# Skript, das in der VM gar nicht erst startet.
+#
+# Das Ausführbar-Bit regelt diese Datei NICHT. Windows kennt es nicht, Git
+# speichert es als Dateimodus im Repository (100755), und dort bleibt es
+# auch beim Auschecken unter Windows erhalten. Setzen lässt es sich mit
+#     git update-index --chmod=+x setup/beispiel.sh
+*.sh text eol=lf

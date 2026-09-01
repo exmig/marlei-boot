@@ -1,0 +1,19 @@
+#!ipxe
+# ---------------------------------------------------------------------------
+# Fuer diesen Rechner ist kein Netzwerkstart freigegeben -- der Normalfall.
+# Angemeldet hat er sich trotzdem: das ist vor diesem Skript passiert, und
+# genau dafuer ist der Netzwerkstart hier auch gut. Er steht jetzt in der
+# Rechnerliste und wartet auf einen Haken.
+#
+# "exit 0" gibt die Kontrolle an die Firmware zurueck, die dann das
+# naechste Geraet in der Bootreihenfolge nimmt -- also die Platte. Wer am
+# Bildschirm sitzt, soll erfahren, warum nichts weiter passiert; deshalb
+# die drei Zeilen. Aufgehalten wird der Start dadurch nicht.
+# ---------------------------------------------------------------------------
+
+echo
+echo   {{ mac }} ist am PXE-Server angemeldet.
+echo   Kein Netzwerkstart freigegeben -- dazu im Browser "PXE Boot aktiv" ankreuzen.
+echo   Starte von der lokalen Festplatte...
+echo
+exit 0

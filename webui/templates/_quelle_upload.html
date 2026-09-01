@@ -1,0 +1,98 @@
+{# "with context": ohne das sieht das Makro die Werte der Seite nicht,
+   und der Pfad-Vorspann bliebe leer. #}
+{% from "_eintragskarte.html" import karte with context %}
+{# Was vom Arbeitsplatz hereinkommt. Eingebunden von
+   quellen.html. #}
+  {% include "_ohne_nfs.html" %}
+
+  {# Dieselben Masse wie in den drei Karten daneben -- siehe .kompakt
+     im Stylesheet. Diese Karte fuehrt denselben Dialog wie Download
+     ("Vorhandenes ersetzen / Als neue Ausgabe / Abbrechen"); zwei gleich
+     gebaute Dialoge in zwei Groessen lesen sich wie zwei verschiedene
+     Vorgaenge. #}
+  <div class="kompakt">
+  <div class="row spaced">
+    {# Der eingebaute Knopf eines <input type="file"> sieht in jedem Browser
+       anders aus und laesst sich nicht gestalten. Deshalb traegt ein
+       <label> die Beschriftung -- ein Klick darauf oeffnet denselben
+       Dialog --, und das Feld selbst steht unsichtbar daneben. Nicht
+       "display: none": so bliebe es fuer die Tastatur unerreichbar. #}
+    <label class="dateiknopf" for="iso-datei">Datei auswählen</label>
+    <input type="file" id="iso-datei" class="dateifeld"
+           accept=".iso,application/x-cd-image">
+    <span class="muted small" id="iso-name">Keine ausgewählt</span>
+    <button type="button" id="iso-start">Vom Arbeitsplatz hochladen</button>
+  </div>
+  <progress id="iso-fortschritt" max="100" value="0" hidden></progress>
+  <p id="iso-meldung" class="hint" hidden></p>
+
+  {# Dieselbe Datei ein zweites Mal kann zweierlei heissen: die vorhandene
+     Fassung ersetzen oder eine zweite Ausgabe daneben stellen, um sie zu
+     erproben, bevor sie ins Menue kommt. Das weiss nur der Mensch davor --
+     gefragt wird, sobald die Datei ausgewaehlt ist, und nicht erst nach
+     sechs uebertragenen Gigabyte. #}
+  <div id="iso-frage" class="hint" hidden>
+    <p id="iso-frage-text"></p>
+    <div class="row">
+      <button type="button" id="iso-ersetzen" class="danger">Vorhandenes ersetzen</button>
+      <button type="button" id="iso-daneben">Als neue Ausgabe aufnehmen</button>
+      <button type="button" id="iso-abbrechen" class="ghost">Abbrechen</button>
+    </div>
+  </div>
+  </div>
+
+  {% if hochgeladen %}
+  {# Die Angaben, die frueher in der Herkunft-Spalte auf Systeme standen:
+     Groesse, Zeitpunkt, erkannte Familie und der Startweg. Sie gehoeren
+     zur Herkunft, also hierher. #}
+  {% for e in hochgeladen %}
+{% call karte(e, e.zustand.text, e.upload.meldung, gut=e.zustand.gut,
+              menue_info=true,
+              loeschen="/uploads/" + e.slug + "/delete",
+              neu_einlesen="/uploads/" + e.slug + "/reload" if e.upload.neu_lesbar else "",
+              neu_titel="Abbild noch einmal einordnen" if e.upload.iso_da
+                        else "Menüpunkt neu bauen — das Abbild selbst ist nach dem Entpacken nicht mehr da",
+              zeitpunkt=e.upload.hochgeladen, zeit_titel="Hochgeladen",
+            zurueck="upload") %}
+  {# Dieselbe Zeile wie im Katalog und mit demselben Namen: was das
+     Abbild ueber sich selbst sagt. "Meldet sich als" hiess sie, solange
+     es sie nur hier gab. #}
+  <div><dt>Beschreibung</dt><dd>{{ e.beschreibung }}</dd></div>
+  {# Was ein Windows-Medium ueber sich selbst sagt. Steht in den Anhaengen
+     der WIM-Dateien und wird beim Einlesen ohnehin gelesen -- bis zum
+     31.08.2026 blieb es ungenutzt, und in der Karte stand nur der
+     Dateiname, den der Benutzer mitgebracht hat.
+
+     Die Ausgaben sind kein Beiwerk: Beim Setup muss eine davon
+     ausgewaehlt werden, und wer sie vorher kennt, raet nicht. #}
+  {% set win = (e.upload.get('befund') or {}).get('windows_angaben') or {} %}
+  {% if win.generation %}
+  <div><dt>Windows</dt>
+    <dd>{{ win.generation }}{% if win.fassung %}
+      &middot; {{ win.fassung }}{% endif %}{% if win.sprache %}
+      &middot; {{ win.sprache }}{% endif %}{% if win.winpe and win.winpe != win.fassung %}
+      &middot; Konsole {{ win.winpe }}{% endif %}</dd></div>
+  {% endif %}
+  {% if win.ausgaben %}
+  <div><dt>Ausgaben</dt><dd>{{ win.ausgaben | join(', ') }}</dd></div>
+  {% endif %}
+  {# Groesse und erkannte Familie beschreiben die Datei -- angehaengt
+     statt in eigenen Zeilen. So ist auch klar, worauf sich die Groesse
+     bezieht: auf das Abbild, das hereinkam. Was davon jetzt auf der
+     Platte liegt, steht weiter unten bei den Dateien. #}
+  <div><dt>Datei</dt>
+    <dd>{{ e.upload.datei }}
+      &middot; {{ e.upload.groesse | groesse }}{% if e.upload.familie %}
+      &middot; erkannt als {{ e.upload.familie }}{% endif %}</dd></div>
+{% endcall %}
+{% endfor %}
+  {% endif %}
+
+{% set weg = "hochgeladen" %}
+{% include "_belegt.html" %}
+
+{# Fusszeile der Karte: der Weg in die Hilfe. Stand bis zum
+   27.08.2026 oben unter der Ueberschrift. #}
+<p class="kartenfuss">
+  <a href="/systeme">Was hier hereinkommt, steht danach unter Systeme &rarr;</a>
+</p>

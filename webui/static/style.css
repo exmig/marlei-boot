@@ -1,0 +1,1472 @@
+/* Die Marke steht am Anfang, weil der Rest von ihr abgeleitet ist.
+   Genau diese Werte stehen auch in exmig-logo.svg und exmig-zeichen.svg --
+   wer hier dreht, dreht dort mit.
+
+   Die beiden Haelften sind fast Gegenspieler: Das Navy traegt auf hellem
+   Grund und verschwindet auf dunklem (1,6:1), dem Tuerkis geht es
+   umgekehrt (2,2:1 auf hell, 7,6:1 auf dunkel). Deshalb ist die Marke
+   nicht dasselbe wie der Akzent der Oberflaeche -- je Thema wird die
+   Haelfte gebraucht, die dort traegt. */
+:root {
+  --marke-ex:  #063b6f;   /* EX  = Expertise */
+  --marke-mig: #15bcb4;   /* MIG = Made in Germany */
+
+  /* Der Seitengrund ist die mig-Haelfte der Marke, stark aufgehellt --
+     er kommt damit aus dem Logo und nicht von aussen. Gerade so viel Ton,
+     dass die weissen Karten darauf als Flaeche zu erkennen sind.
+     Gerechnet, nicht geschaetzt: Text 15,4:1, Verweise 5,5:1,
+     Nebentext 4,4:1 -- dieselben Werte wie beim blaugrauen Vorgaenger. */
+  --bg: #f2f8f7;
+  --panel: #ffffff;
+  --ink: #1b1f24;
+  --muted: #6b7480;
+  --line: #dfe3e8;
+  /* Der Akzent ist die ex-Haelfte, aufgehellt. Das Marken-Navy selbst
+     stuende der Textfarbe zu nahe (1,5:1) -- Verweise waeren dann nicht
+     mehr als Verweise zu erkennen, sondern nur als Text. So sind es
+     5,6:1 gegen den Grund und 2,8:1 gegen den Text. */
+  --accent: #0a63bd;
+  /* Die Flaeche der Knopf-Variante 1. Hier reicht das Marken-Navy selbst:
+     weisse Schrift darauf 11,3:1, die Flaeche gegen den Grund 10,5:1. */
+  --knopf1: var(--marke-ex);
+  /* Die helle Flaeche der Varianten 2 und 3 -- beide sind umrandete
+     Knoepfe und unterscheiden sich nur in der Schriftfarbe. */
+  --knopf-flaeche: #ffffff;
+  --knopf2-schrift: var(--marke-ex);
+  /* Die mig-Haelfte, abgedunkelt: roh haette sie hier nur 2,2:1 und
+     verschwaende. Sie traegt keine Schrift, nur Flaechen -- Balken. */
+  --accent-mig: #0e817b;
+  /* Ueberschriften tragen das Marken-Navy roh: 11,3:1 gegen die Karte.
+     Dass es der Textfarbe nahe kommt (1,5:1), stoert hier nicht -- eine
+     Ueberschrift muss sich nicht als anklickbar zu erkennen geben, dafuer
+     sorgen Groesse und Fettung. Bei Verweisen ist genau das der Grund,
+     warum dort --accent steht und nicht dieser Wert. */
+  --ueberschrift: var(--marke-ex);
+  --ok-bg: #e3f4e8;
+  --ok-ink: #1c6b34;
+  --miss-bg: #fdeceb;
+  --miss-ink: #a3271f;
+  --danger: #b3261e;
+
+  /* Die Ampel der Seitenkarten -- siehe docs/gestaltung.md,
+     "Die Karte und ihre drei Bereiche".
+     Rot steht schon da und wird nur unter seinem neuen Namen gefuehrt;
+     Gelb und Blau kommen dazu.
+
+     Das Gelb ist der Haken, und zwar nur hier: Ein Gelb, das aussieht wie
+     ein Gelb (#f5c518), kommt gegen diesen Grund auf 1,5:1 und ist damit
+     nicht zu sehen. Wer die 3:1 fuer bedeutungstragende Flaechen will,
+     landet zwangslaeufig bei einem Ocker -- 4,1:1. Im dunklen Thema ist es
+     umgekehrt; derselbe Fall wie beim Tuerkis der Marke.
+
+     Das Blau ist das Marken-Navy selbst (10,5:1), nicht --accent: Die
+     ruhigste der drei Karten traegt die Hausfarbe. */
+  --fehler-bg: var(--miss-bg);
+  --fehler-kante: var(--danger);
+  --warn-bg: #fdf4dd;
+  --warn-kante: #a86a00;
+  --info-bg: #e9f1fb;
+  --info-kante: var(--marke-ex);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171b;
+    --panel: #1c2026;
+    --ink: #e6e9ee;
+    --muted: #98a1ad;
+    --line: #2c323a;
+    /* Hier reichen die Markenfarben selbst: Das aufgehellte Navy des Logos
+       kommt auf 4,7:1 gegen den Grund und 3,2:1 gegen den Text, das
+       Tuerkis auf 7,6:1. Anders als im hellen Thema muss nichts
+       abgeleitet werden. */
+    --marke-ex:  #3585d4;
+    --accent: var(--marke-ex);
+    --accent-mig: var(--marke-mig);
+    /* Die Knopfflaeche zieht hier in zwei Richtungen: Weisse Schrift
+       darauf will sie dunkel, ihre eigene Kante gegen den Grund will sie
+       hell. Das rohe Marken-Navy kaeme gegen den Grund nur auf 1,6:1 und
+       waere kein Knopf mehr, sondern ein Loch. Dieser Wert erfuellt
+       beides -- weiss 4,9:1, gegen den Grund 3,6:1, gegen eine Karte
+       3,3:1. */
+    --knopf1: #1170d0;
+    /* Die Flaeche ist bei beiden die der Karte, sonst saesse ein heller
+       Fleck darauf. Die Schrift ist etwas heller als --marke-ex: auf der Karte
+       kaeme das Marken-Navy nur auf 4,25:1, so sind es 4,65:1 (und 5,1:1
+       auf dem Seitengrund). */
+    --knopf-flaeche: var(--panel);
+    --knopf2-schrift: #428cd7;
+    /* Das aufgehellte Marken-Navy kaeme auf der Karte nur auf 4,25:1. Fuer
+       eine fette 20px-Ueberschrift reichte das (grosse Schrift, 3:1), fuer
+       die 17,6px der Abschnitte nicht mehr. Also derselbe Wert wie bei der
+       Knopfschrift: 4,65:1 auf der Karte, 5,1:1 auf dem Seitengrund. */
+    --ueberschrift: #428cd7;
+    --ok-bg: #16311f;
+    --ok-ink: #7ed69a;
+    --miss-bg: #351a18;
+    --miss-ink: #ff9c92;
+    --danger: #ff8079;
+
+    /* Hier traegt das satte Gelb muehelos (9,2:1) und der Ocker des hellen
+       Themas verschwaende. --fehler-* stehen nicht dabei: Sie zeigen auf
+       --miss-bg und --danger und ziehen deshalb von selbst mit. */
+    --warn-bg: #302512;
+    --warn-kante: #e3b341;
+    --info-bg: #15263a;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0 1.25rem 3rem;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+main, .topbar, footer { max-width: 60rem; margin: 0 auto; }
+
+.topbar {
+  padding: 1.5rem 0 0;
+  /* Probeweise in der Marke statt in Grau -- zusammen mit dem Balken des
+     aktiven Reiters darueber ergibt das eine durchgehende Kante. */
+  border-bottom: 1px solid var(--marke-ex);
+  margin-bottom: 1.5rem;
+}
+
+.kopfzeile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .6rem;
+  margin-bottom: .8rem;
+}
+
+/* Die Marke: ans rechte Ende derselben Zeile geschoben. margin-left:auto
+   braucht dafuer kein Raster, und bricht die Zeile auf einem schmalen
+   Schirm um, bleibt sie rechts stehen. Nicht auf der Schriftlinie, sondern
+   mittig: das Logo hat eine Unterlaenge (g), die sonst darunter haengt.
+   Die Hoehe ist der einzige Wert, an dem man drehen muss. */
+.kopfzeile .marke {
+  margin-left: auto;
+  align-self: center;
+  height: 1.5rem;
+  width: auto;
+}
+
+/* Navigation: die aktive Seite traegt einen Balken, damit man ohne
+   Farbverstaendnis erkennt, wo man ist. */
+nav { display: flex; flex-wrap: wrap; gap: .2rem; }
+nav a {
+  padding: .45rem .9rem;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: .95rem;
+}
+nav a:hover { color: var(--ink); }
+nav a.aktiv {
+  color: var(--marke-ex);
+  border-bottom-color: var(--marke-ex);
+  font-weight: 600;
+}
+
+/* Statuszahlen auf der Uebersicht */
+.kacheln { display: flex; flex-wrap: wrap; gap: 1.5rem; margin: .8rem 0 .4rem; }
+.kachel { display: flex; flex-direction: column; gap: .1rem; min-width: 8rem; }
+.kachel .zahl { font-size: 1.7rem; line-height: 1.1; font-weight: 600; }
+.kachel .zahl .muted { font-size: 1rem; font-weight: 400; }
+
+/* Kennzahlen als Satz statt als Kacheln -- fuer zwei Werte, die
+   zusammengehoeren. Gleiche Schriftgroesse wie in den Kacheln, damit die
+   Seite nicht zwei Groessen fuer dasselbe kennt. */
+.kennzeile {
+  margin: .2rem 0 .6rem;
+  line-height: 1.9;
+}
+.kennzeile .zahl {
+  font-size: 1.7rem;
+  font-weight: 600;
+  margin-right: .1rem;
+}
+
+/* Was gerade herein- oder hinausgeht. Der Pfeil sagt die Richtung, damit
+   Upload und Download ohne zweite Ueberschrift auseinanderzuhalten sind. */
+.vorgangsliste {
+  list-style: none;
+  margin: .1rem 0 .4rem;
+  padding: 0;
+}
+.vorgangsliste li { margin: .15rem 0; }
+
+.ampel {
+  display: inline-block;
+  width: .6rem; height: .6rem;
+  border-radius: 50%;
+  margin-right: .45rem;
+  background: var(--muted);
+}
+.ampel.an { background: var(--ok-ink); }
+.ampel.aus { background: var(--danger); }
+.ampel.unklar { background: var(--line); }
+
+.nowrap { white-space: nowrap; }
+
+/* Vorschau des Bootmenues. Bewusst immer dunkel, egal welches Farbschema
+   der Browser hat -- es soll wie ein Bildschirm aussehen, nicht wie ein
+   Teil der Seite. */
+pre.ipxe {
+  background: #101216;
+  color: #d6dae0;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: .85rem;
+  line-height: 1.45;
+  padding: 1rem 1.1rem;
+  border-radius: 8px;
+  border: 1px solid #2c323a;
+  overflow-x: auto;
+  margin: .8rem 0 .4rem;
+}
+pre.ipxe#syncausgabe {
+  max-height: 22rem;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+/* Am 28.08.2026 von "protokoll" auf "protokolltext" umbenannt: So hiess
+   auch die Karte darum herum, und getElementById nimmt das erste Element
+   im Dokument. Siehe den Kommentar in templates/protokoll.html. */
+pre.ipxe#protokolltext {
+  max-height: 60vh;
+  overflow-y: auto;
+  white-space: pre;
+}
+
+/* Was ueber die Bildschirmbreite hinausragt: sichtbar, aber deutlich
+   zurueckgenommen -- es steht in der Vorschau nur, damit man weiss, was
+   fehlt und wie viel. Auf dem bootenden Rechner ist es gar nicht da. */
+pre.ipxe .ueberrand { color: #4b5158; }
+.muted .ueberrand { color: var(--line); }
+
+pre.ipxe b.gewaehlt {
+  display: inline-block;
+  background: #d6dae0;
+  color: #101216;
+  font-weight: normal;
+}
+
+/* Umschalter, der wie ein Knopf aussieht, aber ein Link ist -- er wechselt
+   die Seite, statt etwas abzuschicken. */
+a.knopf {
+  display: inline-block;
+  /* Dieselben Masse wie ein Knopf -- er sieht aus wie einer. */
+  padding: .15rem .5rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: .78rem;
+}
+a.knopf:hover { color: var(--ink); }
+a.knopf.gewaehlt {
+  background: var(--accent);
+  border-color: transparent;
+  color: #fff;
+}
+table.schmal { width: auto; }
+
+/* Kompakte Tabelle: enger gesetzt, Bedienelemente kleiner. Gedacht fuer
+   Listen, in denen jede Zeile ein kleines Formular traegt -- sonst wird die
+   Seite unruhig, obwohl gar nicht viel darauf steht. */
+table.eng th, table.eng td { padding: .45rem .5rem; }
+table.eng td { font-size: .92rem; }
+table.eng .muted.small { line-height: 1.35; }
+table.eng .row { gap: .35rem; }
+
+/* Das Namensfeld soll wie eine Ueberschrift aussehen und erst beim
+   Hineinklicken als Eingabefeld zu erkennen sein. */
+.namensfeld { margin: 0 0 .15rem; }
+
+/* Loeschen steht als letztes in der Rechnerspalte, mit etwas Luft davor --
+   es ist das Seltenste und soll nicht neben dem Namen um Aufmerksamkeit
+   ringen. */
+.wegnehmen { margin-top: .5rem; }
+
+/* Die WOL-Spalte: schmal, mittig, und der Knopf sitzt in der Ueberschrift
+   statt in jeder Zeile -- angekreuzt wird unten, ausgeloest wird oben. */
+.wolspalte { width: 1%; text-align: center; white-space: nowrap; }
+.wolspalte input[type="checkbox"] { width: 1.05rem; height: 1.05rem; }
+th.wolspalte { padding-top: .25rem; padding-bottom: .25rem; }
+th.wolspalte button { letter-spacing: .04em; }
+/* Sieht aus wie eine Ueberschrift, ist aber ein Feld. Deshalb eigene
+   Masse und nicht die der gewoehnlichen Felder. */
+.namensfeld input[type="text"] {
+  font-weight: 600;
+  font-size: .95rem;
+  border-color: var(--line);
+  background: var(--bg);
+  /* Waagerecht so viel, wie das <code> mit der MAC darunter innen hat --
+     dann stehen beide Texte an derselben Stelle. Senkrecht fast nichts,
+     damit das Feld nicht hoeher baut als eine Textzeile. */
+  padding: .05rem .28rem;
+  width: 100%;
+  max-width: 13rem;
+}
+.namensfeld input[type="text"]:hover { border-color: var(--muted); }
+.namensfeld input[type="text"]:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+.namensfeld input::placeholder { font-weight: 400; color: var(--muted); }
+
+/* Die Kopfzeile traegt jetzt den Speichern-Knopf und muss deshalb in
+   Reichweite bleiben, auch wenn die Liste laenger ist als das Fenster. Der
+   Hintergrund ist noetig, sonst scheinen die Zeilen darunter durch. */
+table.eng thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--panel);
+}
+
+/* Beschriftung links, Knopf rechts: der Knopf gilt fuer die ganze Tabelle
+   und soll nicht wie eine zweite Spaltenueberschrift aussehen. Steht
+   bewusst in einem <div> innerhalb der Kopfzelle -- ein "display: flex"
+   auf dem <th> selbst laesst dessen "position: sticky" ins Leere laufen,
+   und die Kopfzeile scrollt mit dem Knopf davon. */
+.sichernspalte {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+}
+.sichernspalte > span:first-child { margin-right: auto; }
+
+/* Die Rueckmeldung nach dem Speichern -- die Seite laedt dabei nicht neu,
+   sonst saehe man gar nicht, dass etwas passiert ist. Nimmt keinen Platz
+   ein, solange nichts dasteht. */
+.quittung {
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  /* Der Platz wird freigehalten, auch wenn nichts dasteht: sonst wuerde die
+     Spalte in dem Moment breiter, in dem die Meldung erscheint, und die
+     ganze Tabelle rutscht unter dem Zeiger weg. */
+  min-width: 7.5rem;
+  text-align: right;
+}
+.quittung.gut { color: var(--ok-ink); }
+.quittung.schlecht { color: var(--danger); }
+
+/* Ein Hinweis, der zur Seite gehoert und nicht zu einer Karte -- er steht
+   deshalb zwischen ihnen, auf dem Seitengrund statt auf dem Papier einer
+   Karte. Rueckt nah an die Karte darueber heran, auf die er sich bezieht. */
+.seitenzeile {
+  margin: -.6rem .3rem 1.25rem;
+  font-size: .82rem;
+  color: var(--muted);
+}
+
+/* Wo ein Eintrag angeboten wird: eine Spalte, zwei Zeilen. Als zwei
+   Spalten brauchten allein die Ueberschriften ("BOOTMENÜ",
+   "BOOT-OPTIONEN") mehr Platz als ihr Inhalt -- ein Kaestchen. Die
+   Beschriftung steht deshalb neben dem Haken statt darueber. */
+.sichtbarspalte { width: 1%; white-space: nowrap; }
+
+/* Drei Gruppen, drei getrennte Tabellen -- und damit drei eigene
+   Spaltenbreiten. Stehen in einer Gruppe lange Pfade fehlender Dateien,
+   wird ihre Status-Spalte breit und schiebt "sichtbar in" nach links; in
+   der Karte darunter sitzt dieselbe Spalte dann woanders. Untereinander
+   gelesen sieht das nach einem Fehler aus, obwohl jede Tabelle fuer sich
+   richtig rechnet. Feste Breiten stellen alle Karten auf dieselbe Kante. */
+table.systemliste { table-layout: fixed; }
+table.systemliste .sichtbarspalte { width: 11rem; }
+table.systemliste th:last-child,
+table.systemliste td:last-child { width: 16rem; }
+/* Mit fester Breite bricht ein langer Pfad nicht mehr von selbst um. */
+table.systemliste td:last-child { overflow-wrap: anywhere; }
+.sichtbarspalte label {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  font-size: .85rem;
+  line-height: 1.5;
+  color: var(--muted);
+  cursor: pointer;
+}
+.sichtbarspalte input[type="checkbox"] { width: 1.05rem; height: 1.05rem; }
+
+/* Der eigene Knopf zum Dateiwaehlen: dieselbe Form wie ein Knopf, dieselbe
+   zurueckhaltende Farbe wie die Umschalter (a.knopf) -- er ist der erste
+   von zwei Schritten und soll den zweiten nicht ueberstimmen. */
+.dateiknopf {
+  display: inline-block;
+  padding: .15rem .5rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: .78rem;
+  cursor: pointer;
+}
+.dateiknopf:hover { border-color: var(--muted); }
+/* Unsichtbar, aber erreichbar: mit "display: none" waere das Feld fuer die
+   Tastatur weg, und der Fokusrahmen haette nichts, woran er haengt. */
+.dateifeld {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.dateifeld:focus-visible + .dateiknopf,
+.dateiknopf:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Eine Zwischenzeile in einer Kartenliste: Name links, danach ein Strich
+   bis zum Rand. Leise gesetzt -- sie ordnet, sie kuendigt nichts an. */
+.trennlinie {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin: 1.1rem 0 .2rem;
+  font-size: .82rem;
+  color: var(--muted);
+}
+.trennlinie::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--line);
+}
+
+/* "hidden" ist ein Attribut, kein Vorschlag: eine display-Regel aus einer
+   Klasse (etwa .row mit "display: flex") wuerde es sonst ueberstimmen und
+   das Element bliebe sichtbar. */
+[hidden] { display: none !important; }
+
+/* --- Die Quellen als Karten ------------------------------------------- */
+
+/* Eine Karte je Adresse, darin eine Zeile je Ausgabe. Zurueckhaltender
+   gerahmt als eine Eintragskarte: sie steht innerhalb einer Karte. */
+.quellenkarte {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: .5rem .7rem;
+  margin-top: .6rem;
+}
+.quellenkopf {
+  display: flex;
+  align-items: baseline;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-bottom: .3rem;
+}
+/* Die Nummer ist kurz, die Adresse lang -- sie bekommt, was uebrig ist. */
+.ausgabe { margin-top: .3rem; flex-wrap: wrap; }
+.ausgabenummer { width: 5rem; text-align: center; }
+.ausgabeadresse { flex: 1 1 24rem; min-width: 12rem; }
+/* Dieselben Masse wie das Feld fuer die Menue-Info: Eine Adresse ist
+   etwas, das dasteht und selten angefasst wird -- sie soll die Karte
+   nicht dominieren. Senkrecht fast keine Polsterung, damit das Feld
+   nicht hoeher baut als eine Textzeile. */
+/* Adresse oben ueber die ganze Breite, Knoepfe darunter. Adressen sind
+   lang; alles, was daneben steht, nimmt ihnen die Breite weg, in der man
+   sie lesen und aendern will. */
+.ausgabe { display: block; }
+.ausgabe > .row { margin-bottom: .25rem; }
+.ausgabeknoepfe { margin-bottom: .6rem; }
+/* Ans rechte Ende der Zeile, weg vom Automatismus daneben: Was von Hand
+   geht, soll nicht wie der naechste Schritt des Knopfes links aussehen. */
+.rechts { margin-left: auto; }
+.befund { flex-basis: 100%; }
+
+/* --- Ein Eintrag als Karte -------------------------------------------- */
+
+/* Vier Tabellenspalten wurden unruhig, sobald in ihnen mehr stand als ein
+   Wort. Als Karte steht oben, was man sucht -- der Name --, und der Rest
+   klappt auf. */
+.eintragskarte {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: .5rem .7rem;
+  margin-top: .6rem;
+  background: var(--panel);
+}
+.eintragskarte > summary {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  cursor: pointer;
+  /* Der eigene Marker ersetzt das Dreieck des Browsers, das je nach
+     Browser woanders sitzt. */
+  list-style: none;
+}
+.eintragskarte > summary::-webkit-details-marker { display: none; }
+.eintragskarte > summary::before {
+  content: "▸";
+  color: var(--muted);
+  font-size: .9rem;
+  transition: transform .12s;
+}
+.eintragskarte[open] > summary::before { content: "▾"; }
+/* Das Namensfeld ist die Ueberschrift und nimmt den Platz, der da ist. */
+.eintragskarte > summary .bezeichnung { flex: 1 1 auto; display: flex; }
+/* Dieselben Masse fuer die Eingabeteile von Download und Custom.
+   Die Karte Katalog hatte sie zuerst, weil dort viele Zeilen
+   untereinander stehen und jede Polsterung mitzaehlt. Daneben wirkten
+   die anderen beiden wie ein anderes Programm -- Knoepfe in zwei
+   Groessen liest man als zwei verschiedene Wichtigkeiten, und gemeint
+   ist das nicht.
+
+   Als eigene Klasse und nicht ueber die Section: Die Eintragskarten in
+   denselben Karten haben ihre eigenen Masse (.eintragskarte), und die
+   sollen davon unberuehrt bleiben. */
+/* Die Zeilen ruecken damit enger zusammen als vorher -- sonst stuenden
+   kleine Felder in grossen Abstaenden, und die Karte saehe leerer aus
+   statt aufgeraeumter. */
+.kompakt .row { gap: .35rem; }
+/* Der nachgebaute Knopf zum Dateiwaehlen ist kein <button>, sondern ein
+   Label vor einem versteckten <input type="file"> -- er braucht die Masse
+   deshalb eigens, sonst stuende er in der Zeile hoeher als der Knopf
+   daneben. */
+.eintragskarte > summary .bezeichnung input.name { flex: 1 1 auto; max-width: 26rem; }
+
+/* Die Knoepfe stehen unter den Angaben, eingerueckt wie die Werte -- so
+   haengen sie nicht am linken Rand, wo die Beschriftungen stehen. */
+.kartenknoepfe { margin: .5rem 0 .2rem 10.6rem; }
+
+/* Die Angaben darunter: Beschriftung links, Wert rechts -- eine Zeile je
+   Angabe statt vieler Spalten nebeneinander. */
+.angaben { margin: .5rem 0 .2rem; }
+.angaben > div {
+  display: flex;
+  gap: .6rem;
+  padding: .12rem 0;
+  align-items: baseline;
+}
+.angaben dt {
+  flex: 0 0 10rem;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.35;
+}
+/* Der Pfad-Vorspann in der Beschriftung: kleiner als der Rest, er ist die
+   Fussnote zur Zeile und nicht ihr Inhalt. */
+.angaben dt code { font-size: .78rem; }
+.angaben dd { margin: 0; min-width: 0; }
+/* Die Menue-Info ist ein Feld mitten in den Angaben. Sie soll wie die
+   anderen Zeilen dastehen -- gleiche Schrift, gleiche Zeilenhoehe -- und
+   nur am grauen Grund als aenderbar zu erkennen sein. So breit wie das,
+   was danebensteht: im Bootmenue ist die Zeile ebenfalls lang. */
+/* Die Zeilen der Angaben sind Flex: eine <dd> ist so breit wie ihr
+   Inhalt. Ein Eingabefeld waere damit so breit wie sein voreingestelltes
+   Fassungsvermoegen -- rund zwanzig Zeichen, und der gelesene Name ist
+   dreimal so lang. Diese eine Zeile darf sich deshalb ausdehnen. */
+.angaben dd.weit { flex: 1 1 auto; }
+.angaben input.menueinfo {
+  width: 100%;
+  max-width: 32rem;
+  font-size: .9rem;
+  padding: .05rem .28rem;
+  border-color: var(--line);
+  background: var(--bg);
+}
+/* Die Dateiliste ist eine Tabelle, und Tabellen bringen "margin-top" mit
+   -- in einer Angabenzeile ist das ein Absatz, wo keiner hingehoert. Die
+   Zellenpolsterung fuehrt sonst zum selben: die erste Datei stuende
+   tiefer als ihre Beschriftung. */
+.angaben table { margin-top: 0; }
+.angaben table.schmal td { padding-top: 0; padding-bottom: .15rem; }
+.angaben dd.umbrechen { overflow-wrap: anywhere; }
+
+/* Name und Version eines Eintrags zum Aendern. Dieselbe leise Optik wie
+   das Namensfeld bei den Clients -- ein Rahmen erscheint erst, wenn man
+   hinzeigt. Die beiden stehen nebeneinander wie im Bootmenue, wo die
+   Version eine eigene Spalte hinter dem Namen hat. */
+/* Inline, nicht als Block: sonst faengt die Erklaerung dahinter eine neue
+   Zeile an und jede Tabellenzeile baut eine Stufe hoeher. So stehen Name,
+   Version und Erklaerung nebeneinander wie vorher, nur eben aenderbar. */
+.bezeichnung {
+  display: inline-flex;
+  gap: .3rem;
+  align-items: center;
+  vertical-align: middle;
+}
+/* Wie .namensfeld: eine Ueberschrift, die man bearbeiten kann. */
+.bezeichnung input[type="text"] {
+  font-weight: 600;
+  font-size: .95rem;
+  border-color: var(--line);
+  background: var(--bg);
+  /* Waagerecht so viel, wie das <code> mit der Kennung darunter innen hat
+     -- dann stehen beide Texte an derselben Stelle. */
+  padding: .05rem .28rem;
+}
+.bezeichnung input.name { width: 12rem; }
+/* Der Vermerk an einer Karte, deren Menuezeile nicht mehr hineinpasst.
+   So gesetzt wie die Angaben unter einem Eintrag -- klein und ohne
+   Grossbuchstaben --, aber in der Warnfarbe: Er ist die Ausnahme, nicht
+   die Regel, und steht deshalb an den meisten Karten gar nicht. */
+.eintragskarte > summary .gekuerzt {
+  color: var(--danger);
+  font-size: .78rem;
+  white-space: nowrap;
+}
+
+/* Unter Systeme stehen Name und Version nur noch da. Die Version bleibt
+   dabei die Beigabe: gleiche Zeile, gedaempft, nicht fett -- so wie im
+   Bootmenue, wo sie in ihrer eigenen Spalte hinter dem Namen steht. */
+.bezeichnung span.version {
+  color: var(--muted);
+  font-size: .92rem;
+}
+/* Vier Zeichen und ein Punkt: "26.04" passt, mehr braucht eine Version
+   selten. Nicht fett -- sie ist die Beigabe, nicht der Name. */
+.bezeichnung input.version,
+table.eng .bezeichnung input.version {
+  flex: 0 0 4.4rem;
+  width: 4.4rem;
+  font-weight: 400;
+}
+/* Erklaerung und Kennung stehen unter der Bezeichnung, jede in ihrer
+   Zeile. Eng gesetzt, damit die drei Zeilen zusammen nicht mehr Platz
+   brauchen als vorher zwei. */
+.erklaerung { line-height: 1.3; padding-left: .28rem; }
+.kennung { line-height: 1.3; margin-top: .1rem; }
+
+/* In der Herkunft-Liste ist mehr Platz als in der Systeme-Tabelle, und
+   der Name, den ein Abbild von sich aus meldet, ist regelmaessig lang --
+   das Feld darf hier die Breite der Spalte nutzen. */
+/* Der Container ist sonst inline-flex und damit so breit wie sein Inhalt
+   -- ein "width: 100%" darin liefe ins Leere. */
+.herkunft .bezeichnung { display: flex; }
+.herkunft .bezeichnung input.name,
+table.eng .herkunft .bezeichnung input.name { flex: 1 1 auto; max-width: 26rem; }
+
+.bezeichnung input[type="text"]:hover { border-color: var(--muted); }
+.bezeichnung input[type="text"]:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+/* --- Systeme: die Reihenfolge der Gruppen ------------------------------ */
+
+/* Name der Gruppe links, ihre Stelle und der Knopf rechts. Die Zeile darf
+   umbrechen: auf einem schmalen Fenster rutscht das Feld unter den Namen,
+   statt ihn zu quetschen. */
+/* Ueberschrift links, ein Weg nach rechts -- dieselbe Zeile bei einer
+   Karte (dort das Hilfezeichen) und bei einem Hilfekapitel (dort der
+   Verweis auf sein Register). Eine Anordnung, zwei Orte: Wer die eine
+   gelesen hat, findet sich in der anderen zurecht. */
+.kartenkopf,
+.kapitelkopf,
+.abschnittskopf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .4rem;
+}
+/* Schiebt alles Weitere an den rechten Rand. */
+.kartenkopf h2,
+.kapitelkopf h2,
+.abschnittskopf h3 { margin: 0 auto 0 0; }
+.kapitelkopf { margin-bottom: .8rem; }
+
+/* Das Hilfezeichen: an jeder Karte dasselbe, an derselben Stelle -- rechts
+   in der Kopfzeile. Wer wissen will, was eine Karte tut, soll nicht suchen
+   muessen, und wer es weiss, soll nicht jedes Mal einen Satz ueberlesen.
+
+   Ein Zeichen und etwas CSS, keine geladene Schrift und keine Grafik.
+   Der Ring macht daraus sichtbar ein Bedienelement und gibt der
+   Klickflaeche ihre Groesse -- ein nacktes Fragezeichen ist acht Pixel
+   breit; das trifft man mit der Maus, aber nicht mit dem Finger.
+
+   Der Ring traegt --accent-mig und nicht --marke-mig: Das rohe Tuerkis
+   kaeme auf hellem Grund nur auf 2,2:1 und waere kaum zu sehen. Die
+   abgeleitete Fassung hat 4,7:1 -- siehe docs/gestaltung.md,
+   "Regeln, nach denen Farbe vergeben wird". */
+.kartenhilfe {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid var(--accent-mig);
+  border-radius: 50%;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: .9rem;
+  line-height: 1;
+}
+.kartenhilfe:hover {
+  color: var(--accent-mig);
+  background: color-mix(in srgb, var(--accent-mig) 10%, transparent);
+}
+.kartenhilfe:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* So leise gesetzt wie die Angaben unter einem Eintrag ("pcbios, efi") --
+   die Reihenfolge wird selten angefasst und soll die Ueberschrift nicht
+   ueberstimmen. Deshalb keine Spaltenoptik mit Grossbuchstaben. */
+.folge {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  font-size: .82rem;
+  color: var(--muted);
+}
+/* Das Feld traegt eine einzelne Ziffer -- es braucht die Breite dafuer und
+   sonst nichts. */
+.folge input[type="text"] {
+  width: 2rem;
+  text-align: center;
+  font-size: .82rem;
+  color: var(--ink);
+  padding: .1rem .15rem;
+}
+/* Kleiner als ein gewoehnlicher Knopf: er steht in einer Ueberschriftzeile
+   und ist grau, solange es nichts zu speichern gibt. */
+.folgeknopf { padding: .2rem .55rem; font-size: .8rem; }
+
+/* Welche Zeile ist offen? Bei langen Listen steht der Knopf weit oben --
+   ein Strich am Zeilenanfang zeigt, wovon er spricht. */
+tr.offen td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+
+table.schmal td { border-bottom: none; padding: .25rem .8rem .25rem 0; }
+
+.meldung { margin-bottom: 1.25rem; }
+
+/* Aufklappbare Abschnitte. Gedacht fuer Formulare, die man selten braucht:
+   die Seite beginnt dann mit der Antwort statt mit Eingabefeldern. */
+.klappe {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: .6rem;
+  background: var(--bg);
+  /* Einmal benannt, weil zwei Regeln sich danach richten muessen: der
+     Abstand der Inhalte zum Rahmen -- und die Breite einer Tabelle darin. */
+  --klappenrand: .9rem;
+}
+.klappe > summary {
+  cursor: pointer;
+  padding: .6rem .9rem;
+  font-weight: 600;
+  font-size: .95rem;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.klappe > summary::-webkit-details-marker { display: none; }
+.klappe > summary::before {
+  content: "▸";
+  color: var(--muted);
+  font-size: .85em;
+}
+.klappe[open] > summary::before { content: "▾"; }
+.klappe > summary:hover { color: var(--accent); }
+.klappe[open] > summary { border-bottom: 1px solid var(--line); }
+.klappe > *:not(summary) {
+  margin-left: var(--klappenrand);
+  margin-right: var(--klappenrand);
+}
+.klappe > *:last-child { margin-bottom: var(--klappenrand); }
+.klappe > p:first-of-type { margin-top: .8rem; }
+/* Eine Tabelle steht auf "width: 100 %" -- das ist die volle Breite der
+   Klappe, und der seitliche Abstand kommt dann noch obendrauf. Die rechte
+   Spalte ragte damit ueber den Rahmen hinaus. Hier zaehlt der Abstand mit. */
+.klappe > table { width: calc(100% - 2 * var(--klappenrand)); }
+
+/* Ein einzelnes Wort, das sich aufklappen laesst -- fuer eine Zeile, die
+   eine Summe ist und ihre Posten erst auf Wunsch zeigt. Leiser als eine
+   ganze Klappe: kein Rahmen, kein Hintergrund, nur das Dreieck davor. */
+details.posten > summary {
+  cursor: pointer;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+}
+details.posten > summary::-webkit-details-marker { display: none; }
+details.posten > summary::before { content: "▸"; color: var(--muted); font-size: .85em; }
+details.posten[open] > summary::before { content: "▾"; }
+details.posten > summary:hover { color: var(--accent); }
+details.posten table.schmal { margin-top: .35rem; width: 100%; }
+
+/* Die drei Antworten des Pruefens, untereinander statt nebeneinander.
+   Ohne Nummern: Es ist eine Reihenfolge, keine Aufzaehlung -- und die
+   dritte Zeile haengt nicht von der zweiten ab. */
+.befundliste {
+  list-style: none;
+  margin: .4rem 0 .2rem;
+  padding: 0;
+  font-size: .92rem;
+}
+.befundliste li {
+  padding: .15rem 0;
+  white-space: pre-wrap;
+}
+.befundliste li.warnung { color: var(--miss-ink); }
+/* Die geprueste Adresse unter ihrer Zeile: eingerueckt, damit sie zur
+   Zeile darueber gehoert, und umbrechend, weil manche Adresse laenger ist
+   als die Karte breit. */
+.befundliste .befundort {
+  margin-left: 1.5rem;
+  word-break: break-all;
+  font-size: .84rem;
+}
+
+/* Protokolle in der Rechnerzeile: Link und Loeschkreuz nebeneinander */
+.protokolle { margin-top: .5rem; }
+.inline-form { display: inline; }
+button.weglassen {
+  background: none;
+  color: var(--muted);
+  padding: 0 .2rem;
+  font-size: .95rem;
+  line-height: 1;
+}
+button.weglassen:hover { color: var(--danger); filter: none; }
+
+/* Ueberschriften tragen die Marke. Bis August 2026 standen sie in der
+   Textfarbe und kaum groesser als der Fliesstext -- eine Kartenueberschrift
+   ging damit im Absatz darunter unter. Jetzt sagt schon die Farbe, dass
+   hier etwas anfaengt, und die Groesse, welche Ebene es ist.
+
+   Das Tuerkis der zweiten Markenhaelfte kommt hier nicht als Schrift vor:
+   Es haette auf hellem Grund 2,2:1. Es traegt Flaechen -- den Trenner
+   unter dieser Regel und das Hilfezeichen an jeder Karte. */
+h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
+h2 { font-size: 1.25rem; margin: 0 0 .45rem; color: var(--ueberschrift); }
+h3 { font-size: 1.2rem; margin: 1.6rem 0 .25rem; color: var(--ueberschrift); }
+h3:first-of-type { margin-top: .8rem; }
+/* Der Trenner zwischen zwei Kartenhilfen: eine Haarlinie in --line, und
+   darauf ein Stueck in den Markenfarben, navy nach tuerkis wie im Logo.
+
+   Das farbige Stueck waechst, je naeher man dem Ende des Kapitels kommt --
+   beim letzten Abschnitt laeuft es durch. So sieht man beim Lesen, wie weit
+   man ist, ohne dass irgendwo eine Zahl steht.
+
+   Gezaehlt wird mit :nth-last-of-type, also vom Ende her. Deshalb braucht
+   es keine Angabe, wie viele Abschnitte ein Kapitel hat: Die Regel gilt
+   fuer ein Kapitel mit vier Karten so wie fuer eines mit neun.
+
+   --accent und --accent-mig statt der rohen Markenwerte, aus demselben
+   Grund wie ueberall -- siehe docs/gestaltung.md,
+   "Regeln, nach denen Farbe vergeben wird". */
+.kapitel > .abschnittskopf {
+  margin-top: 2.4rem;
+  padding-top: .9rem;
+  border-top: 1px solid var(--line);
+  position: relative;
+}
+.kapitel > .abschnittskopf::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  height: 3px;
+  width: 12%;
+  background: linear-gradient(to right, var(--accent), var(--accent-mig));
+}
+.kapitel > .abschnittskopf:nth-last-of-type(6)::before { width: 22%; }
+.kapitel > .abschnittskopf:nth-last-of-type(5)::before { width: 36%; }
+.kapitel > .abschnittskopf:nth-last-of-type(4)::before { width: 52%; }
+.kapitel > .abschnittskopf:nth-last-of-type(3)::before { width: 70%; }
+.kapitel > .abschnittskopf:nth-last-of-type(2)::before { width: 86%; }
+.kapitel > .abschnittskopf:nth-last-of-type(1)::before { width: 100%; }
+
+/* Der erste Abschnitt eines Kapitels braucht keinen Trenner -- darueber
+   steht die Kapitelueberschrift, und ein zweiter Strich waere eine
+   Trennung ohne Anlass. */
+.kapitel > .abschnittskopf:first-of-type {
+  margin-top: .8rem;
+  padding-top: 0;
+  border-top: none;
+}
+.kapitel > .abschnittskopf:first-of-type::before { content: none; }
+
+/* Vierte Ebene: nur in der Hilfe, wo Kapitel (h2), Abschnitt (h3) und
+   Unterpunkt (h4) uebereinanderliegen. Kleiner als h3, aber abgesetzt --
+   sonst verschwimmen die Ebenen.
+
+   Die Groesse taeuscht hier, und darum steht sie so tief: Versalien mit
+   Sperrung wirken deutlich groesser als ihre Punktgroesse. .9rem in
+   Grossbuchstaben las sich wie gut 1,05rem -- die Frage "WOFUER IST DIESE
+   KARTE DA?" stand damit ueber dem Kartennamen darueber, obwohl sie eine
+   Ebene darunter liegt. Bei .78rem stimmt der Eindruck wieder.
+
+   Gemessen wird bei gesperrten Versalien also nicht die Zahl im
+   Stylesheet, sondern was im Browser danebensteht. */
+h4 {
+  font-size: .78rem;
+  margin: 1.3rem 0 .2rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+/* --- Ein Befehl zum Mitnehmen ------------------------------------------ */
+
+/* Ein Befehl, der auf einer ANDEREN Maschine eingegeben wird -- meist in
+   einer SSH-Sitzung daneben. Abtippen ist die haeufigste Fehlerquelle, die
+   wir selbst abstellen koennen. Der Knopf sitzt in der Ecke des Kastens
+   statt daneben: So bleibt der Befehl die ganze Breite lang lesbar. */
+.befehlszeile {
+  position: relative;
+}
+.befehlszeile > pre {
+  padding-right: 5.5rem;
+}
+.kopierknopf {
+  position: absolute;
+  top: .45rem;
+  right: .45rem;
+}
+
+/* --- Hilfe: Inhaltsverzeichnis und Kapitel ----------------------------- */
+
+/* Zweispaltig, damit die acht Kapitel auf einen Blick passen und der
+   Einstieg nicht schon selbst zum Scrollen zwingt. */
+.verzeichnis {
+  columns: 2;
+  column-gap: 2rem;
+  margin: .6rem 0 0;
+  padding-left: 1.2rem;
+}
+.verzeichnis li { margin: .15rem 0; break-inside: avoid; }
+
+/* Aufzaehlung von Namen -- so viele Spalten, wie bei 18rem je Spalte
+   hineinpassen. Bei drei Eintraegen bleibt es einspaltig, bei zwanzig
+   werden es drei; ohne das waere die Liste auf einem breiten Bildschirm
+   eine sehr lange, sehr schmale Saeule. */
+.namensliste {
+  columns: 18rem;
+  column-gap: 2rem;
+  margin: .2rem 0 .6rem;
+  padding-left: 1.1rem;
+}
+.namensliste li { margin: .1rem 0; break-inside: avoid; }
+
+/* Belegungsbalken. Die Vorlage haengt ab drei Vierteln "knapp" und ab neun
+   Zehnteln "voll" an -- welche Farbe das bedeutet, steht hier.
+
+   Am 28.08.2026 zog der Balken mit der Ampel der Seitenkarten gleich
+   (docs/gestaltung.md, "Die Karte und ihre drei Bereiche"). Vorher hatte
+   er seine eigene: tuerkis,
+   ein fest verdrahtetes #d99400 ab drei Vierteln, --danger ab neun
+   Zehnteln. Zwei Dinge stimmten daran nicht:
+
+   1. Bei 94 Prozent war der Balken ROT und die Warnkarte darueber GELB --
+      zwei Farben fuer dieselbe Tatsache, uebereinander auf einer Seite.
+      Rot heisst bei den Karten "der Server tut seine Arbeit nicht". Eine
+      volle Platte tut das nicht; sie kostet den naechsten Download.
+   2. #d99400 kam gegen die Spur des Balkens auf 2,11:1 und verfehlte damit
+      als einzige Balkenfarbe die 3:1-Regel fuer bedeutungstragende
+      Flaechen (6.4) -- und zwar nur im hellen Thema.
+
+   Beide Warnstufen tragen deshalb jetzt --warn-kante, das Gelb der Karte.
+   Rot hat den Balken verlassen: Die dritte Stufe ist nicht mehr eine
+   Farbe, sondern die Karte selbst, die ab neun Zehnteln erscheint.
+
+   Dass "knapp" und "voll" damit gleich aussehen, ist der Preis und keine
+   Nachlaessigkeit: Zwei Gelbstufen, die beide 3:1 schaffen, gibt es auf
+   hellem Grund nicht. Alles heller als #b4740e (3,17) faellt durch, und
+   zwischen #b4740e und #a86a00 sieht niemand einen Unterschied. Die
+   beiden Klassen bleiben trotzdem getrennt -- sie stehen im HTML, tragen
+   die Schwelle im title, und wer hier einmal etwas anderes als Farbe
+   braucht (ein Muster etwa), findet die Stelle schon vor. */
+.balken {
+  height: .5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  overflow: hidden;
+  margin: .5rem 0 .3rem;
+}
+.balken > span {
+  display: block;
+  height: 100%;
+  background: var(--accent-mig);
+  transition: width .3s;
+}
+.balken.knapp > span,
+.balken.voll > span { background: var(--warn-kante); }
+
+/* Der Weg zurueck ins Register, ueber das man gerade liest. */
+/* Zwei Wege, dieselbe Stelle: rechts in der Zeile der Ueberschrift. Am
+   Kapitel fuehrt er zum Register, am Abschnitt zu genau der Karte, um die
+   es geht -- zusammen mit dem Fragezeichen auf der Karte selbst ergibt das
+   den Weg hin und zurueck.
+
+   Beide heissen nur "Zum Register" bzw. "Zur Karte", ohne den Namen: Der
+   steht direkt daneben links. */
+.zumregister,
+.zurkarte {
+  margin: 0;
+  font-size: .9rem;
+  font-weight: 400;
+}
+
+/* Eine Frage im FAQ: zugeklappt eine Zeile, aufgeklappt die Antwort. */
+details.frage {
+  border-top: 1px solid var(--line);
+  padding: .1rem 0;
+}
+details.frage:last-of-type { border-bottom: 1px solid var(--line); }
+details.frage > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: .6rem 0 .6rem 1.4rem;
+  position: relative;
+  font-weight: 600;
+}
+details.frage > summary::-webkit-details-marker { display: none; }
+details.frage > summary::before {
+  content: "›";
+  position: absolute;
+  left: .2rem;
+  color: var(--muted);
+  font-size: 1.15rem;
+  line-height: 1.2;
+  transition: transform .15s;
+}
+details[open].frage > summary::before { transform: rotate(90deg); }
+details.frage > summary:hover { color: var(--accent); }
+details.frage > p { margin-top: 0; padding-left: 1.4rem; }
+
+/* Ein langes Unterkapitel zum Aufklappen -- wie eine Frage, aber mit dem
+   Gewicht einer Ueberschrift und einer Zeile daneben, die sagt, was drin
+   steht. Ohne diese Zeile muesste man aufklappen, um zu entscheiden, ob es
+   das Richtige ist. */
+details.vertiefung {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 1rem;
+  margin: .8rem 0;
+}
+details.vertiefung > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: .7rem 0 .7rem 1.4rem;
+  position: relative;
+  font-size: .95rem;
+}
+details.vertiefung > summary::-webkit-details-marker { display: none; }
+details.vertiefung > summary::before {
+  content: "›";
+  position: absolute;
+  left: .1rem;
+  color: var(--muted);
+  font-size: 1.15rem;
+  line-height: 1.2;
+  transition: transform .15s;
+}
+details[open].vertiefung > summary::before { transform: rotate(90deg); }
+details.vertiefung > summary:hover { color: var(--accent); }
+details.vertiefung > *:last-child { padding-bottom: .8rem; }
+
+section {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+/* Der letzte Eintrag einer Karte bringt seinen eigenen Abstand nach unten
+   mit -- ein Absatz zum Beispiel 0,9rem. Zusammen mit der Polsterung der
+   Karte stehen darunter dann zwei Zentimeter Luft, und die Karte wirkt
+   unten aufgerissen. Die Polsterung allein reicht. */
+section > *:last-child { margin-bottom: 0; }
+
+/* Die Fusszeile der Karte (siehe docs/gestaltung.md, "Die Karte und
+   ihre drei Bereiche"). Sie bekommt
+   einen Namen, weil sie ein Aussehen hat -- ein <footer>-Element wird sie
+   deshalb trotzdem nicht: Die Einteilung der Karte ist eine Verabredung
+   ueber Begriffe, kein Bauplan.
+
+   Kursiv, damit man ihr ansieht, dass sie ueber den Inhalt spricht,
+   statt ihn zu sein. Farbe und Groesse sind die von .muted.small -- der
+   Name fasst nur zusammen, was die Zeile ohnehin trug. */
+.kartenfuss {
+  color: var(--muted);
+  font-size: .82rem;
+  font-style: italic;
+  /* Enger nach unten als ein gewoehnlicher Absatz: Der Fuss darf zwei
+     Zeilen haben -- die Aussage und darunter die Verweise --, und die
+     beiden gehoeren zusammen. Steht er als letztes in der Karte, nimmt
+     ihm "section > *:last-child" den Rest. */
+  margin: .3rem 0 .2rem;
+}
+
+/* Die Seitenkarten: Befunde, die dem Server gelten und nicht einer
+   einzelnen Karte. Sie stehen in base.html, unterhalb der Reiter, und
+   damit auf jeder Seite -- siehe docs/gestaltung.md,
+   "Die Karte und ihre drei Bereiche".
+
+   Aufbau wie jede Karte, mit zwei Unterschieden: eine kraeftige Kante
+   links, die die Stufe traegt, und eine getoente Flaeche dahinter. Der
+   Kontrast der 3:1-Regel liegt auf der Kante, nicht auf der Flaeche --
+   die blasse Flaeche kaeme allein auf 1,1:1, der Text darauf dagegen auf
+   ueber 12:1, und deshalb funktionieren drinnen alle gewoehnlichen Farben
+   weiter.
+
+   Zugeklappt, auch beim Fehler: Eine offene Fehlerkarte waere das Erste,
+   Groesste und oft Einzige auf der Seite. Bauart ist die .klappe von
+   weiter oben -- <details> mit <summary>, kein Skript.
+
+   "stufe-" steht vor dem Namen, weil es .warnung als Textfarbe schon gibt
+   (siehe unten) und ein nacktes .warnung hier die Schrift der ganzen
+   Karte einfaerben wuerde. */
+.seitenkarte {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left-width: 5px;
+  border-left-style: solid;
+  border-radius: 10px;
+  margin-bottom: .6rem;
+  /* Einmal benannt, weil Ueberschrift und Inhalt denselben Abstand zum
+     Rand halten muessen -- die eine ueber ihre Polsterung, der andere
+     ueber seinen Rand. */
+  --kartenrand: 1.25rem;
+}
+.seitenkarte.stufe-fehler {
+  background: var(--fehler-bg);
+  border-left-color: var(--fehler-kante);
+}
+.seitenkarte.stufe-warnung {
+  background: var(--warn-bg);
+  border-left-color: var(--warn-kante);
+}
+.seitenkarte.stufe-info {
+  background: var(--info-bg);
+  border-left-color: var(--info-kante);
+}
+
+.seitenkarte > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: .5rem;
+  padding: .8rem var(--kartenrand);
+}
+.seitenkarte > summary::-webkit-details-marker { display: none; }
+.seitenkarte > summary::before {
+  content: "▸";
+  color: var(--muted);
+  font-size: .85em;
+}
+.seitenkarte[open] > summary::before { content: "▾"; }
+.seitenkarte > summary h2 { margin: 0; }
+.seitenkarte > summary:hover h2 { text-decoration: underline; }
+.seitenkarte > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: 8px;
+}
+/* Der Inhalt haelt denselben seitlichen Abstand wie die Ueberschrift. */
+.seitenkarte > *:not(summary) {
+  margin-left: var(--kartenrand);
+  margin-right: var(--kartenrand);
+}
+.seitenkarte > *:last-child { margin-bottom: .9rem; }
+
+/* Der Rundgang in der Hilfe: nachgebaute Ausschnitte der Oberflaeche.
+   Kein Bildschirmfoto -- die Ausschnitte benutzen dieselben Klassen wie
+   die echten Karten und ziehen deshalb mit, wenn sich hier etwas aendert.
+
+   Der Rahmen traegt den SEITENGRUND, nicht die Kartenflaeche: So steht der
+   Ausschnitt darin wie auf einer echten Seite, und man sieht auf den
+   ersten Blick, dass es eine Abbildung ist und nicht die Oberflaeche
+   selbst.
+
+   Die Bedienteile darin sind echte <input readonly> und <button
+   type="button"> ohne Formular. Sie sehen deshalb exakt aus wie ihre
+   Vorbilder, ohne dass es dafuer eigene Regeln braucht -- und ohne dass
+   sie irgendetwas tun. */
+/* Die Wegzeile ueber jedem Schritt des Rundgangs: wohin man am Server
+   navigieren muss. Sie steht bewusst VOR dem Erklaertext und nicht darin
+   -- wer den Weg sucht, soll ihn finden, ohne einen Absatz zu lesen.
+
+   Die Pfeile kommen aus der CSS-Regel und nicht aus dem Text: So kann
+   keiner vergessen werden, keiner doppelt stehen, und die Kette bricht
+   beim Umbrechen an der richtigen Stelle. Dieselbe Schreibweise wie in der
+   Wege-Tabelle unter "Systeme". */
+.rundgang-ort {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .15rem .5rem;
+  margin: .1rem 0 .8rem;
+  font-size: .88rem;
+  color: var(--muted);
+}
+/* Das Gattungswort tritt zurueck, der Name steht vorn: Gesucht wird
+   "Katalog", "Reiter" ist nur die Auskunft, welcher Art das Ding ist. */
+.rundgang-ort b {
+  color: var(--fg);
+  font-weight: 600;
+}
+.rundgang-ort span + span::before {
+  content: "→";
+  margin-right: .5rem;
+  opacity: .7;
+}
+
+.rundgang-bild {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: .9rem 1rem;
+  margin: .9rem 0 1.2rem;
+}
+.rundgang-bild > :first-child { margin-top: 0; }
+.rundgang-bild > :last-child { margin-bottom: 0; }
+/* Nichts darin laesst sich bedienen. "pointer-events" statt "disabled"
+   oder "inert": disabled blasst jedes Feld ab und zeigt damit einen
+   Zustand, den die Oberflaeche gar nicht hat, und inert nimmt den ganzen
+   Ausschnitt aus dem Baum, den ein Screenreader vorliest -- die Werte
+   darin sind aber der Inhalt dieses Kapitels. Fuer die Tastatur steht
+   tabindex="-1" an den Elementen selbst. */
+.rundgang-bild { pointer-events: none; }
+
+p { margin: .3rem 0 .9rem; }
+
+.muted { color: var(--muted); }
+.small { font-size: .82rem; }
+
+/* Eine graue Flaeche heisst auf dieser Oberflaeche: hier kann man tippen.
+   Deshalb hat Text, den man nur liest, keine -- eine Kennung wie
+   "debian-13" oder ein Pfad ist an der Schreibmaschinenschrift und der
+   gedaempften Farbe zu erkennen, nicht am Kasten. */
+code {
+  font-family: ui-monospace, SFMono-Regular, "Cascadia Code", Consolas, monospace;
+  font-size: .88em;
+  padding: 0;
+}
+
+/* Die Kennung unter einem Eintrag ist Nebensache -- sie steht da, damit man
+   sie beim Suchen im Dateisystem wiederfindet, und nicht zum Lesen. Ein
+   Befehl zum Abtippen ist das Gegenteil und behaelt deshalb die normale
+   Textfarbe. */
+.kennung code { color: var(--muted); }
+
+table { width: 100%; border-collapse: collapse; margin-top: .5rem; }
+th, td { text-align: left; padding: .55rem .5rem; vertical-align: top; border-bottom: 1px solid var(--line); }
+th { font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); font-weight: 600; }
+tr.dim td { opacity: .55; }
+
+/* History: Zeitpunkt und Rechner nehmen nur, was sie brauchen; was uebrig
+   bleibt, gehoert dem Eintrag. Ohne feste Breiten verteilt der Browser
+   gleichmaessig, und die Rechnerspalte bricht um, obwohl rechts Platz
+   frei steht. */
+.startliste td:nth-child(1),
+.startliste th:nth-child(1),
+.startliste td:nth-child(2),
+.startliste th:nth-child(2) { width: 1%; white-space: nowrap; }
+
+/* Eine Spalte mit Groessenangaben. Rechtsbuendig und mit gleich breiten
+   Ziffern, damit die Zahlen untereinander vergleichbar sind: In einer Liste
+   nach Groesse sortiert soll man das Gefaelle sehen, ohne zu lesen. */
+.belegungsspalte {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Summen unter einer Tabelle: dieselben Spalten, aber leiser als die
+   Zeilen darueber -- sie sind das Ergebnis, nicht noch ein Posten. Nur die
+   letzte Zeile steht wieder in voller Farbe, denn sie ist die Antwort. */
+tfoot td { border-bottom: none; color: var(--muted); padding: .3rem .5rem; }
+tfoot tr:first-child td { border-top: 1px solid var(--line); padding-top: .55rem; }
+tfoot tr.summe td { color: var(--ink); font-weight: 600; padding-top: .5rem; }
+
+.row { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+.spaced { margin-top: 1rem; }
+.inline { display: inline-flex; align-items: center; gap: .3rem; font-size: .85rem; color: var(--muted); }
+
+input[type="text"], select {
+  /* Eine Groesse fuer alle Felder, am 27.08.2026 festgelegt -- die der
+     Zeilen unter Quellen. Vorher gab es drei: die hier (.35rem .5rem /
+     15px), table.eng (.25rem .4rem / 0,9rem) und .kompakt bzw. .ausgabe
+     (0,05rem .28rem / 0,9rem). Ein Feld neben einem Knopf soll dieselbe
+     Zeile fuellen, nicht eine hoehere.
+
+     Ausgenommen bleiben die drei Felder, die keine gewoehnlichen Felder
+     sind: .namensfeld und .bezeichnung sehen aus wie Ueberschriften, und
+     .folge ist ein 2rem breiter Kasten fuer eine Zahl.
+
+     "font: inherit" muss dabeistehen: Ohne das nimmt ein Feld die
+     Formularschrift des Browsers samt deren Zeilenhoehe (rund 1,2 statt
+     1,55) und baut damit rund fuenf Pixel niedriger als ein Knopf
+     daneben. Mit ihr sind beide 26 Pixel hoch. */
+  font: inherit;
+  font-size: .9rem;
+  padding: .05rem .28rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+/* Variante 1 -- der gefuellte Knopf: Flaeche in der Marke, Schrift weiss.
+   Am 27.08.2026 festgelegt, samt der Masse, die seither fuer jeden Knopf
+   gelten. Begruendung und Zahlen in docs/gestaltung.md. */
+button {
+  font: inherit;
+  /* Eine Groesse fuer alle Knoepfe, am 27.08.2026 festgelegt. Vorher gab
+     es fuenf: die hier, .kopfknopf, .kompakt button, table.eng button und
+     a.knopf -- Knoepfe in verschiedenen Groessen liest man als
+     verschiedene Wichtigkeiten, und gemeint war das nirgends. */
+  padding: .15rem .5rem;
+  font-size: .78rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: var(--knopf1);
+  color: #fff;
+  cursor: pointer;
+}
+button:hover { filter: brightness(1.08); }
+
+/* Ausgegraut heisst hier: es gibt nichts zu speichern -- oder, bei
+   "Pruefen", dass er gerade laeuft. Der Knopf bleibt sichtbar, damit man
+   weiss, dass es ihn gibt; er sieht nur nicht mehr nach einer
+   Aufforderung aus.
+
+   Die Regel dahinter: Ausgrauen aendert die Farbe, nie die Form. Ein
+   Knopf, der gerade nichts tun kann, bleibt derselbe Knopf -- gleiche
+   Flaeche, gleicher Rahmen, gleiche Masse. Sonst zuckte die Zeile bei
+   jedem Pruefen, weil der Knopf beim Ausgrauen die Groesse wechselt. */
+button:disabled,
+button:disabled:hover {
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  color: var(--muted);
+  cursor: default;
+  filter: none;
+}
+button.ghost:disabled, button.danger:disabled {
+  /* Die Flaeche bleibt -- nur die Schrift verliert ihre Farbe. */
+  background: var(--knopf-flaeche);
+  color: var(--muted);
+  border-color: var(--line);
+}
+/* Variante 3 -- der Warnknopf. Wie Variante 2 gebaut, nur die Schrift ist
+   die Warnfarbe: 6,5:1 im hellen Thema, 6,7:1 auf einer dunklen Karte.
+   Am 27.08.2026 festgelegt. */
+button.danger {
+  background: var(--knopf-flaeche);
+  color: var(--danger);
+  border-color: var(--line);
+}
+/* Variante 2 -- der umrandete Knopf. Am 27.08.2026 festgelegt: Flaeche
+   weiss, Schrift in der Marke, Rahmen weiter grau. Die Masse sind die von
+   Variante 1, hier aendern sich nur die Farben. */
+button.ghost {
+  background: var(--knopf-flaeche);
+  color: var(--knopf2-schrift);
+  border-color: var(--line);
+}
+
+.warnung { color: var(--miss-ink); }
+
+.badge {
+  display: inline-block;
+  font-size: .78rem;
+  padding: .1rem .5rem;
+  border-radius: 999px;
+}
+.badge.ok { background: var(--ok-bg); color: var(--ok-ink); }
+.badge.missing { background: var(--miss-bg); color: var(--miss-ink); }
+/* Weder ja noch nein -- Windows-Abbilder starten als Konsole, installieren
+   aber nicht. Gruen waere gelogen, rot auch. */
+.badge.teils {
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+  color: var(--muted);
+}
+.badge.version {
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.hint {
+  border-left: 3px solid var(--line);
+  padding-left: .8rem;
+  color: var(--muted);
+}
+
+footer { padding-top: .5rem; font-size: .85rem; }
+a { color: var(--accent); }
+
+progress {
+  width: 100%;
+  max-width: 34rem;
+  height: .8rem;
+  margin-top: .6rem;
+  accent-color: var(--accent-mig);
+}
+input[type="file"] {
+  font: inherit;
+  font-size: .9rem;
+  color: var(--muted);
+  max-width: 22rem;
+}
+
+/* Die Speicherleiste: derselbe Knopf wie oben in der ersten Karte, nur
+   dort, wo die Hand gerade ist. Sie erscheint erst, wenn etwas geaendert
+   wurde -- vorher waere sie ein Balken, der Platz nimmt und nichts sagt.
+
+   Am unteren Rand und nicht am oberen: Geaendert wird in den Feldern, und
+   die Hand ist beim Tippen unten am Bildschirm, nicht oben. */
+#speicherleiste {
+  position: fixed;
+  left: 50%;
+  bottom: 1.1rem;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  padding: .5rem .7rem .5rem 1rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .18);
+}
+#speicherleiste[hidden] { display: none; }
+/* Die Zahl in Ziffernbreite: Sie zaehlt beim Tippen hoch und runter, und
+   ein wanderndes Wort daneben liest sich unruhig. */
+#speicherzahl { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Die Quellen-Karten sind seit August 2026 aufklappbar. Zugeklappt ist
+   die Kopfzeile die ganze Karte -- Name, Ampel, Datum -, und die
+   Dreiecksmarke sitzt davor wie bei den uebrigen Klappen der Seite. */
+details.quellenkarte > summary.quellenkopf {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+details.quellenkarte > summary::-webkit-details-marker { display: none; }
+details.quellenkarte > summary.quellenkopf::before {
+  content: "▸";
+  color: var(--muted);
+  font-size: .8em;
+  transition: transform .12s ease;
+  display: inline-block;
+}
+details.quellenkarte[open] > summary.quellenkopf::before { transform: rotate(90deg); }
+details.quellenkarte > summary.quellenkopf:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  details.quellenkarte > summary.quellenkopf::before { transition: none; }
+}

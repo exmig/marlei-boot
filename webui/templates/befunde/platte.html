@@ -1,0 +1,23 @@
+{# Die Platte ist voll genug, dass der naechste Abgleich abbrechen kann.
+   Dieselbe Schwelle, ab der der Balken auf Server Health "voll" heisst --
+   sie steht in dienste.VOLL, damit Balken und Karte nicht auseinanderlaufen.
+
+   Die Ueberschrift nennt hier den Zustand und nicht die Folge: Ob der
+   Platz noch reicht, haengt daran, wie gross das naechste Abbild ist, und
+   das wissen wir nicht. Behaupten waere schlimmer als beschreiben. #}
+<p>
+  Der Datenträger unter den Abbildern ist zu {{ befund.platz.anteil }} %
+  belegt — frei sind noch
+  <strong>{{ "%.0f"|format(befund.platz.frei / 1073741824) }} GB</strong>
+  von {{ "%.0f"|format(befund.platz.gesamt / 1073741824) }} GB.
+</p>
+<p>
+  Ein vollständiges Abbild braucht je nach System mehrere Gigabyte. Geht der
+  Platz mitten im Holen aus, bleibt ein halber Eintrag liegen: Im Bootmenü
+  steht er, startbereit ist er nicht.
+</p>
+<p class="kartenfuss">
+  Was wie viel belegt, steht auf Server Health unter <em>Speicherplatz</em>
+  &middot; <a href="/#speicherplatz">Nachsehen &rarr;</a>
+  &middot; <a href="/systeme">Einträge aufräumen &rarr;</a>
+</p>

@@ -1,0 +1,35 @@
+[Unit]
+Description=MARLEI Boot Web-Oberflaeche
+Documentation=file:///opt/pxeweb/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=pxeweb
+Group=pxeweb
+WorkingDirectory=/opt/pxeweb
+EnvironmentFile=/etc/pxeweb.env
+ExecStart=/opt/pxeweb/venv/bin/uvicorn app:app --host 127.0.0.1 --port 8080
+Restart=on-failure
+RestartSec=3
+
+# Absicherung: die App braucht Lesezugriff auf die Assets, Schreibzugriff
+# auf ihr eigenes Datenverzeichnis und auf den Ablageort fuer selbst
+# hochgeladene ISO-Abbilder. Sonst nichts.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/pxeweb
+# Die gesamte Abbild-Ablage, nicht nur der Upload-Ordner: die Anwendung
+# stoesst auf Wunsch sync-images.sh an, und das legt dort Verzeichnisse an.
+# Das Skript braucht dafuer kein root -- es genuegt, dass ihm der Pfad
+# gehoert (install.sh setzt den Eigentuemer).
+ReadWritePaths=-/srv/pxe/assets
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

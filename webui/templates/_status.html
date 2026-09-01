@@ -1,0 +1,14 @@
+{# Wird alle fuenf Sekunden nachgeladen und in die Seite eingesetzt. Zwei
+   Stuecke in einer Antwort: die Auslastung steht in der ersten Karte, die
+   laufenden Uebertragungen in der zweiten. Ein Aufruf statt zweier -- und
+   die Darstellung gibt es weiterhin genau einmal, hier in der Vorlage. #}
+<div data-teil="auslastung">
+  <div class="kacheln">
+    {% include "_auslastung.html" %}
+  </div>
+  {% include "_vorgaenge.html" %}
+</div>
+
+<div data-teil="laufend">
+  {% include "_laufend.html" %}
+</div>

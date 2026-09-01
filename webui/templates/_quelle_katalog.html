@@ -1,0 +1,384 @@
+{% from "_eintragskarte.html" import karte with context %}
+{# Die mitgelieferten Systeme: woher der Server sie holt, welche
+   Ausgaben nebeneinander stehen sollen, und der Abgleich selbst.
+   Eingebunden von quellen.html -- die Karte samt Ueberschrift und
+   Reihenfolge steht dort. #}
+{# Die Ankreuzliste der Komponenten ist weg. Geholt wird jetzt dort, wo
+   die Quelle steht -- je Ausgabe ein Knopf. Sie war ohnehin ein Bruch:
+   Sie fuehrte andere Namen ("gparted" statt "gparted-live-1-8-1-3") und
+   holte immer alle Ausgaben zugleich.
+
+   Was der laufende Abgleich sagt, bleibt: Ohne diese Zeilen bekaeme man
+   auf "Holen" gar keine Rueckmeldung. Und dass immer nur einer laufen
+   kann, gehoert dazu -- der Grund, warum ein zweiter Knopf gerade nichts
+   tut, soll zu lesen sein. #}
+{% if sync.laeuft or sync.ergebnis %}
+<h3>Abgleich</h3>
+<p class="muted small">
+  {% if sync.laeuft %}
+  Läuft gerade: <strong>{{ sync.komponenten | join(", ") }}</strong> — solange
+  geht kein zweiter.
+  {% else %}
+  Zuletzt: {{ sync.komponenten | join(", ") }} — {{ sync.ergebnis }}
+  {% endif %}
+</p>
+<pre class="ipxe" id="syncausgabe">{{ sync.text }}</pre>
+{% endif %}
+
+{# Karten, die den neuen Aufbau haben: ein "Pruefen" fuer alles, "Holen"
+   je Ausgabe, Ampel mit Datum, Verlauf. Eine nach der anderen -- was sich
+   bewaehrt, bekommen die naechsten. #}
+{% set umgebaut = ["DEBIAN_URL", "UBUNTU_ISO_URL",
+                   "SYSRESC_ISO_URL", "GPARTED_ISO_URL",
+                   "CLONEZILLA_ISO_URL", "MEMTEST_ZIP_URL",
+                   "FEDORA_URL", "DEBIAN_LIVE_ISO_URL",
+                   "LEAP_URL", "ROCKY_BASE",
+                   "MINT_MIRROR", "TUMBLEWEED_URL", "SHREDOS_ISO_URL"] %}
+{% if katalog %}
+<h3>Was im Katalog steht</h3>
+{% for gruppe, eintraege in katalog.items() %}
+{# Eine leise Zwischenzeile je Gruppe. Sie steht in derselben Folge wie
+   das Bootmenue -- die Werkzeuge landen deshalb von selbst unten, ohne
+   eine eigene Regel. Ganz zuletzt kommt "Inaktiv": alles, dem die Dateien
+   fehlen. Das gehoert nicht zwischen die anderen, denn es steht in keinem
+   Menue -- man laese sich sonst durch Eintraege, die es nicht gibt. #}
+<p class="trennlinie">{{ gruppe }}</p>
+{% if gruppe == "Inaktiv" %}
+<p class="muted small">
+  Diese Einträge sind eingerichtet, ihre Dateien liegen aber nicht auf dem
+  Server. Sie stehen in keinem Bootmenü. Geholt wird unten unter
+  <em>Adressen</em>, bei der Ausgabe, um die es geht.
+</p>
+{% endif %}
+{% for e in eintraege %}
+{# Der Zustand steht neben dem Namen und damit auch zugeklappt vor Augen --
+   an derselben Stelle, an der ein Upload seinen zeigt, und mit demselben
+   gruenen "bereit" wie in der Liste unter Systeme. #}
+{# "Version entfernen" nur, wo es eine zweite Ausgabe gibt: die letzte
+   muss bleiben. Ein Eintrag mit nur einer Ausgabe -- Debian, Mint,
+   Tumbleweed, und jede Liste, in der genau eine Nummer steht -- zeigt den
+   Knopf deshalb nicht. #}
+{% call karte(e, e.zustand.text, gut=e.zustand.gut, offen=false,
+              menue_info=true,
+              dateien_weg=e.dateien_da,
+            zurueck="katalog") %}
+  {# Zwei Zeilen, zwei Fragen. Oben: wofuer ist diese Distribution gut --
+     der lange Satz aus catalog.yaml, der beim Auswaehlen hilft und den
+     der bootende Rechner nie zu sehen bekommt. Unten: was das Abbild
+     ueber sich selbst sagt, gelesen aus dem ISO oder der ausgepackten
+     .disk/info. Das eine ist gepflegt, das andere abgelesen -- sie
+     zusammenzufassen hiesse, eines von beiden zu verlieren. #}
+  {% if e.description %}
+  <div><dt>Wofür</dt><dd class="weit">{{ e.description }}</dd></div>
+  {% endif %}
+  <div><dt>Beschreibung</dt><dd>{{ e.beschreibung }}</dd></div>
+{% endcall %}
+{% endfor %}
+{% endfor %}
+{% endif %}
+
+  {% if meldung %}<p class="hint">{{ meldung }}</p>{% endif %}
+
+  <h3>Adressen</h3>
+  <p class="muted small">
+    <a href="/hilfe#quellen-adressen">Warum Adressen veralten, was
+    <em>Prüfen</em> tut und wohin Geändertes geht &rarr;</a>
+  </p>
+
+  {% if quellengruppen %}
+  <div class="row spaced">
+    <button type="button" id="alle-pruefen">Alle prüfen</button>
+    <span class="muted small" id="pruef-stand"></span>
+  </div>
+
+  {# Dieselben Zwischenzeilen wie oben unter "Was im Katalog steht", nur
+     zu zweien zusammengefasst: Ob eine Installation online oder offline
+     laeuft, entscheidet sich am bootenden Rechner. Hier geht es darum,
+     woher die Dateien kommen -- und da gehoert alles, was ein System
+     installiert, zusammen und die Werkzeuge daneben. #}
+  {% for gruppe in quellengruppen %}
+  <p class="trennlinie">{{ gruppe.name }}</p>
+  {% for q in gruppe.karten %}
+  {% set st = quellstand.get(q.name) or {} %}
+  {# Zugeklappt, sobald hier nichts zu tun ist. Dreizehn Quellen mit
+     Adressen, Ausgaben und Knoepfen machten drei Viertel dieser Seite aus,
+     und das meiste davon steht seit Wochen unveraendert richtig.
+
+     Offen steht, was Aufmerksamkeit braucht: eine Ampel auf "pruefen"
+     oder eine Quelle, die noch nie geprueft wurde. Eine eigene Adresse
+     gehoert ausdruecklich NICHT dazu -- das ist der reparierte Zustand,
+     nicht der auffaellige, und das Abzeichen dafuer steht ohnehin in der
+     Kopfzeile.
+     Dieselbe Ueberlegung wie bei den verwaisten Ordnern -- zugeklappt
+     beantwortet die Zeile schon die Frage, mit der man herkommt, und wo es
+     etwas zu sehen gibt, klappt sie sich selbst auf.
+
+     Die Kennung als Sprungmarke: Die Karte Quelleninfo auf Server Health
+     verweist auf die Quelle, an der etwas nicht stimmt. Das Skript unten
+     klappt sie dann auf -- ein Sprung auf einen geschlossenen Kasten
+     landete richtig und zeigte nichts. #}
+  <details class="quellenkarte" id="{{ q.name }}" data-name="{{ q.name }}"
+           {% if not st.zeit or (not st.ok and not st.leer) %}open{% endif %}>
+    <summary class="quellenkopf">
+      {# Der Name des Systems, nicht der der Shell-Variablen. Die steht
+         klein daneben: Sie ist der Schluessel in quellen.env, der Name im
+         Bericht des Waechters und die Sprungmarke, ueber die Server Health
+         hierher verweist -- wer von dort kommt, muss die Karte
+         wiedererkennen. #}
+      <strong>{{ q.titel }}</strong>
+      {% if q.titel != q.name %}<code class="muted small">{{ q.name }}</code>{% endif %}
+      {# Die Ampel steht neben dem Namen und nicht beim Knopf: Sie
+         beantwortet die Frage, mit der man auf diese Seite kommt --
+         stimmt hier noch alles? -- und zwar schon beim Oeffnen. Deshalb
+         wird der Befund gespeichert; die Seite klappert nicht bei jedem
+         Aufruf zwoelf Anbieter ab. Ohne Datum daneben behauptete sie, sie
+         sei von jetzt. #}
+      {% if st.zeit %}
+      {# Drei Zustaende, nicht zwei. "leer" heisst: fuer diese Quelle ist
+         keine Ausgabe eingetragen, sie ist also gar nicht in Betrieb --
+         der Auslieferungszustand. Das ist kein Fehler und darf nicht
+         aussehen wie einer, sonst begruesst ein frisch aufgesetzter
+         Server seinen Betreiber mit zehn roten Ampeln. #}
+      {% if st.leer %}
+      <span class="badge" title="{{ st.meldung }}">nicht in Betrieb</span>
+      <span class="muted small">{{ st.meldung }}</span>
+      {% else %}
+      <span class="badge {{ 'ok' if st.ok else 'missing' }}"
+            title="{{ st.meldung }}">{{ "gültig" if st.ok else "prüfen" }}</span>
+      <span class="muted small">{{ st.meldung }} · {{ st.zeit | zeit }}</span>
+      {% endif %}
+      {% endif %}
+      {% if q.geaendert %}<span class="badge ok">geändert</span>{% endif %}
+      {% if q.basis %}
+      <span class="muted small">
+        Basisadresse{% if q.pruefdatei %} — geprüft wird
+        <code>…/{{ q.pruefdatei }}</code>{% endif %}
+      </span>
+      {% endif %}
+      {# Noch nie geprueft: Die Zeile soll auch dann etwas sagen, sonst
+         steht dort nur ein Name und die Klappe wirkt leer. #}
+      {% if not st.zeit %}<span class="muted small">noch nicht geprüft</span>{% endif %}
+    </summary>
+
+
+    {# Erst die Handgriffe fuer die ganze Quelle, dann die Ausgaben. Sonst
+       stehen sie hinter einer Liste, die beliebig lang werden kann, und
+       man sucht sie. #}
+    {% if q.name in umgebaut %}
+    <div class="row spaced">
+      {# Kein "ghost": Pruefen ist der Knopf, mit dem in dieser Karte alles
+         anfaengt -- auf einem frisch aufgesetzten Server ist es der
+         einzige, der etwas bewirkt. Deshalb gefuellt und nicht nur
+         umrandet. "" gibt ihm dieselbe Groesse wie "Speichern"
+         und "Holen" darunter: Er soll auffallen durch die Farbe, nicht
+         durch die Flaeche. #}
+      <button type="button" class="durchleuchten"
+              title="Verbindung, Adresse und — wo es Ausgaben gibt — neue Ausgaben beim Anbieter">
+        Prüfen
+      </button>
+      {# Rechts und abgesetzt: "Pruefen" sieht nach und traegt selbst ein,
+         "Neue Version" ist der Weg von Hand. Nebeneinander sehen sie aus
+         wie zwei Schritte desselben Vorgangs. Wo es nur eine Ausgabe gibt
+         -- Mint, Tumbleweed, ShredOS --, gibt es auch nichts einzutragen. #}
+      {% if q.mehrfach %}
+      <button type="button" class="ghost neue-ausgabe rechts">Neue Version</button>
+      {% endif %}
+    </div>
+    <ol class="befundliste" hidden></ol>
+    {% endif %}
+
+    {% if q.mehrfach %}
+    {# Der Auslieferungszustand: keine Ausgabe eingetragen. Ausgeliefert
+       wird die Auswahl der Distributionen, nicht die Nummer ihrer
+       Ausgabe -- welche es gibt, weiss der Anbieter besser als eine
+       Datei. Hier steht deshalb der eine Satz, der den naechsten Schritt
+       nennt, statt einer leeren Stelle. #}
+    {% if not q.ausgaben %}
+    <p class="muted small">
+      Noch keine Ausgabe eingetragen — dieses System steht in keinem
+      Bootmenü. <em>Prüfen</em> sieht beim Anbieter nach und trägt die
+      neueste ein, samt Adresse; <em>Neue Version</em> ist der Weg von
+      Hand.
+    </p>
+    {% endif %}
+    {# Eine Zeile je Ausgabe. Das Muster steht nicht mehr allein da: Was
+       hier zu sehen ist, wird auch wirklich geholt -- und aendert ein
+       Distributor seine Struktur, bricht nur die Ausgabe, die es
+       betrifft. #}
+    {% for a in q.ausgaben %}
+    {# Adresse in einer eigenen Zeile, Knoepfe darunter: Die Adressen sind
+       lang, und was daneben steht, nimmt ihnen genau die Breite weg, in
+       der man sie lesen und aendern will. #}
+    {# "Version entfernen" braucht ein eigenes Formular: Es geht woanders
+       hin als "Speichern" und "Holen", und ein <form> gehoert nicht in ein
+       <form>. Der Knopf haengt sich unten ueber sein form-Attribut daran --
+       derselbe Weg wie in der Eintragskarte, aus der er hierher gezogen
+       ist. Dort stand er im falschen Zusammenhang: Entfernt wird eine
+       Nummer aus der Ausgabenliste, und die steht hier. #}
+    <form id="weg-{{ q.name }}-{{ a.version }}" method="post"
+          action="/quellen/version/loeschen"
+          onsubmit="return confirm('Ausgabe {{ a.version }} entfernen? Die Dateien und die eingetragene Adresse werden gelöscht.')">
+      <input type="hidden" name="adresse" value="{{ q.name }}">
+      <input type="hidden" name="version" value="{{ a.version }}">
+    </form>
+    <form method="post" action="/quellen/ausgabe" class="ausgabe">
+      <input type="hidden" name="adresse" value="{{ q.name }}">
+      <input type="hidden" name="war_version" value="{{ a.version }}">
+      <div class="row">
+        <input type="text" name="version" value="{{ a.version }}" size="7"
+               class="ausgabenummer" title="Nummer dieser Ausgabe">
+        <input type="text" name="url" value="{{ a.url }}" class="ausgabeadresse"
+               required title="Adresse, unter der genau diese Ausgabe geholt wird">
+      </div>
+      <div class="row ausgabeknoepfe">
+      <button type="submit" class="ghost">Speichern</button>
+      {# Kein eigenes "Pruefen" mehr, wo das Sammelpruefen jede Ausgabe
+         einzeln durchgeht -- zwei Knoepfe fuer dieselbe Frage sind einer
+         zu viel, und der obere ist der vollstaendigere. #}
+      {% if q.name not in umgebaut %}
+      <button type="button" class="ghost pruefen">Prüfen</button>
+      {% else %}
+      {# Genau diese Ausgabe holen. Frueher fuehrte der Weg dorthin ueber
+         eine Ankreuzliste weiter oben, unter anderem Namen, und sie holte
+         immer alle Ausgaben zugleich -- wer eine neue erproben wollte,
+         bekam die alten mit nachgeladen. #}
+      <button type="submit" class="ghost holen"
+              formaction="/quellen/{{ q.name }}/holen"
+              formnovalidate
+              title="Nur diese Ausgabe holen">Holen</button>
+      {% endif %}
+      {# Was der Anbieter selbst zu dieser Ausgabe sagt. Bisher nur bei
+         Debian: Dort steht im Feld daneben der Codename, weil die Pfade
+         nur den kennen -- "dists/trixie/" antwortet, "dists/13.6/" nicht.
+         Die Nummer ist damit nirgends zu sehen, obwohl der Server sie beim
+         Pruefen erfaehrt, und beim Live-Abbild daneben steht sie sehr wohl.
+         Steht sie schon im Feld, faellt das Abzeichen weg. #}
+      {% if a.nummer and a.nummer not in a.version %}
+      {# Mit Datum im Titel, wie die Ampel darueber: Die Angabe stammt vom
+         letzten Pruefen und altert. Aus trixie 13.6 wird irgendwann
+         13.7, ohne dass sich hier etwas ruehrt -- wer sich darauf
+         beruft, soll sehen koennen, von wann sie ist. #}
+      <span class="badge ok"
+            title="Debians eigene Auskunft zu dieser Ausgabe{% if st.zeit %},
+                   gelesen beim Prüfen am {{ st.zeit | zeit }}{% endif %}">
+        Debian {{ a.nummer }}</span>
+      {% endif %}
+      {% if a.eigen %}<span class="badge ok">eigene Adresse</span>{% endif %}
+      {# Rechts und abgesetzt: Das Entfernen loescht Dateien und gehoert
+         nicht neben die Knoepfe, die etwas herstellen.
+         Vor der Befundzeile und nicht dahinter: Die hat "flex-basis:100%"
+         und erzwingt einen Umbruch -- was danach kommt, faellt auf eine
+         eigene Zeile ganz unten und klebt dort an der naechsten Ausgabe. #}
+      <button type="submit" form="weg-{{ q.name }}-{{ a.version }}"
+              class="danger rechts"
+              title="Diese Ausgabe aus der Liste nehmen, ihre Dateien und ihre eingetragene Adresse löschen">
+        Version entfernen
+      </button>
+      <span class="muted small befund"></span>
+      </div>
+    </form>
+    {% endfor %}
+
+    {# Die neue Zeile bekommt ihre Adresse aus dem Muster vorgeschlagen --
+       tippen muss man nur die Nummer, korrigieren nur, wenn sich beim
+       Distributor etwas geaendert hat. #}
+    <form method="post" action="/quellen/ausgabe" class="ausgabe row neue" hidden
+          data-muster="{{ q.muster or q.url }}">
+      <input type="hidden" name="adresse" value="{{ q.name }}">
+      <input type="text" name="version" size="7" class="ausgabenummer"
+             placeholder="Nummer">
+      <input type="text" name="url" class="ausgabeadresse" required>
+      <button type="submit" >Aufnehmen</button>
+      <button type="button" class="ghost pruefen">Prüfen</button>
+      <span class="muted small befund"></span>
+    </form>
+    {% set frueher = quellverlauf.get(q.name) or [] %}
+    {% if frueher %}
+    {# Ein Verlauf von Entscheidungen, nicht von Stoerungen: Hier landet
+       eine Adresse, wenn sie **ersetzt** wird -- nicht, wenn eine Pruefung
+       fehlschlaegt. Sonst stuende bald zwanzigmal dieselbe darin. #}
+    <details class="posten">
+      <summary>Frühere Adressen ({{ frueher | length }})</summary>
+      <table class="schmal">
+        <tbody>
+          {% for f in frueher %}
+          <tr>
+            <td><code>{{ f.adresse }}</code></td>
+            <td class="nowrap muted small">bis {{ f.bis | zeit }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </details>
+    {% endif %}
+
+    <div class="row">
+      {# Bei Debian stehen "Pruefen" und "Neue Version" oben, vor den
+         Ausgaben. Die uebrigen Karten haben sie noch hier. #}
+      {% if q.name not in umgebaut %}
+      <button type="button" class="ghost neue-ausgabe">Neue Version</button>
+      {% endif %}
+      {# "Nach neueren sehen" ist die dritte Frage des Sammelpruefens.
+         Wo das oben steht, braucht es hier keinen zweiten Knopf dafuer --
+         bei den uebrigen Karten gibt es noch kein Sammelpruefen, dort
+         bleibt er der einzige Weg dorthin. #}
+      {% if q.name not in umgebaut %}
+      <button type="button" class="ghost nachsehen"
+              title="Beim Anbieter nachsehen, welche Ausgaben es gibt">
+        Nach neueren sehen
+      </button>
+      <span class="muted small nachsehen-befund"></span>
+      {% endif %}
+    </div>
+
+    {% else %}
+    {# Einversionige Quellen: Mint holt beim Abgleich ohnehin die neueste
+       Ausgabe, Tumbleweed rollt, und ShredOS traegt Ausgabe und Datum an
+       zwei Stellen seiner Adresse -- aus einem Muster laesst die sich
+       nicht erzeugen. Nach neuen Ausgaben zu suchen hat hier keinen Sinn;
+       Ampel, Verbindungspruefung, Verlauf und Holen fehlten ihnen aber
+       genauso wie den anderen. #}
+    <form method="post" action="/quellen/{{ q.name }}" class="ausgabe">
+      <div class="row">
+        <input type="text" name="url" value="{{ q.url }}" class="ausgabeadresse" required>
+      </div>
+      <div class="row ausgabeknoepfe">
+        <button type="submit" class="ghost">Speichern</button>
+        {% if q.name in umgebaut %}
+        <button type="submit" class="ghost holen"
+                formaction="/quellen/{{ q.name }}/holen" formnovalidate
+                title="Die Dateien dieser Quelle holen">Holen</button>
+        {% else %}
+        <button type="button" class="ghost pruefen">Prüfen</button>
+        {% endif %}
+        {% if q.geaendert %}
+        <button type="submit" class="danger"
+                formaction="/quellen/{{ q.name }}/zuruecksetzen">Vorgabe</button>
+        {% endif %}
+        <span class="muted small befund"></span>
+      </div>
+    </form>
+    {% if q.geaendert %}
+    <p class="muted small">Vorgabe: <code>{{ q.vorgabe }}</code></p>
+    {% endif %}
+    {% endif %}
+  </details>
+  {% endfor %}
+  {% endfor %}
+
+{% else %}
+  <p class="hint">
+    Keine Quellen gefunden. Erwartet wird <code>sync-images.sh</code> unter
+    <code>/opt/pxe-setup/</code> — läuft die Anwendung aus dem Projektordner,
+    wird sie auch dort gesucht.
+  </p>
+  {% endif %}
+
+{% set weg = "katalog" %}
+{% include "_belegt.html" %}
+
+{# Fusszeile der Karte: der Weg in die Hilfe. Stand bis zum
+   27.08.2026 oben unter der Ueberschrift. #}
+<p class="kartenfuss">
+  <a href="/systeme">Was bereitsteht, zeigt Systeme &rarr;</a>
+</p>

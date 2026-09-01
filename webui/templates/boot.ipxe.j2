@@ -1,0 +1,32 @@
+#!ipxe
+# ---------------------------------------------------------------------------
+# Vorspann -- hierhin schickt dnsmasq jedes gestartete iPXE.
+#
+# Aufgabe: die Eigenschaften des Rechners einsammeln (MAC, Architektur,
+# Firmware-Typ, Modellbezeichnung) und an das Menue weiterreichen. Die
+# eigentliche Entscheidung faellt serverseitig in Python.
+# ---------------------------------------------------------------------------
+
+set base {{ base }}
+
+echo
+echo   exmig - MARLEI Boot
+echo   ===============
+echo   Rechner : ${net0/mac}  (${product})
+echo   Firmware: ${platform} / ${buildarch}
+echo   Adresse : ${net0/ip} -- Server ${base}
+echo
+
+chain ${base}/menu.ipxe?mac=${net0/mac:hexhyp}&arch=${buildarch}&platform=${platform}&product=${product:uristring}&uuid=${uuid} || goto fehler
+
+:fehler
+echo
+echo   Das Bootmenue konnte nicht geladen werden.
+echo   Server: ${base}
+echo
+echo   Pruefen auf dem PXE-Server:
+echo     systemctl status pxeweb nginx
+echo     curl -s ${base}/health
+echo
+prompt --timeout 15000 Beliebige Taste druecken, um von der Platte zu starten...
+exit 0

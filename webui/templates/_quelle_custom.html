@@ -1,0 +1,145 @@
+{# "with context": ohne das sieht das Makro die Werte der Seite nicht,
+   und der Pfad-Vorspann bliebe leer. #}
+{% from "_eintragskarte.html" import karte with context %}
+{# Selbst aufgenommene Netz-Installer. Eingebunden von
+   quellen.html. #}
+  {# Dieselben Masse wie in der Katalog-Karte -- siehe dort. Nur das
+     Formular; die Eintragskarten darunter haben ihre eigenen. #}
+  <div class="kompakt">
+  <form method="post" action="/quellen/eintrag">
+    <div class="row spaced">
+      <select name="bauart" id="bauart">
+        {% for schluessel, art in bauarten.items() %}
+        <option value="{{ schluessel }}">{{ art.titel }}</option>
+        {% endfor %}
+      </select>
+      <select name="gruppe">
+        {% for g in eigene_gruppen %}<option value="{{ g }}">{{ g }}</option>{% endfor %}
+      </select>
+    </div>
+
+    <div class="row spaced">
+      <input type="text" name="name" size="28" required
+             placeholder="Name im Menü, z. B. Kali Linux installieren">
+      <input type="text" name="beschreibung" size="28"
+             placeholder="Beschreibung (optional)">
+    </div>
+
+    {% for schluessel, art in bauarten.items() %}
+    <div class="bauart-felder" data-bauart="{{ schluessel }}" hidden>
+      <p class="muted small">{{ art.hinweis }}</p>
+
+      {% if schluessel == "debian" %}
+      <div class="row">
+        <select class="vorlage">
+          <option value="">— bekannte Spiegel —</option>
+          {% for titel, adresse, suite in spiegel_liste %}
+          <option value="{{ adresse }}|{{ suite }}">{{ titel }}</option>
+          {% endfor %}
+        </select>
+        <input type="text" name="spiegel" size="34" list="spiegel-adressen"
+               placeholder="Spiegel, z. B. http://http.kali.org/kali">
+        <input type="text" name="suite" size="16" placeholder="Suite, z. B. kali-rolling">
+      </div>
+      {% elif schluessel == "frei" %}
+      <div class="row">
+        <input type="text" name="kernel_url" size="46" placeholder="Adresse des Kernels">
+        <input type="text" name="initrd_url" size="46" placeholder="Adresse der Initrd">
+      </div>
+      <div class="row spaced">
+        <input type="text" name="cmdline" size="60"
+               placeholder="Kernel-Kommandozeile (kann leer bleiben)">
+      </div>
+
+      {% else %}
+      <div class="row">
+        <input type="text" name="basis" size="60"
+               placeholder="Basisadresse{% if art.beispiel %}, z. B. {{ art.beispiel }}{% endif %}">
+      </div>
+      {% if art.quelle_noetig %}
+      <div class="row spaced">
+        <input type="text" name="quelle" size="60" placeholder="Adresse der Paketquelle">
+      </div>
+      {% endif %}
+      {% endif %}
+
+      {% if art.dateien %}
+      <p class="muted small">
+        Geholt werden:
+        {% for dort, hier in art.dateien %}<code>{{ dort }}</code>{% if not loop.last %}, {% endif %}{% endfor %}
+        &middot; Kommandozeile: <code>{{ art.cmdline or "leer" }}</code>
+      </p>
+      {% endif %}
+    </div>
+    {% endfor %}
+
+    <datalist id="spiegel-adressen">
+      {% for titel, adresse, suite in spiegel_liste %}
+      <option value="{{ adresse }}">{{ titel }}</option>
+      {% endfor %}
+    </datalist>
+
+    <div class="row spaced">
+      <button type="button" id="eintrag-pruefen" class="ghost">Prüfen</button>
+      <button type="submit">Aufnehmen und holen</button>
+      <span class="muted small" id="eintrag-befund"></span>
+    </div>
+
+    {# Steht leer da und fuellt sich erst, wenn "Pruefen" beim Anbieter
+       mehrere Ausgaben gefunden hat. Ohne JavaScript bleibt es leer, und
+       dann entsteht ein einzelner Eintrag wie eh und je -- der Weg ueber
+       curl soll sich nicht dadurch aendern, dass die Seite jetzt fragt. #}
+    <div id="ausgabenwahl" hidden>
+      <p class="muted small">
+        Welche Ausgaben sollen aufgenommen werden? Jede bekommt einen
+        eigenen Menüpunkt und ein eigenes Verzeichnis — wie bei den
+        mitgelieferten Systemen.
+      </p>
+      <div class="row spaced" id="ausgabenkaesten"></div>
+    </div>
+    <input type="hidden" name="versionen" id="versionen">
+  </form>
+  </div>
+
+{% if selbst %}
+{% for e in selbst %}
+{% call karte(e, e.zustand.text, e.eigen.meldung, gut=e.zustand.gut,
+              loeschen="/eintraege/" + e.slug + "/delete",
+              zeitpunkt=e.eigen.angelegt, zeit_titel="Angelegt",
+            zurueck="custom") %}
+  <div><dt>Bauart</dt><dd>{{ e.eigen.bauart }}</dd></div>
+  {% if e.eigen.version %}
+  <div><dt>Ausgabe</dt><dd>{{ e.eigen.version }}</dd></div>
+  {% endif %}
+  {# Nur wo eine Ausgabe in der Adresse steckt: Aus einer festen
+     Adresse laesst sich keine zweite ableiten, und ein Feld, das
+     nichts bewirkt, ist schlimmer als keines.
+
+     Der Weg vom Befund des Wächters hierher: Er meldet die neue
+     Ausgabe und verlinkt auf diese Karte -- ohne diesen Knopf wäre
+     die Meldung eine Sackgasse. #}
+  {% if "{version}" in (e.eigen.muster or "") %}
+  <div>
+    <dt>Weitere Ausgabe</dt>
+    <dd>
+      <form method="post" action="/eintraege/{{ e.slug }}/ausgabe"
+            class="row">
+        <input type="text" name="version" size="8" required
+               class="ausgabenummer"
+               title="Nummer der Ausgabe, die danebengestellt werden soll">
+        <button type="submit" class="ghost">Aufnehmen</button>
+      </form>
+      <div class="muted small">
+        Entsteht als eigener Eintrag daneben; diese Ausgabe bleibt, wie
+        sie ist. Die Adresse baut der Server aus derselben Vorlage.
+      </div>
+    </dd>
+  </div>
+  {% endif %}
+{% endcall %}
+{% endfor %}
+{% endif %}
+
+{% set weg = "selbst" %}
+{% include "_belegt.html" %}
+

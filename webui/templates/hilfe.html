@@ -1,0 +1,4374 @@
+{% extends "base.html" %}
+{% block title %}Hilfe — MARLEI Boot{% endblock %}
+
+{% block content %}
+
+<section class="inhalt">
+  <h2>Hilfe</h2>
+  <p class="muted">
+    Ein Kapitel je Register, davor die <a href="#erste-schritte">Ersten
+    Schritte</a> und dahinter häufige Fragen und Nützliches. Wer den Server
+    zum ersten Mal bedient, liest die ersten Schritte und arbeitet den
+    <a href="#erste-schritte-zuerst">Arbeitsablauf</a> mithilfe der Reiter
+    durch — der Rest ist zum Nachschlagen da.
+  </p>
+  <ol class="verzeichnis">
+    <li><a href="#erste-schritte">Erste Schritte</a></li>
+    <li><a href="#rundgang">Der erste Durchgang</a></li>
+    <li><a href="#serverhealth">Server Health</a></li>
+    <li><a href="#clients">Clients</a></li>
+    <li><a href="#systeme">Systeme</a></li>
+    <li><a href="#quellen">Quellen</a></li>
+    <li><a href="#einrichtung">Einrichtung</a></li>
+    <li><a href="#history">History</a></li>
+    <li><a href="#faq">Häufige Fragen</a></li>
+    <li><a href="#nuetzliches">Nützliches</a></li>
+    <li><a href="#lizenz">Lizenz und Förderung</a></li>
+  </ol>
+</section>
+
+<section id="erste-schritte" class="kapitel">
+  <header class="kapitelkopf">
+    <h2>Erste Schritte</h2>
+  </header>
+  {# Der Satz, der hier stand ("Wer diesen Server zum ersten Mal vor sich
+     hat ..."), sagte dasselbe wie der Einstieg oben auf dieser Seite, nur
+     einen Absatz spaeter. Er ist am 28.08.2026 dorthin gewandert.
+
+     Was stattdessen hier steht, beantwortet die Frage, mit der jemand
+     dieses Kapitel aufschlaegt: Wie viel kommt da auf mich zu? #}
+  <p class="muted">
+    Es ist weniger, als es aussieht. <strong>Das Schwerste hast du schon
+    hinter dir:</strong> eine Maschine bereitgestellt und
+    <code>install.sh</code> darauf laufen lassen. Was jetzt kommt, geschieht
+    alles in dieser Oberfläche — der Ablauf ist immer derselbe: fünf Reiter,
+    einer nach dem anderen, und jeder liefert, was der nächste braucht. Das
+    erste Durcharbeiten dauert ein paar Minuten; danach kommt man nur noch
+    für einen einzelnen Schritt hierher.
+  </p>
+  <p class="muted small">
+    Nicht mitgerechnet ist dabei das Herunterladen eines Betriebssystems
+    unter <a href="/quellen">Quellen</a> — das dauert, je nach Leitung und
+    Abbild, eine Viertelstunde oder länger. Die Handgriffe sind schnell,
+    die Gigabyte nicht.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="erste-schritte-wofuer">Wofür ist dieser Server da?</h3>
+  </div>
+  <p class="muted">
+    Er <strong>installiert und startet Rechner über das Netzwerk</strong> —
+    ohne Stick und ohne CD/DVD.
+    Ein Rechner wird eingeschaltet, holt sich sein Startsystem über das
+    Netzwerkkabel und zeigt ein Auswahlmenü: Installer für verschiedene
+    Linux-Systeme, dazu Rettungswerkzeuge wie GParted oder Memtest.
+  </p>
+  <p class="muted">
+    Das ist praktisch, wenn man öfter Rechner neu aufsetzt — man muss keine
+    Sticks mehr pflegen, und alle Maschinen bekommen denselben Stand. Für
+    Rechner ohne Bildschirm geht es sogar ganz ohne Anwesenheit: hier
+    festlegen, was der Rechner starten soll, ihn per Netzwerk einschalten,
+    fertig.
+  </p>
+  <p class="hint">
+    <strong>Der Router bleibt unangetastet.</strong> Der Server vergibt keine
+    IP-Adressen, er ergänzt nur die Antwort des Routers um den Hinweis „dein
+    Startsystem findest du hier“. Ist er aus, merkt das Netz nichts davon —
+    die Rechner starten dann einfach von ihrer Festplatte.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="erste-schritte-braucht">Was braucht er, damit es geht?</h3>
+  </div>
+  <p class="muted">
+    Wenig — und das meiste davon steht schon. Fünf <strong>Voraussetzungen</strong>
+    müssen stimmen: vier am Rechner und am Netz, eine in dieser Oberfläche.
+    Was danach an Arbeit kommt, steht unter
+    <a href="#erste-schritte-zuerst">Was tut man zuerst?</a>
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>Eine Adresse, die bleibt</strong></td>
+        <td class="muted">Dieser Server braucht eine Adresse, die sich nicht
+          ändert — <strong>entweder eine Reservierung am Router oder eine
+          feste Adresse am Host</strong>. Beides ist in Ordnung. Was nicht
+          genügt, ist eine gewöhnliche DHCP-Lease: Die kann der Router beim
+          nächsten Mal anders vergeben, und dann zeigen alle Boot-Skripte ins
+          Leere. Mehr dazu unten unter
+          <a href="#einrichtung-ersteinrichtung">Ersteinrichtung</a>.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Ein Netz mit Kabel</strong></td>
+        <td class="muted">Der Rechner und dieser Server müssen im selben Netz
+          hängen. Über WLAN startet praktisch keine Firmware, und ein
+          Weckpaket kommt über einen Router hinweg ohnehin nicht an.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>PXE im BIOS/UEFI</strong></td>
+        <td class="muted">Der Netzwerkstart muss dort eingeschaltet und in der
+          Startreihenfolge vor der Festplatte sein. Der Punkt heißt je nach
+          Hersteller <em>Network Boot</em>, <em>PXE Boot</em> oder
+          <em>Onboard LAN Boot ROM</em>. Meist geht es auch ohne Umstellen:
+          einmalig über das Bootmenü der Firmware, oft <kbd>F12</kbd>.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Secure Boot aus</strong></td>
+        <td class="muted">iPXE ist nicht signiert; mit eingeschaltetem Secure
+          Boot verweigert die Firmware den Start. Das ist der häufigste Grund
+          dafür, dass ein Rechner „nichts tut".</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Ein freigegebener Eintrag</strong></td>
+        <td class="muted">Das Einzige, was hier geschieht — und der Schritt,
+          den man am ehesten vergisst. Ohne ihn meldet sich der Rechner nur an
+          und startet weiter von seiner Platte.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted">
+    <strong>Und was die Maschine selbst braucht.</strong> Wenig — dieser
+    Server ist genügsam. Die einzige Zahl, auf die es wirklich ankommt, ist
+    der Plattenplatz:
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>Arbeitsspeicher</strong></td>
+        <td class="muted">1 GB genügt, 2 GB sind entspannter. Gemessen sind
+          es <strong>0,4 GB</strong> im Betrieb, mit allen vier Diensten und
+          NFS.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Prozessor</strong></td>
+        <td class="muted">Ein Kern reicht, zwei sind bequemer. Im Leerlauf
+          ein Prozent Last — Holen und Auspacken hängen an der Platte, nicht
+          am Rechenwerk.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Plattenplatz</strong></td>
+        <td class="muted"><strong>20 GB als Untergrenze, 60 GB
+          empfohlen.</strong> Das System selbst braucht etwa 1 GB, der ganze
+          Katalog 8–10 GB, und beim Auspacken liegen Abbild und Inhalt kurz
+          nebeneinander. Wer eigene Abbilder hochlädt, rechnet großzügiger.
+          Wie viel gerade belegt ist, steht unter
+          <a href="/#speicherplatz">Server&nbsp;Health</a>.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Netz</strong></td>
+        <td class="muted">Kabel, siehe oben. Über WLAN startet kein Rechner
+          vom Netz — weder der Server noch der bootende Rechner darf am Funk
+          hängen.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted small">
+    Die Zahlen sind gemessen, nicht geschätzt: auf einem frisch
+    installierten Server mit einem geladenen Abbild.
+    <strong>Der Arbeitsspeicher der bootenden Rechner ist eine andere
+    Frage</strong> als der dieses Servers — steht NFS bereit, hängen
+    Live-Systeme ihr Dateisystem über das Netz ein und brauchen kaum
+    welchen; ohne NFS wird das ganze Abbild in den Speicher des Clients
+    geladen, und dann ist bei ungefähr der Hälfte seines RAM Schluss.
+  </p>
+
+  <p class="hint">
+    <strong>Wo die Grenze verläuft:</strong> Die Netzkonfiguration des Hosts
+    gehört dir — dieser Server fasst sie nicht an, weder bei der Installation
+    noch später. Er liest sie ab, richtet sich danach und sagt es, wenn sie
+    sich geändert hat. Alles, was auf dem Host installiert wird, ist dagegen
+    unsere Sache: Dienste, Ablageorte und die vier Stellen, an denen die
+    Adresse noch einmal steht.
+  </p>
+  <p class="muted small">
+    Am Server selbst ist sonst nichts einzurichten: Dienste und Ablageorte
+    setzt <code>install.sh</code>. Ob sie stehen, sagt
+    <a href="#einrichtung">Einrichtung</a>.
+  </p>
+
+  {# Das Gegenstueck zu "Was braucht er": erst die Voraussetzungen, dann
+     die Grenzen, und DANN was zu tun ist. Die Einschraenkung steht vor der
+     Handlung, nicht dahinter -- sonst trifft sie genau die, die den Server
+     zum ersten Mal ausprobieren. Fast niemand haelt einen zweiten Rechner
+     zum Testen bereit; die VM IST der Normalfall. #}
+  <div class="abschnittskopf">
+    <h3 id="erste-schritte-grenzen">Wo sind die Grenzen?</h3>
+  </div>
+  <p class="muted">
+    Zwei Dinge, die man besser vorher weiß als mitten im ersten Versuch.
+  </p>
+
+  <p class="hint">
+    <strong>Zum Ausprobieren eine virtuelle Maschine zu nehmen liegt nahe —
+    und geht mit neuerem dnsmasq schief.</strong> Eine
+    <strong>VirtualBox-VM als Testclient</strong> bootet dann nicht. Sie
+    zeigt iPXE und bleibt mit <em>Connection timed out</em> stehen, während
+    der Server kerngesund aussieht.
+  </p>
+  <p class="muted">
+    <strong>Dein Server ist deswegen nicht kaputt.</strong> Echte Rechner
+    booten davon einwandfrei — nur diese eine Kombination geht nicht. Das
+    PXE-ROM von VirtualBox meldet sich als iPXE, kann aber kein HTTP, und
+    das neuere dnsmasq schickt es daraufhin in eine Verhandlung, die es
+    nicht zu Ende bringt.
+  </p>
+  <p class="muted">
+    <strong>Es hängt an der Fassung von dnsmasq, nicht am System.</strong>
+    Auf dem Server nachsehen mit <code>dnsmasq --version</code>:
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>2.91 oder älter</strong></td>
+        <td class="muted">Test mit einer VirtualBox-VM geht — nichts zu
+          beachten. Geprüft mit <strong>Debian 13.6</strong>. Ubuntu 24.04
+          liefert 2.90 und fällt damit ebenfalls hierher.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>2.92</strong></td>
+        <td class="muted">Zum Testen einen <strong>echten Rechner</strong>
+          per Netzwerkstart booten; eine VirtualBox-VM kommt nicht durch.
+          Geprüft mit <strong>Ubuntu 26.04</strong>.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted small">
+    Untersucht und belegt; eine Lösung ist in Arbeit. Im Betrieb ändert es
+    nichts — die Rechner, die dieser Server aufsetzen soll, sind echte
+    Maschinen.
+  </p>
+
+  <p class="hint">
+    <strong>Über WLAN startet kein Rechner vom Netz.</strong> Weder der
+    Server noch der bootende Rechner darf am Funk hängen: Ein PXE-Start
+    beginnt mit Rundrufen, die ein Access Point nicht so weiterreicht, wie
+    es dafür nötig wäre. Beide Seiten gehören ans Kabel — das steht auch
+    oben unter <a href="#erste-schritte-braucht">Was braucht er</a>.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="erste-schritte-zuerst">Was tut man zuerst?</h3>
+  </div>
+  {# Der Ablauf stand bis zum 26.08.2026 nirgends. Achtung, hier stand bis
+     zum 29.08.2026, er sei "die Reihenfolge der Reiter" und man gehe sie
+     "von links nach rechts" durch -- beides falsch, und die Tabelle
+     darunter widersprach dem auf demselben Bildschirm. Die Navigation ist
+     nach taeglichem Gebrauch sortiert (Server Health vorn), der Aufsetzweg
+     laeuft andersherum. Die Tabelle sagt, WAS in jedem Reiter
+     entsteht; wie es aussieht, zeigt seit dem 28.08.2026 "Der erste
+     Durchgang" -- dieselben fuenf Reiter, acht Schritte, mit
+     nachgebauten Ausschnitten der Oberflaeche. Beide bleiben: Diese
+     Tabelle ist in zwanzig Sekunden gelesen, das Kapitel dauert. #}
+   <p class="muted">
+    Die Navigation ist danach sortiert, was man im <em>Betrieb</em> am
+    häufigsten braucht — deshalb steht <a href="/">Server Health</a> vorn.
+    Beim <em>Aufsetzen</em> läuft der Weg genau andersherum, und jeder
+    Schritt liefert, was der nächste braucht. Danach bleibt man meist bei
+    <a href="/">Server Health</a> und <a href="/clients">Clients</a>.
+    Dass beides nicht dieselbe Richtung hat, ist so gewollt — aufgesetzt
+    wird einmal, benutzt wird jahrelang. Ob es dabei bleibt, entscheidet
+    sich mit einer künftigen Fassung.
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>1. <a href="/einrichtung">Einrichtung</a></strong></td>
+        <td class="muted">Die Adresse, unter der dieser Server erreichbar
+          ist. Sie steht nach der Installation schon — hier ändert man
+          sie, wenn der Server umzieht.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>2. <a href="/quellen">Quellen</a></strong></td>
+        <td class="muted">Betriebssysteme hereinholen — aus dem Katalog,
+          als hochgeladene ISO, über einen Link oder als eigener
+          Netz-Installer. Und ihnen Namen geben, unter denen sie im
+          Bootmenü stehen.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>3. <a href="/systeme">Systeme</a></strong></td>
+        <td class="muted">Freigeben, was tatsächlich angeboten werden
+          soll — im Bootmenü, in den Boot-Optionen der Clients, oder in
+          beidem. Was hier keinen Haken hat, taucht dort auch nicht auf:
+          nicht im Bootmenü, nicht in der Auswahl unter
+          <a href="/clients">Clients</a>.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>4. <a href="/clients">Clients</a></strong></td>
+        <td class="muted">Einem einzelnen Rechner sagen, was er beim
+          nächsten Netzwerkstart tun soll — und ihn auf Wunsch gleich
+          wecken.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>5. <a href="/">Server Health</a></strong></td>
+        <td class="muted">Der Blick zurück auf alles: Laufen die Dienste,
+          wer lädt gerade, wie viel Platz ist noch da, sind Adressen
+          tot geworden.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted small">
+    Man muss nicht bei 1 anfangen. Wer nur eine ISO hochladen und
+    freigeben will, braucht 2 und 3 — der Rest steht schon.
+  </p>
+  <p class="muted">
+    <a href="#rundgang">Diese fünf Reiter einmal durchgespielt, mit
+    Bildern &rarr;</a>
+  </p>
+
+  {# "Karte" steht 115x in dieser Hilfe und wurde nie erklaert. Kopf,
+     Inhalt und Fusszeile bleiben dagegen draussen: Das sind unsere
+     Begriffe aus docs/gestaltung.md, "Die Karte und ihre drei Bereiche"
+     -- eine Verabredung zum Reden
+     ueber Karten, die die Hilfe selbst nicht benutzt. Was hier steht, ist
+     nur das, was der Leser wirklich braucht: was eine Karte ist, wie er
+     ihre Erklaerung findet, und dass jede gleich gebaut ist. #}
+  <div class="abschnittskopf">
+    <h3 id="erste-schritte-karten">Wie man eine Karte liest</h3>
+  </div>
+  <p class="muted">
+    Jede Seite besteht aus <strong>Karten</strong> — abgesetzten Kästen mit
+    einer Überschrift. Eine Karte beantwortet eine Frage und hält alles
+    beisammen, was dazugehört.
+  </p>
+  <p class="muted">
+    Am rechten Rand jeder Überschrift steht ein <strong>?</strong>. Es führt
+    genau zu dem Abschnitt in dieser Hilfe, der diese eine Karte erklärt —
+    und von dort führt <em>Zur Karte →</em> wieder zurück. Man muss also
+    nichts suchen: Wo eine Frage aufkommt, steht der Weg zur Antwort daneben.
+  </p>
+  <p class="muted">
+    Jeder dieser Abschnitte ist gleich gebaut und beantwortet dieselben fünf
+    Fragen, immer in dieser Reihenfolge:
+  </p>
+  <table>
+    <tbody>
+      <tr><td class="nowrap"><strong>Wofür ist diese Karte da?</strong></td>
+        <td class="muted">Die eine Frage, die sie beantwortet.</td></tr>
+      <tr><td class="nowrap"><strong>Was steht darin?</strong></td>
+        <td class="muted">Jede Angabe einzeln, in der Reihenfolge der Karte.</td></tr>
+      <tr><td class="nowrap"><strong>Was kann man hier tun?</strong></td>
+        <td class="muted">Die Handgriffe — oft keine, dann sagt der Abschnitt das.</td></tr>
+      <tr><td class="nowrap"><strong>Was passiert dabei — und was nicht?</strong></td>
+        <td class="muted">Wirkung und Grenze: was ein Klick auslöst, und was er ausdrücklich nicht tut.</td></tr>
+      <tr><td class="nowrap"><strong>Was, wenn nichts dasteht?</strong></td>
+        <td class="muted">Eine leere Karte ist meistens eine Antwort und kein Fehler.</td></tr>
+    </tbody>
+  </table>
+  <p class="muted small">
+    Die letzte ist die, die man am häufigsten braucht — und der Grund, warum
+    keine Karte einen Text anzeigt, wenn sie nichts zu melden hat. Was das im
+    Einzelfall heißt, steht dort.
+  </p>
+
+  {# Die Seitenkarten aus base.html. Sie haben bewusst keine eigene
+     Kartenhilfe -- der Weg fuehrt zu der Karte, die den Befund behebt.
+     Erklaert werden sie deshalb hier, einmal fuer alle. Siehe
+     webui/befunde.py und docs/gestaltung.md, "Die Karte und ihre drei
+     Bereiche". #}
+  <div class="abschnittskopf">
+    <h3 id="erste-schritte-befunde">Farbige Karten über der Seite</h3>
+  </div>
+  <p class="muted">
+    Manches betrifft nicht eine einzelne Karte, sondern den Server im
+    Ganzen. Solche Befunde stehen deshalb <strong>über jeder Seite</strong>,
+    gleich unter den Reitern — man soll sie nicht suchen müssen und nicht
+    auf den richtigen Reiter geraten müssen. Sichtbar ist nur die
+    Überschrift; was dahintersteckt und was zu tun ist, kommt beim
+    Aufklappen.
+  </p>
+  <p class="muted">Die Farbe sagt, <strong>wann</strong> etwas zu tun ist:</p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>Rot</strong></td>
+        <td class="muted">Der Server tut seine Arbeit gerade nicht —
+          <em>jetzt</em>. Zum Beispiel, wenn er unter einer anderen Adresse
+          läuft als der eingerichteten: Dann laufen zwar alle Dienste, aber
+          kein Rechner findet mehr seine Dateien.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Gelb</strong></td>
+        <td class="muted">Etwas ist eingeschränkt, oder es läuft darauf zu —
+          <em>bald</em>. Zum Beispiel, wenn NFS nicht läuft: Dann starten
+          die großen Live-Systeme nicht, alles andere schon. Oder wenn die
+          Platte fast voll ist. Zeit genug, es in Ruhe zu erledigen.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Blau</strong></td>
+        <td class="muted">Wissenswert, mehr nicht — niemand muss deswegen
+          aufstehen.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted small">
+    Steht dort nichts, ist nichts zu melden. Das ist der Normalfall, und er
+    sieht aus wie eine Seite ohne diese Karten.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="erste-schritte-dabei">Was passiert dabei — und was nicht?</h3>
+  </div>
+  <p class="muted">
+    <strong>Was passiert:</strong> Der Rechner fragt beim Einschalten nach
+    einer Adresse, bekommt vom Router die Adresse und von diesem Server den
+    Hinweis, wo sein Startsystem liegt, lädt einen kleinen Bootloader und
+    darüber Kernel und Initrd. Der Ablauf in acht Schritten steht unter
+    <a href="#nuetzliches-ablauf">Wie ein Netzwerkstart abläuft</a> — man
+    braucht ihn nicht zum Bedienen, aber er sagt bei einer Störung sofort,
+    welcher Schritt hakt.
+  </p>
+  <p class="muted"><strong>Was nicht passiert:</strong></p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>Keine Anmeldung</strong></td>
+        <td class="muted">Diese Oberfläche hat kein Passwort. Sie ist für das
+          eigene Netz gedacht und darf nicht ins Internet gestellt werden —
+          wer sie erreicht, kann Rechner neu aufsetzen. Für den heutigen
+          Stand ist das eine bewusste Entscheidung; in einer künftigen
+          Fassung kann sie anders ausfallen.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Keine IP-Adressen</strong></td>
+        <td class="muted">Die vergibt weiterhin der Router. Dieser Server
+          ergänzt dessen Antwort nur um den Hinweis, wo das Startsystem
+          liegt. Ist er aus, merkt das Netz nichts davon.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Nichts von allein</strong></td>
+        <td class="muted">Kein Rechner bekommt ein Menü, solange er nicht
+          ausdrücklich freigegeben ist. Siehe <a href="#clients">Clients</a>.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Kein Secure Boot</strong></td>
+        <td class="muted">iPXE ist nicht signiert. An Rechnern mit
+          eingeschaltetem Secure Boot muss es im BIOS/UEFI abgeschaltet
+          werden, sonst verweigert die Firmware den Start.</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="abschnittskopf">
+    <h3 id="erste-schritte-nichts">Was, wenn nichts passiert?</h3>
+  </div>
+  <p class="muted">
+    Der häufigste Fall überhaupt, und meistens ist er in Ordnung: Ein Rechner
+    startet vom Netz, bekommt aber <strong>kein Menü</strong>. Dann fehlt der
+    Haken unter <a href="/clients">Clients</a> — dieser Server bietet von sich
+    aus niemandem etwas an.
+  </p>
+  <p class="muted">
+    Kommt er dagegen <strong>gar nicht so weit</strong>, geht es der Reihe
+    nach: Steht der Rechner überhaupt in der Liste unter
+    <a href="/clients">Clients</a>? Wenn nein, hat seine Anfrage den Server
+    nie erreicht — dann liegt es an Kabel, PXE oder Secure Boot, nicht an der
+    Oberfläche.
+  </p>
+  <p class="hint">
+    <strong>Der eine Ort, an dem es steht:</strong> das
+    <a href="/protokoll?einheit=dnsmasq">Protokoll von dnsmasq</a>. Dort steht
+    jede Anfrage eines bootenden Rechners mit seiner MAC-Adresse. Kommt dort
+    nichts an, während der Rechner startet, ist die Frage beantwortet: Es
+    liegt vor dem Server, nicht in ihm.
+  </p>
+  <p class="muted">
+    <strong>Ging es gestern noch?</strong> Dann sieh zuerst auf
+    <a href="/">Server Health</a> nach, ob dort ganz oben ein Befund zur
+    Adresse steht. Hat der Host eine andere Adresse bekommen als die
+    eingerichtete, laufen alle Dienste weiter und trotzdem findet kein
+    Rechner mehr seine Dateien. Das ist der einzige Ausfall, bei dem jede
+    Karte Ordnung meldet und nichts geht.
+  </p>
+  <p class="muted small">
+    Zu einzelnen Symptomen — kein Menü, Server nicht gefunden, Eintrag fehlt,
+    Installation gescheitert — steht der jeweilige Griff unter
+    <a href="#faq">Häufige Fragen</a>.
+  </p>
+</section>
+
+{# Der Rundgang. Nachgebaute Ausschnitte der Oberflaeche, kein
+   Bildschirmfoto: Sie benutzen dasselbe Stylesheet wie die echten Karten
+   und ziehen deshalb mit, wenn sich Form, Farbe oder Knopfgroesse aendert.
+   Ein Bild koennte das nicht, und niemand wuerde merken, dass es veraltet
+   ist -- Markus' Idee am 28.08.2026.
+
+   Es sind die ECHTEN Elemente, nur stumm: <input readonly>, <button
+   type="button"> ohne Formular, und ".rundgang-bild" nimmt dem Ganzen per
+   pointer-events die Bedienbarkeit. Sie sehen deshalb nicht aehnlich aus
+   wie ihre Vorbilder, sondern gleich, und brauchen keine eigenen Regeln.
+   Kein "disabled" und kein "inert": das eine blasst die Darstellung ab,
+   das andere nimmt sie dem Screenreader ganz weg -- und die Werte darin
+   sind der Inhalt dieses Kapitels.
+
+   JEDER Schritt beginnt mit <p class="rundgang-ort"> -- dem vollstaendigen
+   Weg von der Reiterleiste bis zu der Stelle, an der der Ausschnitt steht.
+   Auch wenn zwei Schritte am selben Ort spielen: Wer ueber einen Anker
+   mitten im Kapitel einsteigt, soll nicht nach oben scrollen muessen.
+
+   Die Gattungswoerter (Reiter/Karte/Abschnitt/Zeile) stehen mit, nicht nur
+   die Namen. In den Quellen heisst nur der aeussere Kasten Karte;
+   "Adressen" darin ist ein Abschnitt, und die beiden sehen einander nicht
+   aehnlich -- Adressen enthaelt Quellenkarten mit Pruefen und Holen, "Was
+   im Katalog steht" die Eintragskarten mit Name und Menue-Info.
+
+   Die Werte sind abgeschrieben, nicht erfunden: menue_info, category und
+   slug stehen in catalog.yaml, die Namen der Shell-Variablen und die
+   Adressen in setup/sync-images.sh, die Menuezeile baut menuezeile() in
+   app.py (45 Zeichen, dann zwei Leerzeichen und die Info in Klammern).
+   Wer dieses Kapitel aendert, sehe dort nach. #}
+<section id="rundgang" class="kapitel">
+  <header class="kapitelkopf">
+    <h2>Der erste Durchgang</h2>
+    <a class="zurueck" href="/hilfe">Zum Register &rarr;</a>
+  </header>
+  <p class="muted">
+    Einmal der ganze Weg: von einem frisch aufgesetzten Server bis zu einem
+    Rechner, der davon startet. Acht Schritte in derselben Reihenfolge wie
+    unter <a href="#erste-schritte-zuerst">Was tut man zuerst?</a> &mdash;
+    nicht in der Reihenfolge der Navigation, die ist nach dem täglichen
+    Gebrauch sortiert. Hier nur mit
+    dem Ausschnitt der Oberfläche daneben, um den es jeweils geht. Darüber
+    steht der Weg dorthin.
+  </p>
+  <p class="muted small">
+    Die Ausschnitte sind nachgebaut, keine Bildschirmfotos: Sie benutzen
+    dasselbe Stylesheet wie die Oberfläche und sehen deshalb immer so aus
+    wie sie. Bedienen lässt sich hier nichts.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="rundgang-1">Schritt 1 &mdash; nachsehen, dass die Adresse stimmt</h3>
+  </div>
+  <p class="rundgang-ort">
+    <span>Reiter <a href="/einrichtung">Einrichtung</a></span>
+    <span>Karte <b>Ersteinrichtung</b></span>
+  </p>
+  <p class="muted">
+    Der erste Reiter ist der einzige, in dem beim ersten Durchgang meist
+    <strong>nichts zu tun ist</strong> &mdash; und trotzdem der, bei dem man
+    anfängt. Denn hier steht die eine Voraussetzung, an der alles andere
+    hängt: <strong>die Adresse dieses Servers.</strong>
+  </p>
+  <p class="muted">
+    Sie ist keine Einstellung, die man hier vornimmt. Sie steht seit
+    <code>install.sh</code> fest, und diese Karte liest sie nur ab. Der
+    Klick auf <em>IP-Adresse übernehmen</em> zeigt, was der Host wirklich
+    hat:
+  </p>
+
+  <div class="rundgang-bild">
+    <div class="kartenkopf">
+      <h2>Ersteinrichtung</h2>
+      <span class="kartenhilfe">?</span>
+    </div>
+    <h3>IP-Adresse übernehmen</h3>
+    <table class="eng">
+      <tbody>
+        <tr><td class="nowrap muted">Netzwerkkarte</td>
+          <td><code>enp0s31f6</code></td></tr>
+        <tr><td class="nowrap muted">IP-Adresse</td>
+          <td><code>192.168.178.30</code></td></tr>
+        <tr><td class="nowrap muted">Netzmaske</td>
+          <td><code>255.255.255.0</code> <span class="muted small">(/24)</span></td></tr>
+        <tr><td class="nowrap muted">Gateway</td>
+          <td><code>192.168.178.1</code></td></tr>
+        <tr><td class="nowrap muted">Herkunft</td>
+          <td class="muted">vom Router vergeben &mdash; in Ordnung, solange
+            sie diesem Server reserviert ist</td></tr>
+      </tbody>
+    </table>
+    <p class="muted">
+      Eingerichtet und tatsächlich sind dasselbe &mdash; es ist gerade nichts
+      nachzuziehen. Nach einer Änderung am Host auf dem Server ausführen:
+    </p>
+    <div class="befehlszeile">
+<pre class="ipxe">sudo /opt/pxe-setup/install.sh</pre>
+      <span class="kopierknopf">kopieren</span>
+    </div>
+  </div>
+
+  <p class="muted">
+    <strong>Steht dort dasselbe zweimal, bist du hier fertig.</strong> Wenn
+    nicht &mdash; wenn neben der Adresse <em>weicht ab</em> steht &mdash;, ist der
+    Server umgezogen, und der Befehl darunter zieht alle vier Stellen nach:
+    dnsmasq, nginx, <code>pxeweb.env</code> und den NFS-Export. Ausgeführt
+    wird er an der Konsole, nicht hier: Der Dienst darf
+    <code>/etc</code> nicht beschreiben.
+  </p>
+  <p class="hint">
+    <strong>Auf <em>Herkunft</em> lohnt ein Blick.</strong> Eine Adresse vom
+    Router ist in Ordnung &mdash; aber nur, wenn sie diesem Server dort
+    <strong>reserviert</strong> ist. Eine gewöhnliche DHCP-Lease kann beim
+    nächsten Mal anders ausfallen, und dann zeigen alle Boot-Skripte ins
+    Leere. Das ist der häufigste Grund dafür, dass ein Server, der wochenlang
+    lief, plötzlich niemanden mehr bootet.
+  </p>
+  <p class="muted small">
+    Auf derselben Karte steht auch <em>Werkseinstellung</em>. Der Knopf
+    gehört nicht in einen ersten Durchgang: Er setzt den Server auf den
+    Auslieferungszustand zurück &mdash; ohne Abbilder, ohne angemeldete
+    Rechner. Gedacht ist er für einen Server, der weitergegeben wird.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="rundgang-2">Schritt 2 &mdash; ein Live-System holen</h3>
+  </div>
+  <p class="rundgang-ort">
+    <span>Reiter <a href="/quellen">Quellen</a></span>
+    <span>Karte <b>Katalog</b></span>
+    <span>Abschnitt <b>Adressen</b></span>
+    <span>Zwischenzeile <b>Installationen</b></span>
+  </p>
+  <p class="muted">
+    Der Server bringt eine Auswahl bekannter Systeme mit &mdash; aber keine
+    Dateien. <strong>Ausgeliefert wird die Auswahl, nicht der
+    Inhalt.</strong> Jede Quelle steht hier als eigene Klappe; aufgeklappt
+    sieht Linux Mint so aus:
+  </p>
+
+  <div class="rundgang-bild">
+    <details class="quellenkarte" open>
+      <summary class="quellenkopf">
+        <strong>Linux Mint</strong>
+        <code class="muted small">MINT_MIRROR</code>
+        <span class="muted small">noch nicht geprüft</span>
+      </summary>
+      <div class="row spaced">
+        <button type="button" tabindex="-1">Prüfen</button>
+      </div>
+      <div class="ausgabe">
+        <div class="row">
+          <input type="text" class="ausgabeadresse" readonly tabindex="-1"
+                 value="https://mirrors.edge.kernel.org/linuxmint/stable">
+        </div>
+        <div class="row ausgabeknoepfe">
+          <button type="button" class="ghost" tabindex="-1">Speichern</button>
+          <button type="button" class="ghost holen" tabindex="-1">Holen</button>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <p class="muted">
+    <strong>Drei Knöpfe, drei verschiedene Dinge.</strong>
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>Prüfen</strong></td>
+        <td class="muted">Sieht beim Anbieter nach, ob die Adresse noch
+          antwortet. Danach steht in der Kopfzeile eine Ampel mit dem Datum
+          der Prüfung &mdash; <em>gültig</em> oder <em>prüfen</em>.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Speichern</strong></td>
+        <td class="muted">Merkt sich eine <em>geänderte</em> Adresse. Beim
+          ersten Durchgang braucht man ihn nicht: Die ausgelieferte Adresse
+          steht schon da.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Holen</strong></td>
+        <td class="muted">Lädt herunter. Das ist der Klick, der Zeit
+          kostet &mdash; bei Mint rund 3&nbsp;GB. Der Fortschritt steht danach
+          oben in der Karte, und die Übertragung läuft weiter, wenn du die
+          Seite verlässt.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted small">
+    <em>Noch nicht geprüft</em> ist kein Fehler, sondern der
+    Auslieferungszustand: Ein frisch aufgesetzter Server hat noch bei
+    keinem Anbieter nachgesehen.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="rundgang-3">Schritt 3 &mdash; einen Netz-Installer holen</h3>
+  </div>
+  <p class="rundgang-ort">
+    <span>Reiter <a href="/quellen">Quellen</a></span>
+    <span>Karte <b>Katalog</b></span>
+    <span>Abschnitt <b>Adressen</b></span>
+    <span>Zwischenzeile <b>Installationen</b></span>
+  </p>
+  <p class="muted">
+    Derselbe Weg, eine Klappe weiter oben. Debian sieht anders aus als
+    Mint, und der Unterschied ist der wichtigste in diesem Kapitel:
+    <strong>Debian gibt es in mehreren Ausgaben.</strong> Welche es gerade
+    gibt, weiß der Anbieter besser als eine mitgelieferte Datei &mdash;
+    deshalb steht hier zunächst keine:
+  </p>
+
+  <div class="rundgang-bild">
+    <details class="quellenkarte" open>
+      <summary class="quellenkopf">
+        <strong>Debian</strong>
+        <code class="muted small">DEBIAN_URL</code>
+        <span class="muted small">noch nicht geprüft</span>
+      </summary>
+      <div class="row spaced">
+        <button type="button" tabindex="-1">Prüfen</button>
+        <button type="button" class="ghost rechts" tabindex="-1">Neue Version</button>
+      </div>
+      <p class="muted small">
+        Noch keine Ausgabe eingetragen &mdash; dieses System steht in keinem
+        Bootmenü. <em>Prüfen</em> sieht beim Anbieter nach und trägt die
+        neueste ein, samt Adresse; <em>Neue Version</em> ist der Weg von
+        Hand.
+      </p>
+    </details>
+  </div>
+
+  <p class="muted">
+    Ein Klick auf <em>Prüfen</em> &mdash; und die Karte hat eine Zeile mehr.
+    Das ist die Ausgabe, die der Anbieter als neueste meldet:
+  </p>
+
+  <div class="rundgang-bild">
+    <details class="quellenkarte" open>
+      <summary class="quellenkopf">
+        <strong>Debian</strong>
+        <code class="muted small">DEBIAN_URL</code>
+        <span class="badge ok">gültig</span>
+        <span class="muted small">Adresse antwortet · vor 1 Minute</span>
+      </summary>
+      <div class="row spaced">
+        <button type="button" tabindex="-1">Prüfen</button>
+        <button type="button" class="ghost rechts" tabindex="-1">Neue Version</button>
+      </div>
+      <div class="ausgabe">
+        <div class="row">
+          <input type="text" class="ausgabenummer" size="7" value="trixie"
+                 readonly tabindex="-1">
+          <input type="text" class="ausgabeadresse" readonly tabindex="-1"
+                 value="https://deb.debian.org/debian/dists/trixie/main/installer-amd64/current/images/netboot/debian-installer/amd64">
+        </div>
+        <div class="row ausgabeknoepfe">
+          <button type="button" class="ghost" tabindex="-1">Speichern</button>
+          <button type="button" class="ghost holen" tabindex="-1">Holen</button>
+          <span class="badge ok">Debian 13.6</span>
+          <button type="button" class="danger rechts" tabindex="-1">Version entfernen</button>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <p class="muted">
+    <strong>Warum steht dort <code>trixie</code> und nicht 13.6?</strong>
+    Weil Debian seine Pfade nach dem Codenamen benennt:
+    <code>dists/trixie/</code> antwortet, <code>dists/13.6/</code> nicht.
+    Damit die Nummer trotzdem zu sehen ist, trägt das Prüfen sie als
+    Abzeichen daneben ein &mdash; <em>Debian 13.6</em>, Debians eigene
+    Auskunft.
+  </p>
+  <p class="muted">
+    Mehrere Ausgaben dürfen nebeneinander liegen. Solange Rechner mit einer
+    älteren Version im Betrieb sind, will man ihr Installationsmedium
+    behalten; jede bekommt ihr eigenes Verzeichnis und ihren eigenen
+    Menüpunkt. <em>Holen</em> lädt deshalb <strong>nur diese eine
+    Ausgabe</strong>.
+  </p>
+  <p class="hint">
+    <strong>57&nbsp;MB statt 3&nbsp;GB.</strong> Ein Netz-Installer bringt nur
+    Kernel und Startdatei mit und zieht seine Pakete während der
+    Installation aus dem Internet. Das macht das Holen kurz &mdash; und die
+    Installation abhängig davon, dass der <em>bootende Rechner</em> ins
+    Internet kommt. Genau das steht später im Bootmenü hinter dem Namen:
+    <em>braucht Internet am Client</em>.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="rundgang-4">Schritt 4 &mdash; nachsehen, ob es geklappt hat</h3>
+  </div>
+  <p class="rundgang-ort">
+    <span>Reiter <a href="/quellen">Quellen</a></span>
+    <span>Karte <b>Katalog</b></span>
+    <span>Abschnitt <b>Was im Katalog steht</b></span>
+    <span>Zwischenzeile <b>Offline-Installationen</b></span>
+  </p>
+  <p class="muted">
+    Dieselbe Karte, ein Abschnitt weiter oben. <em>Adressen</em> ist die
+    Werkbank &mdash; dort wird geprüft und geholt. <em>Was im Katalog
+    steht</em> ist das Regal: eine Karte je Eintrag, mit dem Zustand neben
+    dem Namen. Hierher kommt man, um zu sehen, was daraus geworden ist:
+  </p>
+
+  <div class="rundgang-bild">
+    <details class="eintragskarte" open>
+      <summary>
+        <div class="bezeichnung">
+          <input type="text" class="name" value="Linux Mint" readonly tabindex="-1">
+          <input type="text" class="version" value="" readonly tabindex="-1">
+        </div>
+        <span class="badge ok">bereit</span>
+      </summary>
+      <dl class="angaben">
+        <div><dt>Menü-Info</dt>
+          <dd class="weit"><input type="text" class="menueinfo"
+              value="Live-System vom Server" readonly tabindex="-1"></dd></div>
+        <div><dt>Wofür</dt>
+          <dd class="weit">Ein fertig eingerichteter Arbeitsplatz auf
+            Ubuntu-Grundlage, gedacht für Leute, die von Windows
+            kommen.</dd></div>
+        <div><dt>Kennung</dt><dd><code>mint-cinnamon</code></dd></div>
+      </dl>
+    </details>
+  </div>
+
+  <p class="muted">
+    <strong>Zwei Felder, zwei Leser.</strong> <em>Name</em> und
+    <em>Menü-Info</em> sind die einzigen beiden Angaben, die der bootende
+    Rechner je zu sehen bekommt &mdash; sie bilden zusammen seine Menüzeile.
+    Der Text unter <em>Wofür</em> steht nur hier: Er hilft beim Auswählen,
+    nicht beim Booten. Geändert wird beides ausschließlich unter Quellen;
+    <a href="/systeme">Systeme</a> zeigt nur.
+  </p>
+  <p class="muted small">
+    Das Versionsfeld ist leer, und das ist richtig: Mint hat nur eine
+    Ausgabe. Bei Debian stünde dort <code>trixie</code>.
+  </p>
+  <p class="hint">
+    <strong>Beide Systeme sind da &mdash; und trotzdem bietet der Server sie
+    niemandem an.</strong> Das ist Absicht: Was fertig geworden ist, stellt
+    sich nicht von selbst ins Bootmenü. Freigegeben wird unter
+    <a href="/systeme">Systeme</a>, und das ist der nächste Schritt.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="rundgang-5">Schritt 5 &mdash; freigeben</h3>
+  </div>
+  <p class="rundgang-ort">
+    <span>Reiter <a href="/systeme">Systeme</a></span>
+    <span>Karte <b>Offline-Installationen</b></span>
+    <span>Zeile <b>Linux Mint</b></span>
+  </p>
+  <p class="muted">
+    Der Reiter wechselt. Unter <a href="/systeme">Systeme</a> steht jede
+    Gruppe als eigene Karte, darin eine Zeile je Eintrag &mdash; und in der
+    Mitte die beiden Haken, um die es hier geht:
+  </p>
+
+  <div class="rundgang-bild">
+    <table class="eng systemliste">
+      <thead>
+        <tr>
+          <th>Eintrag</th>
+          <th class="sichtbarspalte">sichtbar in</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="bezeichnung"><strong>Linux Mint</strong></div>
+            <div class="muted erklaerung">Live-System vom Server</div>
+            <div class="kennung"><code>mint-cinnamon</code></div>
+          </td>
+          <td class="sichtbarspalte">
+            <label><input type="checkbox" checked tabindex="-1"> BootMenü</label>
+            <label><input type="checkbox" tabindex="-1"> Boot-Optionen</label>
+          </td>
+          <td><span class="badge ok">bereit</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="bezeichnung"><strong>Debian</strong>
+              <span class="version">trixie</span></div>
+            <div class="muted erklaerung">braucht Internet am Client</div>
+            <div class="kennung"><code>debian</code></div>
+          </td>
+          <td class="sichtbarspalte">
+            <label><input type="checkbox" checked tabindex="-1"> BootMenü</label>
+            <label><input type="checkbox" checked tabindex="-1"> Boot-Optionen</label>
+          </td>
+          <td><span class="badge ok">bereit</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="muted">
+    <strong>Die zwei Haken sind zwei verschiedene Fragen</strong> &mdash; und
+    das ist die Stelle, an der die meisten stutzen:
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>BootMenü</strong></td>
+        <td class="muted">Der Eintrag steht im Menü, das <strong>jeder
+          freigegebene Rechner</strong> zu sehen bekommt. Wer davor sitzt,
+          wählt selbst aus.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Boot-Optionen</strong></td>
+        <td class="muted">Der Eintrag steht unter
+          <a href="/clients">Clients</a> in der Auswahlliste zur Verfügung,
+          mit der du <strong>einem einzelnen Rechner</strong> etwas
+          vorgibst. Ohne diesen Haken taucht er dort nicht auf.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted small">
+    Im Beispiel oben ist Debian für beides freigegeben, Mint nur fürs
+    Menü: Debian lässt sich damit einem Rechner vorgeben, Mint nur von Hand
+    am Bildschirm auswählen. Einem Eintrag, dem die Dateien fehlen, fehlt
+    auch das Kästchen &mdash; es ließe sich anhaken, ohne dass etwas
+    geschieht.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="rundgang-6">Schritt 6 &mdash; nachsehen, was entstanden ist</h3>
+  </div>
+  <p class="rundgang-ort">
+    <span>Reiter <a href="/systeme">Systeme</a></span>
+    <span>Karte <b>PXE BootMenü - Vorschau</b></span>
+  </p>
+  <p class="muted">
+    Weiter unten auf derselben Seite steht die Antwort auf die Frage, mit
+    der man hierhergekommen ist: <strong>Was bekommt der Rechner zu
+    sehen?</strong> Nicht beschrieben, sondern gezeigt &mdash; dieselbe
+    Schrift, dieselbe Breite wie am bootenden Gerät:
+  </p>
+
+  <div class="rundgang-bild">
+    <div class="row">
+      <span class="knopf gewaehlt">UEFI</span>
+      <span class="knopf">BIOS</span>
+    </div>
+<pre class="ipxe">exmig - MARLEI Boot  --  aa:bb:cc:dd:ee:ff  (efi)
+
+   Offline-Installationen
+      Linux Mint                                     (Live-System vom Server)
+   Online-Installationen
+      Debian trixie                                  (braucht Internet am Client)
+   System
+<b class="gewaehlt">      Von der lokalen Festplatte starten</b>
+      iPXE-Eingabeaufforderung
+      Neu starten
+      Ausschalten
+   Startet in 30 s von selbst: local</pre>
+    <p class="kartenfuss">Aktualisierung bei Neuladen des Browsers</p>
+  </div>
+
+  <p class="muted">
+    Jetzt zahlen sich die beiden Felder aus Schritt 4 aus: Links steht der
+    <em>Name</em>, rechts in Klammern die <em>Menü-Info</em>. Was nicht auf
+    die Zeile passt, schneidet der bootende Rechner stillschweigend ab
+    &mdash; die Vorschau zeigt den Überhang deshalb blass, statt einen
+    Rollbalken anzubieten, den es dort nicht gibt.
+  </p>
+  <p class="hint">
+    <strong>Hervorgehoben steht, was von selbst geschieht.</strong> Wählt
+    niemand etwas aus, startet der Rechner nach 30 Sekunden von seiner
+    eigenen Festplatte. Das ist die sichere Vorgabe: Ein Rechner, der
+    versehentlich ins Netz bootet, installiert sich nicht selbst.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="rundgang-7">Schritt 7 &mdash; einem Rechner etwas vorgeben</h3>
+  </div>
+  <p class="rundgang-ort">
+    <span>Reiter <a href="/clients">Clients</a></span>
+    <span>Karte <b>Registrierte Clients</b></span>
+  </p>
+  <p class="muted">
+    Der letzte Reiter. Hier steht jeder Rechner, der schon einmal beim
+    Server angefragt hat &mdash; <strong>eingetragen hat er sich
+    selbst</strong>, bei seinem ersten Netzwerkstart. Eine Zeile sieht so
+    aus:
+  </p>
+
+  <div class="rundgang-bild">
+    <table class="eng">
+      <thead>
+        <tr>
+          <th>Client</th>
+          <th>Zuletzt gesehen</th>
+          <th>
+            <div class="sichernspalte">
+              <span>Boot-Optionen</span>
+              <button type="button" class="sichern" tabindex="-1">Speichern</button>
+            </div>
+          </th>
+          <th class="wolspalte">
+            <button type="button" tabindex="-1">WOL</button>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="namensfeld">
+              <input type="text" size="16" value="Werkstatt-PC" readonly tabindex="-1">
+            </div>
+            <code>a4:bb:6d:11:22:33</code>
+            <div class="muted small">OptiPlex 7040</div>
+          </td>
+          <td class="nowrap">
+            <span class="gesehen">vor 4 Minuten</span>
+            <div class="muted small herkunft">192.168.178.42 · efi</div>
+          </td>
+          <td>
+            <div class="row">
+              <select tabindex="-1">
+                <option>Debian</option>
+              </select>
+              <label class="inline">
+                <input type="checkbox" checked tabindex="-1"> PXE Boot aktiv
+              </label>
+            </div>
+          </td>
+          <td class="wolspalte">
+            <input type="checkbox" tabindex="-1">
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="muted">
+    <strong>Der Haken ist der Schalter, die Auswahl daneben die
+    Vorgabe.</strong> Ohne <em>PXE Boot aktiv</em> startet der Rechner von
+    seiner Platte, ganz gleich, was in der Auswahl steht. Mit Haken bootet
+    er über das Netz &mdash; und was dann geschieht, sagt die Auswahl:
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>&mdash; Menü anzeigen &mdash;</strong></td>
+        <td class="muted">Er bekommt das Menü aus Schritt 6, und jemand
+          wählt davor aus.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>ein Eintrag</strong></td>
+        <td class="muted">Er startet ohne Rückfrage genau diesen. Zur
+          Auswahl steht nur, was unter Systeme den Haken bei
+          <em>Boot-Optionen</em> hat &mdash; deshalb hier Debian und nicht
+          Mint.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted">
+    <em>Speichern</em> übernimmt alle Änderungen der Liste auf einmal.
+    <em>WOL</em> schaltet die angekreuzten Rechner per Wake-on-LAN ein
+    &mdash; nützlich genau hier: Haken setzen, Vorgabe wählen, speichern,
+    einschalten. Der Rechner beginnt zu installieren, ohne dass jemand im
+    Raum ist.
+  </p>
+
+  <h4 id="rundgang-7-neu">Und wenn die Liste leer ist?</h4>
+  <p class="muted">
+    Dann steckt in dem Ablauf oben ein Henne-Ei-Problem. Ein Rechner trägt
+    sich <strong>selbst</strong> ein &mdash; aber erst bei seinem ersten
+    Netzwerkstart. Wer ihm etwas vorgeben will, <em>bevor</em> er je
+    gebootet hat, findet keine Zeile, in der er das tun könnte. Und wecken
+    kann man nur, wen der Server kennt.
+  </p>
+  <p class="muted">
+    Dafür steht auf derselben Seite eine zweite Karte, weiter unten:
+  </p>
+  <p class="rundgang-ort">
+    <span>Reiter <a href="/clients">Clients</a></span>
+    <span>Karte <b>Manuelle Registrierung</b></span>
+  </p>
+  <div class="rundgang-bild">
+    <div class="kartenkopf">
+      <h2>Manuelle Registrierung</h2>
+      <span class="kartenhilfe">?</span>
+    </div>
+    <div class="row spaced">
+      <input type="text" placeholder="aa:bb:cc:dd:ee:ff" readonly tabindex="-1">
+      <input type="text" placeholder="Name (optional)" readonly tabindex="-1">
+      <button type="button" tabindex="-1">Client registrieren</button>
+    </div>
+    <p class="kartenfuss">
+      Hier können Rechner ohne Bootvorgang als Clients registriert werden.
+    </p>
+  </div>
+
+  <p class="muted">
+    <strong>Ein Feld genügt: die MAC-Adresse.</strong> Sie ist die Kennung,
+    unter der dieser Server einen Rechner führt &mdash; und die einzige
+    Angabe, die er beim Netzwerkstart überhaupt zu sehen bekommt. Der Name
+    ist freiwillig und nur für dich; nachtragen lässt er sich jederzeit in
+    der Liste darüber.
+  </p>
+  <p class="muted">
+    Geschrieben wird sie in <strong>sechs Paaren, getrennt durch
+    Doppelpunkt oder Bindestrich</strong>: <code>aa:bb:cc:dd:ee:ff</code>
+    oder <code>aa-bb-cc-dd-ee-ff</code>. Zwölf Zeichen am Stück oder die
+    Punktschreibweise mancher Hersteller nimmt der Server nicht an. Zu
+    finden ist sie im BIOS des Rechners, auf einem Aufkleber am Gehäuse
+    oder am Router in der Liste der bekannten Geräte.
+  </p>
+  <p class="hint">
+    <strong>Danach ist alles wie oben.</strong> Der neu angelegte Rechner
+    steht sofort in der Liste &mdash; mit <em>zuletzt gesehen: noch nie</em>,
+    aber mit Auswahl, Haken und WOL-Kästchen. Genau das macht den Weg
+    ohne Anwesenheit vollständig: Adresse eintragen, Vorgabe wählen, Haken
+    setzen, wecken. Der Rechner war nie an diesem Server, und trotzdem
+    installiert er.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="rundgang-8">Schritt 8 &mdash; der Blick zurück</h3>
+  </div>
+  <p class="rundgang-ort">
+    <span>Reiter <a href="/">Server Health</a></span>
+    <span>Karte <b>Dienste</b></span>
+  </p>
+  <p class="muted">
+    Der Rechner startet, zieht seine Dateien vom Server und installiert.
+    Zwei Dinge geschehen dabei, ohne dass jemand etwas tut:
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>Der Haken fällt weg</strong></td>
+        <td class="muted">Nach dem Netzwerkstart setzt der Server die Zeile
+          zurück: <em>PXE Boot aktiv</em> aus, Auswahl wieder auf
+          <em>Menü anzeigen</em>. Sonst installierte sich der Rechner beim
+          nächsten Einschalten ein zweites Mal &mdash; über die frische
+          Installation hinweg.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Die Zeile füllt sich</strong></td>
+        <td class="muted"><em>Zuletzt gesehen</em>, Adresse und Architektur
+          stehen danach in der Liste. Wer wissen will, ob ein Rechner
+          überhaupt beim Server angekommen ist, sieht hier nach &mdash; und
+          im <a href="/history">Verlauf</a>.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted">
+    Und dann kommt man hierher &mdash; auf die Startseite. Sie ist der fünfte
+    und letzte Reiter des Ablaufs und beantwortet die Frage, die man beim
+    Ankommen am Ende stellt: <strong>Hat alles funktioniert?</strong> Die
+    Antwort fängt bei den Diensten an &mdash; vier Stück, vier Ampeln:
+  </p>
+
+  <div class="rundgang-bild">
+    <div class="kartenkopf">
+      <h2>Dienste</h2>
+      <span class="kartenhilfe">?</span>
+    </div>
+    <table class="schmal">
+      <tbody>
+        <tr>
+          <td class="nowrap"><span class="ampel an"></span> <strong>nginx</strong></td>
+          <td><span class="badge ok">läuft</span></td>
+          <td class="muted small">liefert Kernel, Initrd und die Weboberfläche aus</td>
+          <td class="nowrap"><a href="/protokoll?einheit=nginx">Protokoll</a></td>
+        </tr>
+        <tr>
+          <td class="nowrap"><span class="ampel an"></span> <strong>dnsmasq</strong></td>
+          <td><span class="badge ok">läuft</span></td>
+          <td class="muted small">beantwortet PXE-Anfragen (proxyDHCP) und liefert iPXE per TFTP</td>
+          <td class="nowrap"><a href="/protokoll?einheit=dnsmasq">Protokoll</a></td>
+        </tr>
+        <tr>
+          <td class="nowrap"><span class="ampel an"></span> <strong>pxeweb</strong></td>
+          <td><span class="badge ok">läuft</span></td>
+          <td class="muted small">diese Anwendung</td>
+          <td class="nowrap"><a href="/protokoll?einheit=pxeweb">Protokoll</a></td>
+        </tr>
+        <tr>
+          <td class="nowrap"><span class="ampel aus"></span> <strong>nfs-server</strong></td>
+          <td><span class="badge missing">inactive</span></td>
+          <td class="muted small">hängt große Live-Systeme beim Client ein</td>
+          <td class="nowrap"><a href="/protokoll?einheit=nfs-server">Protokoll</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="muted">
+    Im Beispiel steht <code>nfs-server</code> auf Rot &mdash; und genau das
+    ist der Fall, den man ohne diese Karte lange sucht: Debian bootet
+    weiterhin tadellos, Mint nicht. Ein Live-System hängt sein Dateisystem
+    über NFS ein; ein Netz-Installer holt seine Pakete über HTTP. Fällt NFS
+    aus, fällt <strong>die Hälfte des Bootmenüs aus</strong>, und die andere
+    Hälfte tut, als sei nichts.
+  </p>
+  <p class="hint">
+    <strong>Suchen musst du das nicht.</strong> Wo ein Befund die ganze
+    Seite betrifft, steht er als farbige Karte über den Reitern &mdash; auf
+    jeder Seite, nicht nur hier. Rot heißt: Der Server erfüllt seine
+    Aufgabe gerade nicht. Gelb: eingeschränkt. Blau: wissenswert, niemand
+    muss handeln. Mehr dazu unter
+    <a href="#serverhealth">Server Health</a>.
+  </p>
+  <p class="muted">
+    Damit ist der Durchgang zu Ende. Was hier in acht Schritten stand,
+    steht ausführlich in den Kapiteln zu den einzelnen Reitern:
+    <a href="#einrichtung">Einrichtung</a>, <a href="#quellen">Quellen</a>,
+    <a href="#systeme">Systeme</a>, <a href="#clients">Clients</a> und
+    <a href="#serverhealth">Server Health</a>.
+  </p>
+
+</section>
+
+<section id="serverhealth" class="kapitel">
+  <header class="kapitelkopf">
+    <h2>Server Health</h2>
+    <p class="zumregister"><a href="/">Zum Register &rarr;</a></p>
+  </header>
+<p class="muted">
+    Die Startseite und die Antwort auf die Frage <em>ist alles in
+    Ordnung?</em> Sieben Karten, von oben nach unten.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="serverhealth-auslastung">Auslastung</h3>
+    <p class="zurkarte"><a href="/#auslastung">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Sie beantwortet eine einzige Frage: <strong>Tut die Maschine gerade
+    etwas?</strong> Wenn ein Rechner im Netz nicht vorankommt, sieht man
+    hier in fünf Sekunden, ob es am Server liegt.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Vier Kacheln und darunter die laufenden Übertragungen.
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>Prozessor</strong></td>
+        <td class="muted">Auslastung in Prozent, über alle Kerne gemittelt.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Last</strong></td>
+        <td class="muted">Der Mittelwert der letzten Minute, daneben die Zahl
+          der Kerne. Erst wenn die Last die Kernzahl übersteigt, warten
+          Aufgaben auf Rechenzeit — bei vier Kernen ist eine Last von 2 also
+          keine Auffälligkeit.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Speicher</strong></td>
+        <td class="muted">Belegter Arbeitsspeicher in Prozent, daneben die
+          Zahlen in Gigabyte.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Netz</strong></td>
+        <td class="muted">Durchsatz hinaus und herein in MB/s. Während ein
+          Rechner ein Abbild zieht, steigt <em>hinaus</em> — die schnellste
+          Art festzustellen, ob überhaupt etwas fließt.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Übertragungen</strong></td>
+        <td class="muted">Wie viele Abbilder gerade herein- oder
+          hinausgehen, darunter jedes einzeln mit seinem Zustand. Sie stehen
+          hier, weil sie dieselbe Bandbreite verbrauchen, deren Wirkung die
+          Netz-Kachel zeigt.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Nichts — die Karte zeigt nur an. Sie hat keinen Knopf und kein Feld.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="muted">
+    Die Zahlen frischen sich alle fünf Sekunden von selbst auf, ohne dass
+    die Seite neu geladen wird. <strong>Gemessen wird nur dieser Server</strong>,
+    nicht der bootende Rechner: Eine ruhige Anzeige heißt also nicht, dass
+    dort drüben nichts passiert — sie heißt, dass hier nichts passiert.
+  </p>
+  <p class="muted small">
+    Und die Karte greift nicht ein. Sie beendet keine Übertragung und
+    drosselt nichts; sie sieht zu.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    Steht statt der Kacheln <em>„Auslastung nicht abfragbar“</em>, konnte
+    der Dienst <code>/proc</code> nicht lesen. Auf einem Linux-Server sollte
+    das nicht vorkommen; in einem Container mit eingeschränkten Rechten
+    schon. Die übrigen Karten sind davon nicht betroffen — sie holen ihre
+    Angaben anderswoher.
+  </p>
+  <p class="muted small">
+    „0 Abbilder im Upload, 0 im Download“ ist dagegen kein Fehler, sondern
+    der Normalfall: Es läuft gerade nichts.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="serverhealth-clients">Registrierte Clients</h3>
+    <p class="zurkarte"><a href="/#registrierte-clients">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Sie ist <strong>der Blick während eines Starts</strong>: Bootet gerade
+    eine Maschine, steht sie hier — mit dem, was sie zieht, und wie lange
+    schon.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Zuerst eine Zeile mit zwei Zahlen: wie viele Rechner der Server kennt,
+    und wie viele davon gerade installieren. Läuft etwas, folgt darunter
+    eine Tabelle.
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>Rechner</strong></td>
+        <td class="muted">Name und IP-Adresse. Der Name kommt aus der Liste
+          unter <a href="/clients">Clients</a>; ohne Namen steht dort die
+          MAC-Adresse.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Läuft gerade</strong></td>
+        <td class="muted">Das System, das er zieht, darunter seine
+          Gruppe.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Verbindung</strong></td>
+        <td class="muted"><em>HTTP</em> für Kernel, Initrd und Abbilder,
+          <em>NFS</em> für die großen Live-Systeme. Stehen beide da, benutzt
+          der Rechner beide Wege.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Gestartet</strong></td>
+        <td class="muted">Wann der Vorgang begann.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Nichts — die Karte zeigt nur an. Angemeldet, benannt und freigegeben
+    wird unter <a href="/clients">Clients</a>.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="muted">
+    Die Karte frischt sich alle fünf Sekunden auf. <strong>Was hier steht,
+    ist an diesem Server vorbeigekommen</strong> — mehr sagt sie nicht: Ob
+    die Installation auf dem Rechner gelingt, weiß der Server nicht. Er
+    liefert Dateien aus; was die Maschine damit anfängt, sieht er nicht.
+  </p>
+  <p class="muted small">
+    Ein Vorgang verschwindet wieder, wenn eine Weile nichts mehr abgerufen
+    wurde. Das heißt nicht „fertig“, sondern nur „hier kommt gerade nichts
+    mehr an“.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="hint">
+    <strong>Bleibt eine Maschine vor dem Bildschirm hängen und hier
+    erscheint nichts, kommt sie gar nicht bis zum Server.</strong> Dann
+    liegt es am Netzwerk oder am BIOS des Rechners, nicht an einem Abbild —
+    und Suchen unter <a href="/systeme">Systeme</a> führt in die Irre.
+  </p>
+  <p class="muted small">
+    „0 werden installiert“ ohne Tabelle ist dagegen der Normalfall. Läuft
+    nichts, steht dort bewusst kein Satz: Die Zahl sagt es schon.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="serverhealth-systeme">Betriebssysteme</h3>
+    <p class="zurkarte"><a href="/#betriebssysteme">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Sie beantwortet: <strong>Was bekommt ein bootender Rechner überhaupt
+    angeboten?</strong> — ohne dass man dafür eine Maschine starten muss.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Eine Zeile mit zwei Zahlen und darunter die Namen.
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>startbereit</strong></td>
+        <td class="muted">Einträge, deren Dateien vollständig auf der Platte
+          liegen. Nur die stehen im Bootmenü.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>erfasst</strong></td>
+        <td class="muted">Alle Einträge, die der Server kennt — mitgelieferte
+          wie selbst angelegte, auch solche ohne Dateien.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Die Liste</strong></td>
+        <td class="muted">Name und Ausgabe, so wie sie im Menü erscheinen.
+          Die Ausgabe steht dabei, weil eine Distribution mehrfach
+          bereitstehen darf: „Rocky Linux“ allein beantwortet dann nicht
+          mehr, was zur Auswahl steht.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Nichts — die Karte zeigt nur an. Geholt wird unter
+    <a href="/quellen">Quellen</a>, freigegeben unter
+    <a href="/systeme">Systeme</a>.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="muted">
+    Die Namen stammen aus den Feldern unter <a href="/quellen">Quellen</a>;
+    wird dort umbenannt, steht hier ohne weiteres Zutun der neue Name.
+  </p>
+  <p class="muted">
+    <strong>„Startbereit“ heißt nicht „wird angeboten“.</strong> Ein Eintrag
+    braucht zusätzlich seine Freigabe unter <a href="/systeme">Systeme</a>.
+    Diese Karte zählt, was der Server ausliefern <em>könnte</em> — nicht,
+    was im Menü steht.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    Steht <em>„Noch kein Eintrag ist startbereit“</em>, fehlen überall die
+    Dateien — der Normalzustand eines frisch aufgesetzten Servers. Unter
+    <a href="/quellen">Quellen</a> werden sie geholt.
+  </p>
+  <p class="muted small">
+    Fehlt ein <em>einzelner</em> erwarteter Name, fehlen diesem Eintrag
+    Dateien. Welche das sind, steht in seiner Karte unter
+    <a href="/systeme">Systeme</a>.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="serverhealth-quelleninfo">Quelleninfo</h3>
+    <p class="zurkarte"><a href="/#quelleninfo">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Sie ist der <strong>Blick nach draußen</strong>: Alle sieben Tage geht
+    ein Wächter die Download-Adressen durch und beantwortet zwei Fragen —
+    <strong>welche Adresse ist tot</strong>, und <strong>wo liegt beim
+    Anbieter etwas Neueres</strong>.
+  </p>
+  <p class="muted">
+    <strong>Warum das von selbst laufen muss:</strong> Diese Adressen
+    veralten, ohne dass es jemand merkt. Ein Anbieter räumt eine Ausgabe ins
+    Archiv, und die Adresse ist tot — auffallen würde das sonst erst beim
+    Abgleich, also genau dann, wenn man das System gebraucht hätte.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>Die Kennzeile</strong></td>
+        <td class="muted">Wie viele Adressen tot sind und wie viele eine
+          neuere Ausgabe haben.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Tote Adressen</strong></td>
+        <td class="muted">Je Zeile das System, was der Anbieter geantwortet
+          hat und die Adresse selbst. Der Name führt zur Karte unter
+          <a href="/quellen">Quellen</a>, wo sich etwas tun lässt.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Etwas Neueres</strong></td>
+        <td class="muted">Systeme, bei denen der Anbieter eine höhere
+          Ausgabe führt als die eingetragene.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Nicht erreicht</strong></td>
+        <td class="muted">Quellen, zu denen der Server gar nicht hinkam.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Die Fußzeile</strong></td>
+        <td class="muted">Wann zuletzt nachgesehen wurde, wie lange es
+          dauerte, und wann es sich wiederholt.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted small">
+    <strong>Etwas Neueres</strong> meint wirklich neuer, nicht bloß
+    „gefunden und nicht eingetragen“. Debians <code>oldstable</code> taucht
+    im selben Verzeichnis auf wie <code>stable</code>, und im
+    Leap-Verzeichnis liegt bis heute 42.3 von 2017. Wo sich Nummern
+    vergleichen lassen, wird verglichen; wo Codenamen stehen, gilt das, was
+    der Anbieter selbst <code>stable</code> nennt.
+  </p>
+  <p class="muted small">
+    <strong>Nicht erreicht</strong> ist etwas anderes als tot: Das ist ein
+    Befund über die Leitung, nicht über die Adresse — steht dort die halbe
+    Liste, war das Netz weg und nicht der Anbieter.
+  </p>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Nichts — außer den Namen zu folgen. Von Hand geprüft wird dort, wo
+    danach auch etwas zu tun ist: Unter <a href="/quellen">Quellen</a> hat
+    jede Karte ihr eigenes <em>Prüfen</em>, und dort trägt es eine gefundene
+    Adresse auch gleich ein.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="muted">
+    <strong>Der Wächter ändert nichts.</strong> Er sieht nach und schweigt
+    sonst — er trägt keine Adresse ein, holt keine Datei und wirft nichts
+    weg. Der Durchgang dauert eine knappe Minute.
+  </p>
+  <p class="muted small">
+    Eine tote Adresse heißt meist nicht, dass es das System nicht mehr gibt:
+    Oft hat nur der Dateiname sich geändert. Unter
+    <a href="/quellen">Quellen</a> findet <em>Prüfen</em> die richtige.
+  </p>
+  <p class="muted small">
+    Seit August 2026 sieht der Wächter auch bei den selbst angelegten
+    Systemen nach, sofern in ihrer Adresse eine Ausgabenummer steckt — sonst
+    wäre er ausgerechnet für die Systeme blind, die man selbst aufgenommen
+    hat.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    <em>„Noch nicht nachgesehen“</em> heißt, dass seit dem Aufsetzen kein
+    Durchgang lief — der Wächter beginnt zwei Minuten nach dem Start des
+    Dienstes und dann alle sieben Tage.
+  </p>
+  <p class="muted">
+    <em>„Alle Adressen erreichbar“</em> ist der gute Fall; daneben steht,
+    wann wieder nachgesehen wird.
+  </p>
+  <p class="muted small">
+    Abschalten lässt sich der Wächter über <code>PXE_QUELLENWACHT</code> in
+    <code>/etc/pxeweb.env</code> (<code>aus</code>, oder eine andere Zahl von
+    Tagen). Ein Befund von vorhin bleibt dann trotzdem stehen — sonst ließe
+    sich eine tote Adresse dadurch loswerden, dass man den Wächter abstellt.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="serverhealth-speicherplatz">Speicherplatz</h3>
+    <p class="zurkarte"><a href="/#speicherplatz">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Zwei Fragen, in dieser Reihenfolge: <strong>Wird der Platz knapp?</strong>
+    — und wenn ja: <strong>wo ist er hin?</strong> Die erste beantwortet die
+    Karte sofort, die zweite die Klappe darunter.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>Die Kennzeile</strong></td>
+        <td class="muted">Belegt, frei, und wie viel davon auf die Abbilder
+          entfällt.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Der Balken</strong></td>
+        <td class="muted">Dieselbe Zahl als Bild — 700 von 900 GB rechnet
+          niemand im Kopf in „wird knapp“ um. Er färbt sich ab drei
+          Vierteln; ab neun Zehnteln erscheint zusätzlich eine
+          <a href="#erste-schritte-befunde">gelbe Karte</a> über der
+          Seite.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Detailansicht</strong></td>
+        <td class="muted">Jeder Eintrag mit dem, was er wirklich belegt —
+          sein ganzer Ordner, nicht nur die Dateien, mit denen er startet.
+          Der größte steht oben.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Verwaiste Ordner</strong></td>
+        <td class="muted">Die zweite Klappe: Verzeichnisse, die zu keinem
+          Eintrag mehr gehören. Je Fund ein Löschknopf.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted small">Drei Dinge, die in der Detailansicht auffallen sollen:</p>
+  <ul class="muted small">
+    <li><strong>nicht startbereit</strong> neben einem Eintrag, der trotzdem
+      Platz belegt — meist ein abgebrochener Download. In der Liste der
+      startbereiten Systeme unter
+      <a href="#serverhealth-systeme">Betriebssysteme</a> taucht so einer
+      nicht auf.</li>
+    <li><strong>Verwaiste Ordner</strong> als eigene Zeile: was zu keinem
+      Eintrag mehr gehört.</li>
+    <li><strong>Sonstiges</strong> — alles Übrige: wimboot und einzelne
+      Dateien, die neben den Ordnern liegen geblieben sind. Diese Zahl wird
+      nicht gemessen, sondern ausgerechnet, damit die Summe aufgeht:
+      Einträge plus verwaist plus Sonstiges ist die ganze Ablage.</li>
+  </ul>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Die beiden Klappen auf- und zuklappen — und in der zweiten einen
+    verwaisten Ordner <strong>löschen</strong>. Der Knopf fragt vorher nach
+    und nennt dabei den Ordner: Mehrere Gigabyte auf einen Klick sind eine
+    Entscheidung zu viel auf einmal.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="muted">
+    <strong>Löschen ist endgültig</strong> und betrifft nur den einen
+    Ordner. Ein Eintrag verschwindet dadurch nicht — verwaiste Ordner
+    gehören ja zu keinem mehr.
+  </p>
+  <p class="muted">
+    <strong>Warum die Rechnung aufgeht:</strong> Jeder Eintrag besitzt genau
+    ein Verzeichnis unter <code>/srv/pxe/assets</code>, und es heißt wie
+    seine Kennung — <code>ubuntu-server-26-04</code>,
+    <code>mint-cinnamon</code>, <code>iso-windows-11-hpc-01</code>. Was
+    darunter liegt, gehört ihm; was daneben liegt, gehört ihm nicht.
+    Deshalb ist „was belegt dieser Eintrag“ nichts, was die Anwendung
+    erschließen müsste — sie liest es ab.
+  </p>
+  <p class="muted small">
+    An der Kennung sieht man auch, woher ein Eintrag kam:
+    <code>iso-…</code> ist ein hochgeladenes Abbild, <code>netz-…</code> ein
+    selbst angelegter Netz-Installer, alles andere kommt aus dem Katalog.
+    Die einzige Ausnahme ist <code>wimboot/</code> — das gehört allen
+    Windows-Abbildern gemeinsam und keinem allein.
+  </p>
+  <p class="muted small">
+    Die Zahl je Eintrag ist dieselbe, die als „Belegt“ in seiner Karte unter
+    <a href="/systeme">Systeme</a> steht. Gemessen wird beim Aufbau der Seite
+    und 30 Sekunden lang gemerkt — ein ausgepacktes Abbild hat leicht 50.000
+    Dateien.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    <em>„Die Belegung der Platte ist von hier aus nicht abfragbar“</em>
+    heißt, dass der Dienst die Angaben des Dateisystems nicht bekommt. Was
+    die Einträge belegen, steht trotzdem da — das misst er selbst.
+  </p>
+  <p class="muted small">
+    Die Klappe <strong>Verwaiste Ordner</strong> bleibt stehen, auch wenn
+    nichts gefunden wurde: Eine, die verschwindet, ließe offen, ob nichts da
+    war oder niemand gesucht hat. Zugeklappt steht die Antwort deshalb schon
+    in ihrer Zeile; gibt es Funde, steht sie von selbst offen.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="serverhealth-dienste">Dienste</h3>
+    <p class="zurkarte"><a href="/#dienste">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Vier Dienste müssen laufen, damit ein Netzwerkstart funktioniert. Die
+    Karte sagt auf einen Blick, ob sie es tun — und ist damit die erste
+    Station, wenn gar nichts geht.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Je Dienst eine Zeile: Ampel, Zustand, wofür er zuständig ist, und der
+    Weg zu seinem Protokoll.
+  </p>
+  <table>
+    <tbody>
+      <tr><td class="nowrap"><code>dnsmasq</code></td>
+        <td class="muted">Beantwortet die Anfrage des bootenden Rechners und
+          liefert iPXE per TFTP aus. <strong>Ohne diesen Dienst passiert gar
+          nichts</strong> — der Rechner findet den Server nicht.</td></tr>
+      <tr><td class="nowrap"><code>nginx</code></td>
+        <td class="muted">Liefert Kernel, Initrd und Abbilder per HTTP aus und
+          reicht die Weboberfläche durch. Läuft er nicht, siehst du auch
+          diese Seite nicht.</td></tr>
+      <tr><td class="nowrap"><code>pxeweb</code></td>
+        <td class="muted">Diese Anwendung. Sie baut das Bootmenü und die
+          Startskripte.</td></tr>
+      <tr><td class="nowrap"><code>nfs-server</code></td>
+        <td class="muted">Hängt große Live-Systeme beim bootenden Rechner ein,
+          statt sie in dessen Arbeitsspeicher zu laden. Nur für diese
+          Einträge nötig.</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Hinter jedem Dienst steht <em>Protokoll</em>. Das zeigt sein Journal —
+    dasselbe, was auf dem Server <code>journalctl -u &lt;dienst&gt;</code>
+    ausgibt, nur mitlesend im Browser. Bei der Fehlersuche ist
+    <a href="/protokoll?einheit=dnsmasq">dnsmasq</a> die erste Adresse: Dort
+    steht jede Anfrage eines bootenden Rechners mit seiner MAC-Adresse.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="muted">
+    <strong>Starten, anhalten oder neu starten lässt sich hier nichts.</strong>
+    Die Karte liest den Zustand und zeigt Protokolle; eingegriffen wird auf
+    dem Server. Das ist Absicht — ein Knopf, der einen Dienst abschaltet,
+    stünde jedem offen, der den Browser erreicht. Die Begründung im Ganzen
+    steht unter
+    <a href="#einrichtung-warum-kein-knopf">Warum es dafür keinen Knopf
+    gibt</a>.
+  </p>
+  <p class="muted small">
+    Eine grüne Ampel heißt „der Dienst läuft“, nicht „er tut das Richtige“.
+    Ein dnsmasq, der auf der falschen Netzwerkkarte lauscht, läuft
+    einwandfrei — und antwortet trotzdem niemandem.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    Steht bei allen vier <em>„nicht abfragbar“</em>, kommt der Dienst nicht
+    an <code>systemctl</code> heran — dann sagt die Karte nichts über die
+    Dienste, sondern etwas über sich selbst. Nachsehen lässt sich das auf
+    dem Server mit <code>systemctl status &lt;dienst&gt;</code>.
+  </p>
+  <p class="muted small">
+    Läuft ein einzelner nicht, erscheint <strong>über der Seite eine
+    Karte</strong> — rot, wenn es einen Dienst des Bootwegs erwischt hat,
+    und gelb, wenn nur NFS fehlt. Sie nennt die Folge, den Dienst und den
+    Befehl, mit dem sein Journal auf dem Server zu lesen ist — für den
+    Fall, dass auch die Oberfläche nicht mehr erreichbar ist. Was die
+    Farben bedeuten, steht unter
+    <a href="#erste-schritte-befunde">Farbige Karten über der Seite</a>.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="serverhealth-protokoll">Protokoll</h3>
+    <p class="zurkarte"><a href="/protokoll">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Sie zeigt das Journal eines der vier Dienste — dasselbe, was auf dem
+    Server <code>journalctl -u &lt;dienst&gt; -f</code> ausgibt. Man kommt
+    über <em>Protokoll</em> in der Karte <a href="#serverhealth-dienste">Dienste</a>
+    hierher; einen eigenen Reiter hat die Seite nicht.
+  </p>
+  <p class="hint">
+    <strong>Beim Einrichten ist <code>dnsmasq</code> das nützlichste
+    davon.</strong> Dort steht, ob ein bootender Rechner überhaupt anfragt
+    und was ihm geantwortet wird — mit seiner MAC-Adresse. Kommt dort nichts
+    an, liegt es nicht am Menü, sondern daran, dass die Anfrage den Server
+    nie erreicht.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Oben je Dienst ein Knopf, der gewählte ist hervorgehoben. Darunter die
+    letzten Zeilen seines Journals, darunter der Hinweis, wie viele Zeilen
+    das sind, und der Verweis auf dieselbe Ausgabe als reinen Text.
+  </p>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Den Dienst wechseln und das Mitlesen abschalten. Ohne Haken bei
+    <em>mitlesen</em> bleibt das Bild stehen — nützlich, wenn man
+    zurückblättert und nicht will, dass einem die Stelle wegspringt.
+  </p>
+  <p class="muted small">
+    <a href="/protokoll.txt">/protokoll.txt</a> liefert dasselbe ohne
+    Oberfläche, zum Weiterreichen oder Abspeichern.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="muted">
+    Nachgeholt wird alle drei Sekunden — <strong>kein dauerhaft offener
+    Datenstrom</strong>, sondern eine kurze Abfrage. Steht das Fenster im
+    Hintergrund, ruht sie.
+  </p>
+  <p class="muted small">
+    Gezeigt werden nur die vier Dienste dieses Servers; ein beliebiges
+    Journal lässt sich hier nicht abrufen. Und gelesen wird nur: Aus dem
+    Protokoll heraus lässt sich kein Dienst starten oder anhalten.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    Ein leeres Protokoll heißt, dass der Dienst seit dem letzten Neustart
+    nichts gemeldet hat — bei <code>dnsmasq</code> also: Es hat kein Rechner
+    angefragt. Steht rechts <em>nicht erreichbar</em>, kommt der Browser
+    nicht mehr an diesen Server heran; dann ist die Verbindung das Problem,
+    nicht der Dienst.
+  </p>
+</section>
+
+<section id="clients" class="kapitel">
+  <header class="kapitelkopf">
+    <h2>Clients</h2>
+    <p class="zumregister"><a href="/clients">Zum Register &rarr;</a></p>
+  </header>
+<p class="muted">
+    Das wichtigste Register im Alltag. Hier steht, welche Maschinen der
+    Server kennt, und hier wird festgelegt, was beim nächsten Netzwerkstart
+    passiert.
+  </p>
+
+  <p class="hint">
+    <strong>Der Kern in einem Satz:</strong> Ohne den Haken
+    <em>PXE Boot aktiv</em> bekommt ein Rechner nichts — er meldet sich nur
+    an und startet weiter von seiner Platte. Das gilt auch dann, wenn jemand
+    vor der Maschine sitzt.
+  </p>
+  <div class="abschnittskopf">
+    <h3 id="clients-liste">Registrierte Clients</h3>
+    <p class="zurkarte"><a href="/clients#registrierte-clients">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Hier steht, welche Maschinen der Server kennt — und hier wird
+    festgelegt, <strong>was beim nächsten Netzwerkstart passiert</strong>.
+    Normalerweise wählt jemand vor der Maschine im Menü aus; hängt dort kein
+    Bildschirm oder steht sie im Keller, geht es auch ganz von hier aus.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Je Rechner eine Zeile. Jeder, der einmal über das Netz gestartet hat,
+    steht automatisch darin.
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>Client</strong></td>
+        <td class="muted">Name und MAC-Adresse. Der Name ist ein Feld — er
+          dient nur dem Wiedererkennen. Darunter steht bei den meisten
+          Geräten noch eine dritte Angabe: die <strong>Produktkennung aus
+          der Firmware</strong>, bei Markengeräten oft eine Typnummer wie
+          <code>20AUS00N00</code>, bei virtuellen Maschinen etwas
+          Sprechendes wie <code>VirtualBox</code>. Sie kommt vom Gerät
+          selbst und lässt sich nicht ändern — sie hilft, zwei
+          gleichnamige Rechner auseinanderzuhalten.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Zuletzt gesehen</strong></td>
+        <td class="muted">Wann sich der Rechner zuletzt gemeldet hat.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>PXE Boot aktiv</strong></td>
+        <td class="muted">Der Haken, ohne den nichts passiert.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Vorauswahl</strong></td>
+        <td class="muted">Das System, in das der Rechner beim nächsten Start
+          direkt bootet — oder « Menü anzeigen ».</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>WOL</strong></td>
+        <td class="muted">Das Kästchen zum Einschalten, mit dem Knopf in der
+          Spaltenüberschrift.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Protokolle</strong></td>
+        <td class="muted">Eingesammelte Installationsprotokolle dieses
+          Rechners, falls welche da sind.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    <strong>1. Festlegen, was er starten soll.</strong> In seiner Zeile das
+    gewünschte System auswählen und den Haken setzen. Dann oben in der
+    Kopfzeile der Tabelle auf <em>Speichern</em> — der Knopf gilt für die
+    ganze Liste, also auch für Namen und für mehrere Rechner auf einmal. Er
+    nennt in Klammern, wie viele noch offen sind.
+  </p>
+  <p class="muted">
+    Bleibt die Auswahl auf « Menü anzeigen » und ist nur der Haken gesetzt,
+    bekommt der Rechner das Auswahlmenü auf seinen Bildschirm. Das ist der
+    Weg, wenn jemand vor der Maschine sitzt.
+  </p>
+  <p class="muted">
+    <strong>2. Einschalten.</strong> Rechts in der Zeile ankreuzen und oben
+    in der Spaltenüberschrift auf <strong>WOL</strong> drücken. Der Server
+    schickt dem Rechner ein sogenanntes <em>Magic Packet</em>; dessen
+    Netzwerkkarte hört auch im ausgeschalteten Zustand mit und schaltet die
+    Maschine ein. Mehrere Häkchen wecken mehrere Rechner auf einmal.
+  </p>
+  <p class="muted">
+    <strong>Löschen</strong> nimmt einen Rechner aus der Liste. Er kommt
+    wieder hinein, sobald er das nächste Mal über das Netz startet.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="hint">
+    <strong>Die Zeile setzt sich selbst zurück</strong>, sobald der Rechner
+    sein Boot-Skript geholt hat: Der Haken geht weg, die Auswahl springt auf
+    « Menü anzeigen ». Ein Haken gilt also für <strong>einen</strong>
+    Netzwerkstart. Das ist Absicht: Nach der Installation startet eine
+    Maschine oft noch einmal über das Netz — bliebe der Haken gesetzt, würde
+    sie sich sofort wieder neu aufsetzen. Beim Menü fällt der Haken schon
+    beim Anzeigen.
+  </p>
+  <p class="muted small">
+    Die Rückmeldung „Weckpaket gesendet“ heißt nur, dass es abgeschickt
+    wurde. Ob der Rechner wirklich angeht, kann dieser Server nicht wissen —
+    ein ausgeschalteter Rechner antwortet nicht. Sobald er sich meldet,
+    erscheint er unter <a href="/">Server Health</a>.
+  </p>
+
+  <h4>Damit das Wecken funktioniert</h4>
+  <p class="muted">
+    Vier Dinge müssen stimmen — alle am Zielrechner, nicht hier:
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>Im BIOS/UEFI</strong></td>
+        <td class="muted">Wake-on-LAN muss eingeschaltet sein. Der Punkt heißt
+          je nach Hersteller <em>Wake on LAN</em>, <em>Power On by PCI-E</em>
+          oder <em>Resume by LAN</em> und steht meist unter „Power
+          Management“.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Im Betriebssystem</strong></td>
+        <td class="muted">Die Netzwerkkarte darf das Aufwachen nicht
+          abschalten. Unter Linux prüfen mit
+          <code>sudo ethtool &lt;karte&gt; | grep Wake-on</code> —
+          <code>g</code> heißt bereit, <code>d</code> heißt abgeschaltet.
+          Unter Windows verhindert der <em>Schnellstart</em> das Wecken.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Kabel</strong></td>
+        <td class="muted">Über WLAN funktioniert Wake-on-LAN in aller Regel
+          nicht.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Dasselbe Netz</strong></td>
+        <td class="muted">Der Rechner muss im selben Netz hängen wie dieser
+          Server. Ein Weckpaket ist ein Rundruf, und Router geben Rundrufe
+          nicht weiter — über ein anderes Subnetz hinweg kommt es nicht an.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    „Noch kein Client bekannt“ heißt, dass noch nie ein Rechner über das
+    Netz gestartet hat. Sobald einer es tut, steht er hier — von selbst. Wer
+    nicht warten will, trägt ihn in der Karte <em>Manuelle Registrierung</em>
+    darunter ein.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="clients-anmelden">Manuelle Registrierung</h3>
+    <p class="zurkarte"><a href="/clients#manuelle-registrierung">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Für Rechner, die <strong>noch nie über das Netz gestartet haben</strong>
+    und trotzdem in die Liste sollen — vor allem, um sie von hier aus
+    einschalten zu können. Zum Wecken genügt die MAC-Adresse; sie steht
+    meist auf einem Aufkleber am Gehäuse.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Zwei Felder und ein Knopf: <strong>MAC-Adresse</strong> (Pflicht) und
+    <strong>Name</strong> (freiwillig, nur zum Wiedererkennen).
+  </p>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Die MAC-Adresse eintragen — sechs Paare, getrennt durch
+    <strong>Doppelpunkt oder Bindestrich</strong>
+    (<code>aa:bb:cc:dd:ee:ff</code>) — und
+    auf <em>Client registrieren</em> drücken. Der Rechner steht danach in
+    der Liste darüber.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="muted">
+    <strong>Der Eintrag allein bewirkt nichts.</strong> Er legt nur die
+    Zeile an; was der Rechner beim nächsten Start bekommt, entscheidet der
+    Haken in der Liste darüber.
+  </p>
+  <p class="hint">
+    <strong>Auch der erste Netzwerkstart tut sonst nichts.</strong> Ein
+    Rechner, der sich meldet, bekommt weder Menü noch Installation — er
+    meldet sich an und bootet weiter von seiner Platte. Eine fabrikneue
+    Maschine ohne Betriebssystem bleibt deshalb beim ersten Mal mit „kein
+    bootfähiges Medium“ stehen. Das ist in Ordnung: Sie wartet auf die
+    Freigabe.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    Die Karte zeigt nichts an — sie besteht nur aus den beiden Feldern. Ist
+    die MAC-Adresse schon bekannt, entsteht keine zweite Zeile; der
+    vorhandene Eintrag bleibt.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="clients-protokolle">Installationsprotokolle bei Abbruch</h3>
+    <p class="zurkarte"><a href="/clients#installationsprotokolle">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Bricht auf einem Rechner die Installation ab, gehen ihre Protokolle mit
+    dem nächsten Neustart verloren — das Dateisystem des Live-Systems liegt
+    im Arbeitsspeicher und ist dann weg. <strong>Solange es noch läuft</strong>,
+    sammelt eine Zeile alles Wichtige ein und legt es hier ab.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Der Befehl zum Abtippen, ein Satz dazu, wo er auszuführen ist, und
+    unten, wie viel alle Protokolle zusammen belegen. Die Protokolle selbst
+    stehen in der Zeile ihres Rechners in der Liste oben.
+  </p>
+  <pre class="ipxe">curl -sf {{ base_url }}/logs.sh | sudo sh</pre>
+  <p class="muted small">
+    Stehen Pakete da, deren MAC-Adresse zu keinem Rechner der Liste gehört,
+    nennt die Karte sie gesondert — sonst wären sie da und niemand fände
+    sie.
+  </p>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Den Befehl abtippen. <strong>Er gehört auf den Rechner, dessen
+    Installation abgebrochen ist</strong> — nicht auf diesen Server. Danach
+    steht das Paket in der Zeile des Rechners zum Herunterladen bereit, und
+    ein <em>×</em> daneben wirft es wieder weg.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="muted">
+    <strong>Was eingepackt wird:</strong> <code>/var/log/installer</code>,
+    das Journal des laufenden Starts, <code>dmesg</code>, die
+    Kernel-Kommandozeile sowie Speicher-, Platten- und Einhänge-Übersicht.
+    Es enthält die Protokolle des Installers, <strong>nicht</strong> den
+    Inhalt der Festplatte.
+  </p>
+  <p class="muted">
+    Zugeordnet wird über die <strong>MAC-Adresse</strong> der Netzwerkkarte:
+    Der Rechner meldet sie mit, und das Paket landet in seiner Zeile — auch
+    dann, wenn er dort noch gar nicht steht.
+  </p>
+  <p class="muted small">
+    Der Befehl <strong>ändert nichts</strong> an der laufenden Installation
+    und startet sie auch nicht neu; er liest und packt. Je Rechner bleiben
+    die letzten 20 Pakete liegen, ältere räumt der Server weg.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    Ohne eingesammelte Protokolle steht in der Karte nur der Befehl — das
+    ist der Normalfall. Die Belegungszeile erscheint erst, wenn etwas da
+    ist.
+  </p>
+  <p class="muted small">
+    Bricht der Befehl mit einem Fehler ab, kommt der Rechner nicht an den
+    Server heran. Dann ist nicht das Protokoll das Problem, sondern die
+    Verbindung — dieselbe, über die er auch die Installation gezogen hätte.
+  </p>
+</section>
+
+<section id="systeme" class="kapitel">
+  <header class="kapitelkopf">
+    <h2>Systeme</h2>
+    <p class="zumregister"><a href="/systeme">Zum Register &rarr;</a></p>
+  </header>
+<p class="muted">
+    Was im Bootmenü zur Auswahl steht — und wie etwas dazukommt. Vier
+    Fragen dieses Kapitels gehören zu keiner einzelnen Karte:
+    <a href="#systeme-inhalt">Was hier steht — und was nicht</a>,
+    <a href="#systeme-wege">Die vier Wege, etwas hinzuzufügen</a>,
+    <a href="#systeme-einlesen">Ein Abbild noch einmal einlesen</a> und
+    <a href="#systeme-benennen">Einträge umbenennen</a>.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="systeme-inhalt">Was hier steht — und was nicht</h3>
+  </div>
+  <p class="muted">
+    Diese Seite zeigt, was der Server <strong>wirklich anbieten kann</strong>:
+    Einträge, deren Dateien auf der Platte liegen. Was noch nie geholt wurde
+    oder dessen Dateien verschwunden sind, steht nicht in den Tabellen —
+    sonst wären es zwei Listen auf einer Seite, die einander widersprechen,
+    denn die Vorschau darunter zeigt ohnehin nur, was startet.
+  </p>
+  <p class="muted">
+    <strong>Wo ein Eintrag ohne Dateien steht:</strong> unter
+    <a href="/quellen">Quellen</a>. Dort führt jeder Eintrag seine eigene
+    Karte, auch der, dem etwas fehlt — sie nennt die fehlende Datei und den
+    Weg, sie zu holen: ankreuzen und holen lassen, der Server lädt im
+    Hintergrund, große Abbilder dauern.
+  </p>
+  <p class="hint">
+    <strong>Zwei Fälle sehen dabei gleich aus, und das ist eine bekannte
+    Schwäche.</strong> <em>Noch nie geholt</em> ist der Normalzustand für
+    alles Mitgelieferte. <em>War da und ist weg</em> — ein abgebrochener
+    Abgleich, eine volle Platte, ein versehentliches <em>Dateien löschen</em>
+    — sieht für diesen Server genauso aus, denn er merkt sich nicht, ob ein
+    Eintrag schon einmal startbereit war. Der zweite Fall passiert deshalb
+    stumm; wer einen Eintrag vermisst, findet ihn an der genannten Stelle
+    wieder.
+  </p>
+  <div class="abschnittskopf">
+    <h3 id="systeme-wege">Die vier Wege, etwas hinzuzufügen</h3>
+  </div>
+
+  <p class="muted">
+    Es gibt vier Wege. Welcher der richtige ist, hängt nur daran, <strong>was
+    du in der Hand hast</strong>:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Du hast …</th><th>Du nimmst …</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>eines der <strong>mitgelieferten</strong> Systeme<br>
+          <span class="muted small">Debian, Fedora, Mint, GParted …</span></td>
+        <td><a href="/quellen">Quellen</a> → <em>Katalog</em><br>
+          <span class="muted small">Häkchen setzen, holen lassen</span></td>
+      </tr>
+      <tr>
+        <td>eine <strong>ISO-Datei auf deinem Rechner</strong></td>
+        <td><a href="/quellen">Quellen</a> → <em>Upload</em></td>
+      </tr>
+      <tr>
+        <td>einen <strong>Link zu einer ISO</strong></td>
+        <td><a href="/quellen">Quellen</a> → <em>Download</em><br>
+          <span class="muted small">der Server lädt selbst — schneller, als
+            das Abbild über den Arbeitsplatz zu schleifen</span></td>
+      </tr>
+      <tr>
+        <td>nur einen <strong>Spiegel mit Kernel und Initrd</strong>,
+          keine ISO</td>
+        <td><a href="/quellen">Quellen</a> → <em>Custom</em></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p class="muted small">
+    Die letzten drei führen zum selben Ziel — der Unterschied ist nur, wo die
+    Dateien herkommen. Was dabei unter <em>Online-</em> und was unter
+    <em>Offline-Installationen</em> landet, entscheidet nicht der Weg, sondern wie
+    viel im Medium steckt: eine vollständige ISO bringt ihr Paketdepot mit,
+    Kernel und Initrd bringen nichts mit.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="systeme-gruppen">Die Gruppenkarten</h3>
+    <p class="zurkarte"><a href="/systeme">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Jede Gruppenkarte zeigt, <strong>was in ihrer Gruppe bereitsteht — und
+    wem es angeboten wird</strong>. Bereitstehen allein genügt nämlich
+    nicht: Erst der Haken macht aus einem vorhandenen Eintrag einen, den ein
+    Rechner auch angeboten bekommt.
+  </p>
+  <p class="muted">
+    Es gibt drei Gruppen, und sie stehen in derselben Reihenfolge wie im
+    Bootmenü:
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>Offline-Installationen</strong></td>
+        <td class="muted">Alles kommt von diesem Server. Der bootende
+          Rechner braucht kein Internet — nur das eigene Netz.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Online-Installationen</strong></td>
+        <td class="muted">Der Server liefert nur Kernel und Initrd; die
+          Pakete holt der Rechner selbst aus dem Netz. Ohne Internet am
+          <em>Client</em> laufen diese nicht.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Rettung und Wartung</strong></td>
+        <td class="muted">Live-Systeme und Werkzeuge, die nichts
+          installieren: GParted, Memtest, Clonezilla und Ähnliches.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Je Eintrag eine Zeile mit drei Spalten.
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>Eintrag</strong></td>
+        <td class="muted">Name und Ausgabe, darunter die Menü-Info und die
+          Kennung. Genau so steht die Zeile im Bootmenü.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>sichtbar in</strong></td>
+        <td class="muted">Zwei Haken. <em>BootMenü</em> heißt: Der Eintrag
+          steht im Auswahlmenü, das ein freigegebener Rechner am Bildschirm
+          bekommt. <em>Boot-Optionen</em> heißt: Er lässt sich unter
+          <a href="/clients">Clients</a> einem einzelnen Rechner fest
+          zuweisen. Beides ist unabhängig voneinander — wozu die Trennung gut
+          ist, steht unter
+          <a href="#systeme-freigeben">Erproben, dann freigeben</a>.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Status</strong></td>
+        <td class="muted">Ob der Eintrag startbereit ist. Fehlt etwas, steht
+          darunter, welche Datei. Manche Einträge brauchen zusätzlich einen
+          NFS-Export — siehe
+          <a href="#systeme-nfs">Wenn ein Eintrag NFS braucht</a>.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted small">
+    Ein Eintrag, dem Dateien fehlen, steht grau und <strong>ohne
+    Kästchen</strong> da: Was nicht startet, kann man auch nicht anbieten.
+  </p>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Die beiden Haken setzen oder wegnehmen und die <em>Reihenfolge</em> der
+    Karte ändern — die Zahl in der Kopfzeile bestimmt, an welcher Stelle die
+    Gruppe hier und im Bootmenü steht.
+  </p>
+  <p class="muted">
+    Gespeichert wird mit dem einen Knopf oben in der ersten Karte. Er gilt
+    für die <strong>ganze Seite</strong>: alle Haken und alle Reihenfolgen
+    auf einmal. Drei Knöpfe täuschten drei Vorgänge vor, wo es einer ist.
+  </p>
+  <p class="muted small">
+    Umbenannt wird hier nicht — das geschieht unter
+    <a href="/quellen">Quellen</a> in der Karte des Abbilds. Warum, steht
+    unter <a href="#systeme-benennen">Einträge umbenennen</a>.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="muted">
+    Ein gesetzter Haken wirkt <strong>sofort für alle künftigen Starts</strong>
+    — laufende Installationen bleiben davon unberührt. Ein weggenommener
+    Haken löscht nichts: Der Eintrag bleibt samt Dateien, er wird nur nicht
+    mehr angeboten.
+  </p>
+  <p class="muted">
+    <strong>Die Tabelle zeigt nur, was startbereit ist.</strong> Ein
+    Eintrag, dessen Dateien fehlen, steht hier gar nicht — geholt wird unter
+    <a href="/quellen">Quellen</a>. Das ist der Weg durch die Reiter: erst
+    Quellen, dann Systeme.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    Eine Gruppe ohne startbereite Einträge erscheint gar nicht als Karte.
+    Fehlt eine, die du erwartest, fehlen ihren Einträgen die Dateien.
+  </p>
+  <p class="muted small">
+    Steht unter einer Karte <em>„1 Eintrag noch nicht freigegeben“</em>,
+    liegt dort etwas bereit, das niemand angeboten bekommt — der Normalfall
+    direkt nach dem Holen. Ein Haken in derselben Karte behebt es.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="systeme-einlesen">Ein Abbild noch einmal einlesen</h3>
+  </div>
+  <p class="muted">
+    Ein Menüpunkt entsteht in dem Moment, in dem sein Abbild verarbeitet
+    wird, und bleibt danach unverändert. Wird der Server aktualisiert und
+    baut die neue Fassung Menüpunkte anders, merkt ein vorhandener Eintrag
+    davon nichts. Dagegen hilft <em>Neu einlesen</em> — der Knopf steht
+    nicht auf dieser Seite, sondern unter <a href="/quellen">Quellen</a>, in
+    der Karte des Abbilds, aus dem der Eintrag stammt:
+  </p>
+  <table>
+    <tbody>
+      <tr><td class="nowrap"><strong>Abbild noch da</strong></td>
+        <td class="muted">Es wird komplett neu untersucht und ausgepackt.</td></tr>
+      <tr><td class="nowrap"><strong>Abbild schon weg</strong></td>
+        <td class="muted">Nur der Menüpunkt wird neu gebaut — entpackt wird
+          nichts. Bei ausgepackten Abbildern wird die ISO nämlich gelöscht,
+          sie würde sonst doppelt Platz belegen.</td></tr>
+    </tbody>
+  </table>
+  <p class="muted">
+    Was der Server beim ersten Untersuchen herausgefunden hat, schreibt er
+    mit. Deshalb genügt für den zweiten Fall der gemerkte Befund — das
+    Abbild braucht es dafür nicht mehr.
+  </p>
+  <p class="muted small">
+    Bei sehr alten Uploads, die von vor diesem Mitschreiben stammen, gibt
+    es keinen. Für ein Windows-Abbild baut der Server ihn dann aus den
+    ausgepackten Dateien nach — deren Namen liegen fest. Bei einem
+    Linux-Abbild geht das nicht: Dort hängt die Kernel-Kommandozeile vom
+    Inhalt ab, den man ohne das Abbild nicht mehr sieht. Der Server sagt
+    das und verweist aufs erneute Hochladen, statt einen halben Menüpunkt
+    zu bauen.
+  </p>
+  <p class="muted small">
+    Faustregel: Wenn nach einer Aktualisierung des Servers etwas nicht so
+    funktioniert wie beschrieben, in der Karte des Abbilds unter
+    <a href="/quellen">Quellen</a> einmal <em>Neu einlesen</em> drücken,
+    bevor du weitersuchst.
+  </p>
+  <div class="abschnittskopf">
+    <h3 id="systeme-nfs">Wenn ein Eintrag NFS braucht</h3>
+  </div>
+  <p class="muted">
+    Große Live-Systeme werden ausgepackt und beim Start über NFS eingehängt,
+    statt vollständig in den Arbeitsspeicher des bootenden Rechners geladen zu
+    werden. Bei manchen Bauarten gibt es dazu keinen anderen Weg: Fehlt der
+    Export, kann der Eintrag nicht starten — auch dann nicht, wenn seine
+    Dateien vollständig da sind.
+  </p>
+  <p class="muted">
+    Deshalb steht so ein Eintrag nicht im Bootmenü. Ihn trotzdem anzubieten
+    hieße, den Fehlschlag vor die Maschine zu tragen — dorthin, wo niemand
+    mehr nachsehen kann, woran es lag.
+  </p>
+  <p class="muted">
+    Eingerichtet wird NFS über <code>PXE_NFS_ROOT</code> in
+    <code>/etc/pxeweb.env</code>; <a href="/einrichtung">Einrichtung</a> zeigt,
+    was gesetzt ist. <code>install.sh</code> richtet den Export auf einem
+    frisch aufgesetzten Server mit ein — fehlt er, ist meist nachträglich
+    etwas daran geändert worden.
+  </p>
+  {# Die drei Faelle standen bis zum 28.08.2026 in docs/03, Abschnitt
+     3.12. Sie gehoeren hierher: Wer wissen will, warum ein Eintrag nicht
+     startbereit ist, sitzt vor dieser Oberflaeche. #}
+  <p class="muted">
+    Diese eine Einstellung entscheidet über den Weg, und zwar für alle
+    Einträge zugleich:
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>gesetzt</strong></td>
+        <td class="muted">Das ausgepackte Abbild wird beim Start über NFS
+          eingehängt. Der Rechner liest nur, was er gerade braucht — die
+          Größe des Abbilds spielt dann keine Rolle mehr.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>leer</strong></td>
+        <td class="muted">Das Dateisystem wird über HTTP geholt und
+          vollständig in den Arbeitsspeicher gelegt. Einfacher, aber
+          begrenzt: Ein Abbild von 3 GB braucht dann einen Rechner mit
+          deutlich mehr.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>leer, und der Eintrag ist Linux Mint</strong></td>
+        <td class="muted">Nicht startbereit. Mint benutzt <em>casper</em>,
+          und das kennt für einzelne Dateien keinen HTTP-Weg — ohne Export
+          gibt es für diesen Eintrag gar keinen. Der Server sagt das,
+          statt einen Menüpunkt anzubieten, der vor der Maschine
+          scheitert.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted small">
+    Der Pfad steht nicht in den Einträgen, sondern wird aus dieser Zeile
+    zusammengesetzt. Wer die Ablage verlegt, ändert also nur sie — und den
+    Export dazu.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="systeme-freigeben">Erproben, dann freigeben</h3>
+  </div>
+  <p class="muted">
+    Zwei Haken je Eintrag, und sie haben verschiedene Reichweite:
+  </p>
+  <table>
+    <tbody>
+      <tr><td class="nowrap"><strong>BootMenü</strong></td>
+        <td class="muted">Der Eintrag steht im Menü — das sehen <em>alle</em>
+          Rechner, die per Netz starten dürfen.</td></tr>
+      <tr><td class="nowrap"><strong>Boot-Optionen</strong></td>
+        <td class="muted">Der Eintrag steht unter <a href="#clients">Clients</a>
+          in der Auswahl, gilt also einem <em>einzelnen</em> Rechner.</td></tr>
+    </tbody>
+  </table>
+  <p class="muted">
+    Damit lässt sich eine neue Ausgabe erproben, bevor sie für alle gilt:
+    Haken nur bei den Boot-Optionen, einen Testrechner darauf setzen,
+    starten. Läuft es, kommt der Haken beim Bootmenü dazu — und bei der
+    alten Ausgabe geht er weg. Ohne diese Trennung müsste ein ungeprüftes
+    System ins Menü, wo es jeder erwischen kann.
+  </p>
+  <p class="muted">
+    <strong>Beide Haken sind ab Werk leer.</strong> Ein Eintrag, dessen
+    Dateien gerade fertig geworden sind, wird nicht angeboten, bis du das
+    entscheidest — egal ob er aus dem Katalog nachgeladen, hochgeladen oder
+    selbst angelegt wurde. Bis August 2026 war es umgekehrt, und das machte
+    genau den Ablauf hier unmöglich: Eine neue Ausgabe stand für alle im
+    Menü, sobald ihr Download fertig war. Den Ausschlag gab
+    <em>ShredOS</em> — ein Eintrag, der Datenträger unwiderruflich löscht
+    und der sich so von selbst vor jeden bootenden Rechner gestellt hätte.
+  </p>
+  <p class="muted small">
+    Damit du nichts übersiehst, sagen es beide Seiten: Unter
+    <a href="/systeme">Systeme</a> zählt <strong>jede Gruppenkarte in ihrer
+    letzten Zeile</strong> auf, was in ihr bereitsteht und trotzdem noch
+    niemandem angeboten wird — je Karte, weil auch je Karte angekreuzt wird.
+    Und die Karte des Eintrags unter <a href="/quellen">Quellen</a> trägt
+    dann <em>wird nicht angeboten</em>.
+  </p>
+  <p class="muted small">
+    Sind beide Haken weg, bleibt der Eintrag bestehen, wird aber nirgends
+    angeboten. Und: <strong>die Haken steuern die Anzeige,
+    nicht die Erreichbarkeit.</strong> Ein Rechner, der schon auf diesen
+    Eintrag eingestellt ist, startet ihn weiter — sonst würde ein Haken
+    hier eine laufende Installation abwürgen. In der Auswahl unter Clients
+    steht er dann als <em>zurückgezogen</em>.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="systeme-benennen">Einträge umbenennen</h3>
+  </div>
+  <p class="muted">
+    Name, Version und Menü-Info lassen sich ändern — allerdings nicht
+    hier, sondern unter <a href="/quellen">Quellen</a>, in der Karte des
+    Abbilds, aus dem der Eintrag stammt. <em>Systeme zeigt, Quellen
+    bearbeitet.</em> Was dort eingetragen wird, gilt sofort überall: im
+    Bootmenü vor der Maschine, in der Vorschau und auf Server Health.
+  </p>
+  <p class="muted">
+    <strong>Der Anlass sind hochgeladene Abbilder.</strong> Sie bringen
+    ihren Namen aus dem Medium mit, und der ist oft unbrauchbar lang — ein
+    Ubuntu-Desktop-Abbild meldet sich als
+    <code>Ubuntu 26.04 "Resolute Raccoon" - Release amd64 (20260423.1)</code>.
+    Im Bootmenü teilen sich Name und Version eine Spalte von
+    {{ max_zeile }} Zeichen, die Menü-Info bekommt {{ max_info }}. Das ist keine willkürliche Zahl: iPXE
+    zeichnet sein Menü in die Textkonsole mit 80 Spalten und
+    <strong>schneidet zu lange Zeilen ab</strong>, statt sie umzubrechen.
+    Was du selbst einträgst, wird deshalb auf diese Länge geprüft — was
+    der Server aus einem Abbild liest, darf länger sein, sonst ließe sich
+    so ein Abbild gar nicht erst anbieten.
+  </p>
+  <table>
+    <tbody>
+      <tr><td class="nowrap"><strong>Name</strong></td>
+        <td class="muted">Was im Menü steht. Kurz halten — was in die
+          Spalte passt, steht sauber untereinander.</td></tr>
+      <tr><td class="nowrap"><strong>Version</strong></td>
+        <td class="muted">Gehört <em>neben</em> den Namen, nicht hinein: im
+          Menü steht sie mit einem Leerzeichen dahinter, und ein Eintrag
+          ohne Version bekommt auch kein Leerzeichen. Nur so stehen zwei
+          Ausgaben desselben Systems sauber untereinander.</td></tr>
+      <tr><td class="nowrap"><strong>Menü-Info</strong></td>
+        <td class="muted">Der Zusatz in Klammern ganz rechts. Vorbelegt
+          mit dem, was im Abbild steht — bei den mitgelieferten Systemen
+          mit der Kennung, wenn dort nichts zu lesen ist.</td></tr>
+      <tr><td class="nowrap"><strong>Feld leeren</strong></td>
+        <td class="muted">Setzt zurück auf das, was von selbst entsteht —
+          es heißt nicht „kein Name“. Was dann gilt, steht blass im leeren
+          Feld.</td></tr>
+    </tbody>
+  </table>
+  <p class="muted small">
+    Der eigene Name liegt in <code>/var/lib/pxeweb/namen.yaml</code>, also
+    außerhalb des Projektordners und außerhalb des Abbilds. Er übersteht
+    damit sowohl ein Update des Servers als auch <em>Neu einlesen</em>.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="systeme-vorschau">Die Vorschau des Bootmenüs</h3>
+    <p class="zurkarte"><a href="/systeme#vorschau">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Sie zeigt, <strong>wie das Menü vor der bootenden Maschine aussieht</strong>
+    — erzeugt aus denselben Daten wie das echte. So sieht man das Ergebnis
+    der Haken und Namen, ohne einen Rechner starten zu müssen.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Das Menü, wie es der Rechner bekommt: die freigegebenen Einträge nach
+    Gruppen, darunter die Systempunkte (lokale Platte, iPXE-Eingabe, Neustart,
+    Ausschalten) und die Zeile mit der Standardauswahl. Hervorgehoben ist
+    der Punkt, der nach Ablauf der Zeit von selbst startet.
+  </p>
+  <p class="muted small">
+    Inhalt und Reihenfolge stimmen; die Darstellung von iPXE weicht im
+    Detail ab — es ist eine Textkonsole, kein Browser.
+  </p>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Zwischen <em>UEFI</em> und <em>BIOS</em> umschalten. Die Auswahl hängt
+    von der Firmware ab: Memtest etwa gibt es in zwei Ausgaben, und es
+    erscheint immer nur die passende.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="muted">
+    <strong>Was blass steht, kommt nicht an.</strong> Die Textkonsole hat
+    {{ menue_breite }} Spalten für einen Eintrag; alles danach schneidet
+    iPXE ab. Die Vorschau zeigt den Rest trotzdem — nur eben blass. Ein
+    Rollbalken wäre die falsche Auskunft: Den gibt es vor der bootenden
+    Maschine nicht, dort ist der Text einfach weg.
+  </p>
+  <p class="muted small">
+    Kürzen lässt sich eine Zeile unter <a href="/quellen">Quellen</a>: Name,
+    Version und Menü-Info stehen dort in der Karte des Abbilds. Aus ihnen
+    baut sich die Zeile zusammen.
+  </p>
+  <p class="muted small">
+    Umschalten ändert nichts am Server — es zeigt nur die andere Fassung
+    derselben Auswahl.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    Steht dort nur der Systemteil, ist kein Eintrag freigegeben. Das Menü
+    sähe am Rechner genauso aus — und das ist der eigentliche Wert dieser
+    Karte: Man sieht es hier statt vor der Maschine.
+  </p>
+  <p class="muted small">
+    Dieses Menü sieht ohnehin nur, wer dafür freigegeben ist, und ein
+    Rechner mit fester Vorauswahl bekommt es gar nicht zu Gesicht — er
+    bootet ohne Umweg in seinen Eintrag. Beides steht unter
+    <a href="#clients">Clients</a>.
+  </p>
+
+  </section>
+
+<section id="quellen" class="kapitel">
+  <header class="kapitelkopf">
+    <h2>Quellen</h2>
+    <p class="zumregister"><a href="/quellen">Zum Register &rarr;</a></p>
+  </header>
+<p class="muted">
+    Woher die Systeme kommen — und wie neue hereinkommen. Vier Karten, eine
+    je Herkunft: <a href="#quellen-katalog">Katalog</a>,
+    <a href="#quellen-upload">Upload</a>,
+    <a href="#quellen-download">Download</a> und
+    <a href="#quellen-custom">Custom</a>. Jede zeigt ihr Werkzeug und
+    darunter, was auf diesem Weg schon hereingekommen ist — in der
+    Reihenfolge, die du auf der Seite selbst eingestellt hast. Was dabei
+    entsteht, steht danach unter <a href="/systeme">Systeme</a>.
+  </p>
+  <p class="muted">
+    <strong>Warum das ein eigenes Register ist:</strong> Diese Adressen
+    veralten. Ubuntu ersetzt bei jeder Punktversion den Dateinamen, Fedora
+    räumt ältere Ausgaben in ein Archiv, Spiegel verschwinden. Meldet ein
+    Download einen Fehler, liegt es fast immer daran — und nicht am Server.
+  </p>
+  <div class="abschnittskopf">
+    <h3 id="quellen-katalog">Katalog — die mitgelieferten Systeme</h3>
+    <p class="zurkarte"><a href="/quellen#katalog">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Der Server bringt eine Auswahl bekannter Systeme mit — <strong>die
+    Distributionen, nicht die Nummer ihrer Ausgabe</strong>. Diese Karte ist
+    der Ort, an dem man sie in Betrieb nimmt: Adresse prüfen, Ausgabe
+    eintragen, Dateien holen.
+  </p>
+  <p class="muted small">
+    <strong>Warum nicht gleich mit Nummern ausgeliefert?</strong> Weil eine
+    Datei nicht wissen kann, welche Ausgabe es in zwei Jahren gibt — der
+    Anbieter schon. Stünde dort eine Nummer von heute, zeigte sie irgendwann
+    ins Leere, und ein neu aufgesetzter Server sähe aus wie ein kaputter.
+    Solange nichts eingetragen ist, sagt die Karte <em>nicht in Betrieb</em>
+    — das ist ein eigener Zustand und kein Fehler.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Drei Teile untereinander.
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>Abgleich</strong></td>
+        <td class="muted">Erscheint nur, während einer läuft oder gelaufen
+          ist: was gerade geholt wird und was dabei herauskam.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Was im Katalog steht</strong></td>
+        <td class="muted">Ein Menüpunkt je Zeile, nach Gruppen sortiert wie
+          im Bootmenü. Mehrversionige Systeme stehen einzeln: Rocky 10 und
+          Rocky 9 sind zwei Einträge, nicht einer mit zwei Ausgaben — jede
+          Ausgabe hat eigene Dateien, eigene Adresse, eigenen
+          Menüpunkt.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Adressen</strong></td>
+        <td class="muted">Je Quelle eine Klappe mit Ampel, Adresse, den
+          eingetragenen Ausgaben und den Knöpfen dazu. Der Name der
+          Shell-Variablen steht klein daneben — unter ihm meldet auch der
+          Wächter auf <a href="/">Server Health</a>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    <strong>So schaltet man ein System ein:</strong> <em>Prüfen</em>
+    drücken. Der Server sieht beim Anbieter nach, welche Ausgaben es gibt,
+    und trägt die neueste samt Adresse ein. Erst danach gibt es in derselben
+    Karte etwas zu <em>Holen</em>.
+  </p>
+  <table>
+    <tbody>
+      <tr><td class="nowrap"><strong>Prüfen</strong></td>
+        <td class="muted">Sieht beim Anbieter nach: ob die Adresse noch
+          gilt und welche Ausgaben es gibt. Trägt die neueste ein.</td></tr>
+      <tr><td class="nowrap"><strong>Alle prüfen</strong></td>
+        <td class="muted">Dasselbe für jede Quelle nacheinander, ohne etwas
+          herunterzuladen. Der erste Griff, wenn ein Abgleich
+          scheitert.</td></tr>
+      <tr><td class="nowrap"><strong>Neue Version</strong></td>
+        <td class="muted">Eine Ausgabe von Hand eintragen — für den Fall,
+          dass ausdrücklich eine ältere gebraucht wird. Die Adresse schlägt
+          der Server aus dem Muster vor.</td></tr>
+      <tr><td class="nowrap"><strong>Holen</strong></td>
+        <td class="muted">Lädt die Dateien genau dieser Ausgabe.</td></tr>
+      <tr><td class="nowrap"><strong>Version entfernen</strong></td>
+        <td class="muted">Nimmt die Ausgabe aus der Liste — samt Dateien und
+          Menüpunkt. Wie sich das von <em>Dateien löschen</em> unterscheidet,
+          steht unter
+          <a href="#quellen-ausgaben">Mehrere Ausgaben nebeneinander</a>.</td></tr>
+    </tbody>
+  </table>
+  <p class="muted small">
+    <em>Prüfen</em> nimmt <strong>immer nur die neueste</strong> — auch
+    dort, wo der Anbieter mehrere nebeneinander pflegt. Rocky Linux führt
+    zum Beispiel 10, 9 und 8 gleichzeitig; eingetragen wird 10.
+  </p>
+  <p class="muted small">
+    Was „die neueste“ ist, entscheidet nicht immer die höhere Zahl. Debian
+    kennt in seinen Pfaden nur Codenamen, und <code>forky</code> steht
+    alphabetisch vor <code>trixie</code>; openSUSE führt zeitweise eine
+    höhere Nummer als Beta neben der stabilen. Wo der Anbieter selbst sagt,
+    welche die aktuelle ist, gilt seine Auskunft.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="muted">
+    Geholt wird <strong>dort, wo die Quelle steht</strong>: Unter
+    <em>Adressen</em> hat jede Ausgabe ihr eigenes <em>Holen</em>. Damit
+    lässt sich eine neue Ausgabe holen, ohne dass die alten mit nachgeladen
+    werden. Was vollständig da ist, wird übersprungen, ein abgebrochener
+    Download wird fortgesetzt; <strong>ein erneuter Lauf schadet also
+    nie</strong>.
+  </p>
+  <p class="muted small">
+    Das kann je nach Abbild Gigabyte und einige Zeit bedeuten. Die Ausgabe
+    läuft auf der Seite mit, aber man muss nicht dabeibleiben — der Abgleich
+    läuft auf dem Server weiter, auch wenn der Browser zugeht. Solange einer
+    läuft, geht kein zweiter.
+  </p>
+  <p class="muted small">
+    <em>Prüfen</em> lädt nichts herunter und ändert nichts an den Dateien —
+    es trägt höchstens eine Adresse oder eine Ausgabe ein. Und ein
+    geholtes System steht danach <strong>nicht automatisch im Bootmenü</strong>:
+    Freigegeben wird unter <a href="/systeme">Systeme</a>.
+  </p>
+  <p class="muted">
+    <strong>Dasselbe System schon über Download geholt?</strong> Dann bringt
+    <em>Holen</em> es ein zweites Mal auf die Platte. Die beiden Wege
+    vergeben verschiedene Kennungen und kommen sich deshalb nie in die
+    Quere — sie wissen aber auch nichts voneinander:
+  </p>
+  <table>
+    <tbody>
+      <tr><td class="nowrap"><a href="#quellen-download">Download</a></td>
+        <td class="muted">Kennung aus dem <strong>Dateinamen</strong> —
+          <code>iso-clonezilla-live-3-3-3-15-amd64</code></td></tr>
+      <tr><td class="nowrap">Katalog</td>
+        <td class="muted">Kennung aus <strong>System und Ausgabe</strong> —
+          <code>clonezilla-3-3-3-15</code></td></tr>
+    </tbody>
+  </table>
+  <p class="muted small">
+    Es entstehen also zwei Verzeichnisse, zwei Menüpunkte mit fast demselben
+    Namen und der doppelte Platzbedarf. Doppelt vorzuhalten bringt nichts:
+    Es ist derselbe Inhalt aus derselben Datei. Wenn die Herkunft nicht
+    gefällt, geht man andersherum — den hochgeladenen Eintrag unter
+    <a href="/systeme">Systeme</a> löschen, danach hier holen.
+  </p>
+  <p class="muted small">
+    Dass die Kennungen auseinandergehen, ist Absicht: Ein hochgeladenes
+    Abbild soll sich nie in einen Katalogeintrag hineinschreiben können —
+    sonst überbügelte der nächste Abgleich die eigene Datei stillschweigend.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    Ein frisch aufgesetzter Server ist hier <strong>leer</strong>: Unter
+    <em>Adressen</em> steht jede Quelle mit <em>Prüfen</em> und <em>Neue
+    Version</em>, sonst nichts, und im Bootmenü steht nichts, bis etwas
+    eingeschaltet wird. Das ist der Auslieferungszustand und kein Mangel.
+  </p>
+  <p class="muted small">
+    <em>nicht in Betrieb</em> heißt: für diese Quelle ist keine Ausgabe
+    eingetragen. <em>prüfen</em> in Rot heißt dagegen: Es ist eine
+    eingetragen, aber die Adresse antwortet nicht mehr — dann hilft
+    derselbe Knopf, er sucht die richtige und trägt sie nach.
+  </p>
+
+  <h4 id="quellen-adressen">Die Adressen — und warum sie veralten</h4>
+  <p class="muted small">
+    Jede Karte trägt den Namen ihres Systems und daneben klein die
+    Shell-Variable, unter der die Adresse in <code>sync-images.sh</code>
+    und <code>quellen.env</code> steht — <em>Ubuntu Server</em> und
+    <code>UBUNTU_ISO_URL</code>. Unter diesem Namen meldet auch der
+    Wächter auf <a href="/">Server Health</a>. Sortiert sind die Karten
+    wie das Bootmenü: erst was ein System installiert, dann die Werkzeuge.
+  </p>
+  <p class="muted">
+    Aus diesen Adressen holt der Abgleich die mitgelieferten Systeme —
+    und sie halten nicht ewig, aus den Gründen
+    <a href="#quellen">ganz oben in diesem Kapitel</a>. Meldet der Abgleich
+    einen Fehler, ist hier die Stelle, an der die neue Adresse eingefügt
+    wird.
+  </p>
+  <table>
+    <tbody>
+      <tr><td class="nowrap"><strong>Prüfen</strong></td>
+        <td class="muted">Holt ein einziges Byte und zeigt Statuscode,
+          Größe und die Adresse nach allen Weiterleitungen — es lädt also
+          nichts herunter. Sind es nur ein paar Kilobyte, hast du
+          vermutlich die Downloadseite erwischt statt der Datei darauf.</td></tr>
+      <tr><td class="nowrap"><strong>Basisadressen</strong></td>
+        <td class="muted">Manche Einträge sind keine Dateien: Der Abgleich
+          hängt den Dateinamen erst an. Bei denen wird eine Datei darunter
+          geprüft — welche, steht in der ersten Spalte.</td></tr>
+      <tr><td class="nowrap"><strong>Speichern</strong></td>
+        <td class="muted">Die neue Adresse gilt ab sofort. Sie landet in
+          <code>/var/lib/pxeweb/quellen.env</code>, also außerhalb des
+          Projektordners — ein Update des Servers überschreibt sie
+          nicht.</td></tr>
+      <tr><td class="nowrap"><strong>Vorgabe</strong></td>
+        <td class="muted">Nimmt den eigenen Eintrag wieder heraus; es gilt
+          dann die Adresse, die das Projekt mitbringt.</td></tr>
+      <tr><td class="nowrap"><strong>Versionslisten</strong></td>
+        <td class="muted">Welche Ausgaben eines Systems nebeneinander
+          bereitstehen sollen. Ausgeliefert wird die Liste leer; was darin
+          steht, hat jemand eingetragen oder <em>Prüfen</em> für ihn. Ein
+          Update des Servers kann darin nichts nachschieben.</td></tr>
+    </tbody>
+  </table>
+
+  <h4 id="quellen-ausgaben">Mehrere Ausgaben nebeneinander</h4>
+  <p class="muted">
+    Jedes mitgelieferte System darf in mehreren Ausgaben gleichzeitig
+    bereitstehen — solange Rechner mit einer älteren Version im Betrieb
+    sind, will man ihr Installationsmedium behalten. Bei den Werkzeugen
+    (SystemRescue, GParted, Clonezilla, Memtest) ist das ebenso nützlich:
+    Eine neue Ausgabe lässt sich neben der bewährten aufnehmen und in
+    Ruhe erproben.
+  </p>
+  <p class="muted small">
+    Jede Ausgabe wird ein eigener Menüpunkt mit eigenem Verzeichnis;
+    deshalb steht Rocky in der Karte zweimal, mit <em>10</em> und
+    <em>9</em>. Eingetragen werden Nummer und Adresse zusammen — die
+    Adresse schlägt der Server vor, sobald die Nummer dasteht. Mehrere Ausgaben durch Leerzeichen trennen,
+    neueste zuerst — danach in derselben Karte holen. Welche Nummern es
+    beim Anbieter überhaupt gibt, sagt <em>Nach neueren sehen</em>; geholt
+    oder eingetragen wird dabei nichts.
+  </p>
+  <p class="muted small">
+    Wieder loswerden lässt sich beides, und die zwei Knöpfe tun
+    Verschiedenes. <em>Version entfernen</em> steht rechts in der Zeile
+    der Ausgabe, neben <em>Holen</em>: es nimmt die Nummer aus der Liste,
+    löscht ihre Dateien <strong>und</strong> eine eigens eingetragene
+    Adresse für genau diese Ausgabe — der Menüpunkt ist danach weg. Auch
+    die letzte Ausgabe darf gehen; das System ist dann nicht mehr in
+    Betrieb. <em>Dateien löschen</em> steht an jedem Eintrag, für den etwas auf
+    der Platte liegt, und räumt nur die Dateien weg. Der Eintrag bleibt und
+    steht auf <em>fehlt</em>; der nächste Abgleich holt ihn wieder. Das ist
+    der Weg für Mint und Tumbleweed, von denen es nur eine Ausgabe gibt.
+  </p>
+
+  <h4 id="quellen-debian">Debian: Codename statt Nummer</h4>
+  <p class="muted">
+    Bei Debian wird nicht <code>13</code> eingetragen, sondern
+    <code>trixie</code> — und der Menüpunkt heißt entsprechend
+    <code>debian-trixie</code>. Das ist keine Marotte: Debians Pfade kennen
+    nur den Codenamen. <code>dists/trixie/</code> antwortet,
+    <code>dists/13/</code> gibt es nicht.
+  </p>
+  <p class="muted small">
+    Die Nummer geht dabei nicht verloren. Seit August 2026 steht sie als
+    Abzeichen neben der Ausgabe — <em>Debian 13.6</em> —, denn beim
+    <em>Prüfen</em> nennt Debian sie in derselben Datei, aus der auch der
+    Codename kommt. Sie stammt vom letzten Prüfen und altert: Aus 13.6
+    wird irgendwann 13.7, ohne dass sich in der Zeile etwas rührt. Wann
+    sie gelesen wurde, steht deshalb im Tooltip des Abzeichens.
+  </p>
+  <p class="muted small">
+    Im Bootmenü steht sie damit noch nicht. Wer sie auch dort lesen will,
+    trägt unter <em>Version</em> ein, was dort stehen soll
+    (<em>13.6</em>), und der Ordner heißt trotzdem weiter nach dem
+    Codenamen. Name und Version sind bei jedem Eintrag frei setzbar.
+  </p>
+  <p class="muted small">
+    <em>Nach neueren sehen</em> geht bei Debian einen eigenen Weg: Unter
+    <code>dists/</code> stehen Wörter statt Nummern, dort wäre nichts zu
+    erkennen. Stattdessen wird Debian direkt gefragt — es beantwortet in
+    einer Textdatei je Suite, welcher Codename gerade <em>stable</em> und
+    welcher <em>oldstable</em> ist, und nennt die Nummer dazu:
+    <em>stable ist trixie (Debian 13.6), oldstable ist bookworm (Debian
+    12.15)</em>. Aufgenommen wird auch hier nichts von selbst.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="quellen-upload">Upload — ein Abbild vom Arbeitsplatz</h3>
+    <p class="zurkarte"><a href="/quellen#upload">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    <strong>Upload heißt hier:</strong> Du wählst im Browser eine ISO-Datei
+    aus, die von deinem Arbeitsplatz aus erreichbar ist, und <em>dein
+    Browser</em> überträgt sie auf den Server. Der Weg führt also über dein
+    Gerät — der Server holt dabei nichts selbst. Woher die Datei kommt, ist
+    gleich: Festplatte, USB-Stick, Netzlaufwerk, alles, was der Dateidialog
+    erreicht.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Oben die Dateiauswahl und der Knopf, darunter die Liste dessen, was auf
+    diesem Weg schon hereingekommen ist — mit Größe, Zeitpunkt, erkannter
+    Familie und dem Startweg (über NFS eingehängt oder in den
+    Arbeitsspeicher geladen). Dort stehen auch <em>Neu einlesen</em> und
+    <em>Löschen</em>. Ganz unten steht, wie viel diese Abbilder zusammen
+    belegen.
+  </p>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Das sind <strong>zwei Schritte</strong>: <em>Datei auswählen</em> öffnet
+    nur den Dialog; übertragen wird erst mit <em>Vom Arbeitsplatz
+    hochladen</em>. Danach läuft ein Balken mit.
+  </p>
+  <p class="muted small">
+    Der Dateidialog gehört dem Browser, nicht dieser Seite: Chrome schreibt
+    <em>Datei auswählen</em>, Firefox <em>Durchsuchen…</em>. Vorgefiltert
+    ist er auf <code>.iso</code>. Trägt ein ISO-Abbild ausnahmsweise eine
+    andere Endung, taucht es erst auf, wenn du im Dialog auf <em>Alle
+    Dateien</em> umstellst.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="muted">
+    Der Server sieht anschließend selbst nach, was in dem Abbild steckt:
+    Bei einem bekannten System legt er automatisch einen Menüpunkt an — du
+    musst weder eine Katalogdatei anfassen noch eine Kernel-Kommandozeile
+    kennen. Erkannt werden Ubuntu und seine Abkömmlinge (Mint, Pop!_OS,
+    Zorin), Debian-Live, Arch und SystemRescue, Fedora und Rocky, openSUSE —
+    und Windows, daraus wird die <a href="#nuetzliches-windows">Windows-Konsole</a>.
+  </p>
+  <p class="hint">
+    <strong>Lass das Fenster offen, bis der Balken durch ist.</strong>
+    Überträgt dein Browser, hängt die Übertragung an diesem Reiter:
+    Schließt du ihn, bricht sie ab, und der Server räumt die halbe Datei
+    weg. Wenn du weggehen können willst, nimm
+    <a href="#quellen-download">Download</a> — dort lädt der Server selbst,
+    und der Browser darf zu.
+  </p>
+  <p class="muted">
+    <strong>Dieselbe Datei ein zweites Mal?</strong> Dann fragt der Server,
+    bevor er etwas entgegennimmt — die Kennung entsteht aus dem Dateinamen
+    und ist einmalig. Zur Wahl steht, das Vorhandene zu <em>ersetzen</em>
+    oder eine <em>neue Ausgabe</em> daneben aufzunehmen; die bekommt
+    dieselbe Kennung mit <code>-2</code> am Ende. Das Danebenlegen ist der
+    Weg zum Erproben: die neue Ausgabe erst nur unter <em>Boot-Optionen</em>
+    freigeben, an einem Rechner ausprobieren und erst danach ins
+    <em>BootMenü</em> nehmen. Gefragt wird, sobald die Datei ausgewählt ist
+    — nicht nach sechs übertragenen Gigabyte.
+  </p>
+  <p class="muted small">
+    Erkannt wird die Doppelung am <em>Dateinamen</em>, nicht am System:
+    <code>ubuntu-26.04.1-desktop-amd64.iso</code> ergibt eine andere Kennung
+    und wird ohne Nachfrage ein eigener Eintrag.
+  </p>
+  <p class="muted small">
+    Ein hochgeladenes Abbild steht danach <strong>nicht automatisch im
+    Bootmenü</strong>. Freigegeben wird es unter
+    <a href="/systeme">Systeme</a> — das ist der nächste Schritt.
+  </p>
+
+  <h4>Was hochgeladen werden kann</h4>
+  <p class="muted">
+    <strong>ISO-Abbilder</strong> — und sonst nichts. Gemeint ist damit das
+    Format, nicht die Endung: ein Abbild mit einem
+    <strong>ISO9660</strong>-Dateisystem, wie es jede Distribution zum
+    Herunterladen anbietet, oder mit <strong>UDF</strong> — so sind
+    Windows-Medien aufgebaut, die auf ISO9660 nur einen Zettel legen.
+  </p>
+  <table>
+    <tbody>
+      <tr><td class="nowrap"><strong>Geht</strong></td>
+        <td class="muted">Die <code>.iso</code>-Datei von der Downloadseite
+          eines Systems — Installer-Medium, Live-Medium, Windows-Medium.</td></tr>
+      <tr><td class="nowrap"><strong>Geht nicht</strong></td>
+        <td class="muted">Rohe Datenträgerabbilder (<code>.img</code>,
+          <code>.raw</code>), Festplatten virtueller Maschinen
+          (<code>.vhd</code>, <code>.vmdk</code>, <code>.qcow2</code>) und
+          Archive (<code>.zip</code>, <code>.7z</code>). In allen steckt
+          kein ISO9660, und der Server kann darin nichts finden.</td></tr>
+    </tbody>
+  </table>
+  <p class="muted small">
+    Große Live-Systeme werden ausgepackt und beim Start über NFS gestreamt —
+    die Größe des Abbilds ist damit egal, auch ein 6-GB-Desktop läuft auf
+    einem Rechner mit 8 GB Arbeitsspeicher. Ist auf diesem Server kein NFS
+    eingerichtet, wird ein Live-System stattdessen komplett in den
+    Arbeitsspeicher des bootenden Rechners geladen; dann darf das Abbild
+    höchstens etwa halb so groß sein wie dessen RAM. Was für diesen Server
+    gilt, sagt die Karte selbst.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    Ohne hochgeladene Abbilder steht unter dem Formular nichts — der
+    Normalfall auf einem frischen Server.
+  </p>
+  <p class="muted small">
+    Passt der Inhalt nicht, steht der Upload sofort auf <em>Fehler</em>, mit
+    der Meldung, dass das Abbild kein lesbares ISO9660 ist. <strong>Liegen
+    bleibt dabei nichts</strong> — auf die Endung kommt es nicht an, der
+    Server sieht in die Datei hinein.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="quellen-download">Download — der Server holt selbst</h3>
+    <p class="zurkarte"><a href="/quellen#download">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Dasselbe Ziel wie beim <a href="#quellen-upload">Upload</a>, nur lädt
+    <strong>der Server</strong> das Abbild selbst von einer Adresse. Das ist
+    schneller, als es erst auf den Arbeitsplatz und von dort wieder hierher
+    zu schicken — und es läuft weiter, wenn der Browser zugeht.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Ein Adressfeld, der Knopf, ein Balken — und darunter dieselbe Liste wie
+    beim Upload, zusätzlich mit der Adresse, von der jedes Abbild kam.
+  </p>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Die vollständige Adresse einer ISO-Datei eintragen und <em>Von Adresse
+    holen</em> drücken. Ist die Kennung schon vergeben, kommt dieselbe Frage
+    wie beim Upload — ersetzen oder danebenlegen; der Dateiname steckt hier
+    am Ende der Adresse.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="muted">
+    Der Balken zeigt hier nicht, was der Browser schickt, sondern was der
+    Server geladen hat — die Seite fragt ihn im Sekundentakt ab. Deshalb
+    darfst du sie <strong>schließen</strong>: Der Download läuft auf dem
+    Server weiter, und beim nächsten Öffnen steht er wieder in dieser Karte.
+  </p>
+  <p class="muted small">
+    Nennt der Anbieter die Größe nicht, bleibt der Balken weg, und es steht
+    nur da, wie viel schon angekommen ist.
+  </p>
+  <p class="muted small">
+    Adressen der mitgelieferten Systeme stehen in der Karte
+    <a href="#quellen-katalog">Katalog</a>. Holst du eines davon hier über
+    seine Adresse, entsteht ein <strong>zweiter</strong> Eintrag neben dem
+    des Katalogs — der Server erkennt nicht, dass es dasselbe System ist.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    Wie beim Upload: keine Liste, solange auf diesem Weg nichts hereinkam.
+    Scheitert ein Download, steht die Meldung des Anbieters dabei — meist
+    <code>404</code>, dann ist die Adresse veraltet.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="quellen-custom">Custom — ein eigener Netz-Installer</h3>
+    <p class="zurkarte"><a href="/quellen#custom">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Für Systeme, die es <strong>nicht als ISO gibt</strong> — etwa Kali —
+    oder die nur Kernel und Initrd auf einem Spiegel bereitstellen. Der
+    Rechner holt sich die Pakete dann während der Installation selbst aus
+    dem Netz.
+  </p>
+  <p class="muted">
+    Das Schwierige daran ist nie der Download, sondern die
+    <strong>Kernel-Kommandozeile</strong>: Anaconda will
+    <code>inst.repo=</code>, linuxrc will <code>install=</code>, ein
+    Debian-Netinstaller gar nichts. Deshalb wählst du hier nur die Bauart,
+    den Rest kennt der Server.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Vier Bauarten zur Auswahl, dazu die Felder, die die jeweilige braucht.
+  </p>
+  <table>
+    <tbody>
+      <tr><td class="nowrap"><strong>Debian-Abkömmling</strong></td>
+        <td class="muted">Spiegel und Suite genügen — der lange Pfad zum
+          netboot-Installer ist bei allen Abkömmlingen derselbe und wird
+          zusammengesetzt. Bekannte Spiegel stehen in der Auswahlliste.</td></tr>
+      <tr><td class="nowrap"><strong>Anaconda</strong><br>
+        <span class="muted small">Fedora, Rocky, Alma</span></td>
+        <td class="muted">Basisadresse des Spiegels, dazu die Paketquelle,
+          die in <code>inst.repo=</code> geschrieben wird.</td></tr>
+      <tr><td class="nowrap"><strong>linuxrc</strong><br>
+        <span class="muted small">openSUSE</span></td>
+        <td class="muted">Basisadresse; die Paketquelle landet in
+          <code>install=</code>.</td></tr>
+      <tr><td class="nowrap"><strong>Frei</strong></td>
+        <td class="muted">Zwei Adressen und die Kommandozeile von Hand — für
+          alles, was in keine Familie passt.</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Bauart wählen, Adressen eintragen, <em>Prüfen</em> drücken und
+    aufnehmen. <em>Prüfen</em> holt vor dem Anlegen ein Byte je Datei und
+    sagt, ob an den Adressen wirklich etwas liegt — das erspart einen
+    Eintrag, der danach im Fehlerzustand steht.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="muted">
+    Aufgenommen wird ein <strong>Menüpunkt</strong>, kein Abbild: Der Server
+    holt nur Kernel und Initrd hierher, alles Weitere zieht der bootende
+    Rechner selbst. Deshalb belegen diese Einträge fast keinen Platz — und
+    deshalb <strong>brauchen sie Internet am Client</strong>, nicht hier.
+  </p>
+  <p class="muted small">
+    <em>Prüfen</em> sieht auch die Kommandozeile an, nicht nur die Adressen
+    der Dateien: Dort steht die zweite Adresse, die Paketquelle. Ein Kernel
+    aus einer Ausgabe mit dem Paketdepot einer anderen installiert
+    Falsches, ohne dass jemand eine Fehlermeldung sieht.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    Ohne eigene Einträge steht unter dem Formular nichts. Bleibt
+    <em>Prüfen</em> ohne Antwort, kommt der Server nicht an den Spiegel
+    heran — dann ist die Adresse falsch oder er hat kein Internet.
+  </p>
+<h4 id="quellen-custom-ausgaben">Mehrere Ausgaben auf einmal</h4>
+  <p class="muted">
+    Steckt in der eingefügten Adresse eine Ausgabenummer, sagt
+    <em>Prüfen</em> das mit dazu — und nennt gleich die anderen, die
+    beim Anbieter danebenliegen. Kreuze an, welche mitkommen sollen:
+    Jede wird ein eigener Menüpunkt mit eigenem Verzeichnis, genau wie
+    bei den mitgelieferten Systemen.
+  </p>
+  <p class="muted small">
+    Kommt später eine Ausgabe dazu, meldet das der Wächter auf
+    <a href="/">Server Health</a> und verlinkt auf die Karte des
+    Eintrags. Dort steht <em>Weitere Ausgabe</em>: Nummer eintragen,
+    <em>Aufnehmen</em> — der Rest entsteht aus derselben Vorlage. Die
+    vorhandene Ausgabe bleibt dabei, wie sie ist; solange Rechner mit
+    ihr laufen, bleibt ihr Installationsmedium verfügbar.
+  </p>
+  <p class="muted small">
+    Die Adresse für die anderen Ausgaben baut der Server aus der, die
+    du eingefügt hast — du musst dafür nichts umschreiben. Findet
+    <em>Prüfen</em> keine Nummer oder liefert der Anbieter kein
+    Verzeichnis zum Nachsehen, bleibt es beim einzelnen Eintrag; das
+    ist kein Fehler, sondern der Normalfall bei Spiegeln, die nur eine
+    Ausgabe führen.
+  </p>
+
+</section>
+
+<section id="einrichtung" class="kapitel">
+  <header class="kapitelkopf">
+    <h2>Einrichtung</h2>
+    <p class="zumregister"><a href="/einrichtung">Zum Register &rarr;</a></p>
+  </header>
+<p class="muted">
+    Wie dieser Server eingerichtet ist. Man braucht die Seite selten — aber
+    wenn, dann meistens dringend: Sie beantwortet die zwei Fragen, mit denen
+    eine Fehlersuche anfängt — welcher Stand läuft, und wo liegt was.
+  </p>
+  <p class="muted small">
+    <strong>Die Seite hieß bis August 2026 Übersicht</strong> und zeigte auch
+    die Belegung je Verzeichnis und die Dateien je Eintrag. Beides steht
+    jetzt dort, wo man ohnehin danach sieht: der Platz unter
+    <a href="/">Server Health</a> in der Detailansicht — nach Einträgen
+    aufgeschlüsselt statt nach Ordnern —, die Dateien in der Karte des
+    jeweiligen Eintrags unter <a href="/systeme">Systeme</a>, mit Pfad,
+    Größe und dem, was fehlt. Alte Lesezeichen auf
+    <code>/uebersicht</code> werden weitergeleitet.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="einrichtung-stand">Stand</h3>
+    <p class="zurkarte"><a href="/einrichtung#stand">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Sie sagt, <strong>welche Fassung dieses Servers gerade läuft</strong> und
+    wann sie eingespielt wurde. Bei einer Rückfrage zu einem Fehler ist das
+    die Angabe, die zählt — ohne sie lässt sich nicht sagen, ob ein Problem
+    schon behoben ist.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Die Kennung des Standes, das Datum der Installation und, falls
+    zutreffend, der Zweig. Die Angabe stammt <strong>nicht aus einer
+    gepflegten Liste</strong>, sondern wird bei jedem <code>install.sh</code>
+    aus dem Projektordner gestempelt — sie lässt sich also genau einem Stand
+    zuordnen und kann nicht danebenliegen, weil jemand vergessen hat, sie
+    hochzuzählen.
+  </p>
+  <p class="muted small">
+    Steht ein anderer Zweig als <code>main</code> dabei oder ein angehängtes
+    <code>-dirty</code>, sagt die Karte auch das: Dann lief zum Zeitpunkt der
+    Installation etwas anderes als der veröffentlichte Stand.
+  </p>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Nichts — die Karte zeigt an. Geändert wird der Stand auf dem Server, mit
+    einem erneuten <code>install.sh</code>.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="muted">
+    Der Stempel wird beim Einspielen gesetzt und rührt sich danach nicht
+    mehr. Er sagt also, <strong>was installiert wurde</strong> — nicht, ob es
+    inzwischen eine neuere Fassung gibt. Danach sieht dieser Server nicht von
+    selbst.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    Dann ist diese Anwendung nicht über <code>install.sh</code> auf den
+    Server gekommen — sie läuft zum Beispiel direkt aus einem Arbeitsordner.
+    Ein Fehler ist das nicht, aber eine Fassung lässt sich dann nicht nennen.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="einrichtung-ablageorte">Ablageorte</h3>
+    <p class="zurkarte"><a href="/einrichtung#ablageorte">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Sie beantwortet die erste Frage jeder Fehlersuche, bei der eine Datei
+    fehlt: <strong>Liegt sie da, wo sie liegen soll — und darf der Dienst
+    dort überhaupt schreiben?</strong>
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Je Zeile ein Ort mit seinem Pfad: wo die Abbilder liegen, wo die
+    Datenbank steht, wo die Protokolle landen. Daneben steht, ob es den
+    Ort gibt und ob er beschreibbar ist.
+  </p>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Nachsehen und abgleichen. Verschoben werden diese Orte auf dem Server;
+    einige stehen in <code>/etc/pxeweb.env</code> — siehe die Karte
+    <a href="#einrichtung-einstellungen">Einstellungen</a>.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="muted">
+    Geprüft wird beim Aufruf der Seite, nicht laufend. Und geprüft wird der
+    <strong>Ort</strong>, nicht sein Inhalt: Ein Verzeichnis kann grün
+    dastehen und trotzdem leer sein. Was darin liegt, steht unter
+    <a href="/">Server Health</a> und <a href="/systeme">Systeme</a>.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    Meldet eine Zeile, dass der Ort fehlt oder nicht beschreibbar ist, ist
+    das kein Anzeigefehler, sondern die Ursache: Alles, was dorthin
+    geschrieben werden müsste, schlägt fehl. Rechte und Eigentümer werden
+    von <code>install.sh</code> gesetzt — ein erneuter Lauf richtet sie
+    wieder her.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="einrichtung-einstellungen">Einstellungen</h3>
+    <p class="zurkarte"><a href="/einrichtung#einstellungen">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Sie zeigt die wenigen Werte, mit denen dieser Server arbeitet: Adresse
+    des Servers, Zeit bis zur Standardauswahl im Bootmenü, Rundrufadresse
+    für das Wecken.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Was in <code>/etc/pxeweb.env</code> steht — gelesen beim Start des
+    Dienstes. Diese Datei liegt <strong>außerhalb des Projektordners</strong>
+    und übersteht damit ein Update: <code>install.sh</code> spiegelt nur das
+    Projekt, nicht <code>/etc</code>.
+  </p>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Hier nur lesen. Geändert wird die Datei auf dem Server, danach
+    <code>sudo systemctl restart pxeweb</code>; ohne den Neustart läuft der
+    Dienst mit den alten Werten weiter.
+  </p>
+  <p class="muted small">
+    Die Server-IP nimmt eine Sonderstellung ein: Sie steht hier und an drei
+    weiteren Stellen, und geändert wird sie am Host, nicht in dieser
+    Oberfläche. Dafür ist die Karte
+    <a href="#einrichtung-ersteinrichtung">Ersteinrichtung</a> da.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  {# Die eine ausfuehrliche Fassung dieses Arguments. Es stand bis zum
+     28.08.2026 viermal in der Hilfe, jedes Mal ganz ausgeschrieben --
+     dreimal davon in diesem Kapitel. Viermal gelesen klingt eine
+     Begruendung wie eine Entschuldigung. Die drei anderen Stellen
+     verweisen jetzt hierher. #}
+  <p class="hint" id="einrichtung-warum-kein-knopf">
+    <strong>Warum es dafür keinen Knopf gibt</strong> — und warum an
+    mehreren Stellen dieses Servers einer fehlt. Zwei Gründe, und der
+    zweite wiegt schwerer:
+  </p>
+  <p class="muted">
+    <strong>Die Oberfläche hat keine Anmeldung.</strong> Sie ist für das
+    eigene Netz gedacht; wer den Browser erreicht, erreicht auch jeden
+    Knopf darin. Alles, was tiefer eingreift als Anzeigen und Freigeben,
+    gehört deshalb auf den Server.
+  </p>
+  <p class="muted">
+    <strong>Und der Dienst dürfte es gar nicht.</strong> Er läuft als
+    Benutzer <code>pxeweb</code> mit <code>NoNewPrivileges</code> und kann
+    <code>/etc</code> nicht schreiben; <code>sudo</code> funktioniert unter
+    dieser Einstellung grundsätzlich nicht. Selbst wenn der Knopf dastünde,
+    liefe er ins Leere.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    Fehlt ein Wert, gilt die Vorgabe aus dem Projekt. Fehlt die ganze Datei,
+    ist <code>install.sh</code> nicht durchgelaufen — dann steht meist auch
+    unter <a href="#einrichtung-stand">Stand</a> nichts.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="einrichtung-ersteinrichtung">Ersteinrichtung</h3>
+    <p class="zurkarte"><a href="/einrichtung#ersteinrichtung">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Für die zwei Eingriffe, die den Server als Ganzes betreffen: <strong>die
+    IP-Adresse übernehmen</strong> und <strong>zurück auf
+    Werkseinstellung</strong>. Beides braucht man selten — und das zweite
+    soll niemand im Vorbeigehen auslösen. Deshalb steht die Karte ganz unten.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Zunächst nur zwei Knöpfe: <em>Werkseinstellung</em> und <em>IP-Adresse
+    übernehmen</em>. Was dahinter passiert, entfaltet sich erst nach dem
+    Druck — Schritt für Schritt in derselben Karte.
+  </p>
+  <p class="muted small">
+    Läuft dieser Server unter einer anderen Adresse als der eingerichteten,
+    steht das als rote Karte über jeder Seite — siehe
+    <a href="#erste-schritte-befunde">Farbige Karten über der Seite</a>. Der
+    Weg hinaus führt hierher zurück: <em>IP-Adresse übernehmen</em>.
+  </p>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Einen der beiden Wege beginnen. Keiner von beiden ist mit einem einzigen
+    Druck erledigt; die Einzelheiten stehen in den zwei Abschnitten darunter.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="hint">
+    <strong>Der letzte Schritt findet nie nur im Browser statt.</strong> Bei
+    der Werkseinstellung prüft der Server das getippte Wort selbst; beim
+    Übernehmen der Adresse schreibt die Seite nur den Befehl hin, ausgeführt
+    wird er an der Konsole. Eine Bestätigung, die im JavaScript stattfindet,
+    ist keine.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    Die Karte zeigt immer nur die beiden Knöpfe — sie hat keinen Zustand, den
+    sie melden könnte. Ein angefangener Weg lässt sich jederzeit über
+    <em>Abbrechen</em> verlassen; dann ist nichts geschehen.
+  </p>
+
+  <h4 id="einrichtung-serverip">Die IP-Adresse übernehmen</h4>
+  <p class="hint">
+    <strong>Die Netzkonfiguration dieses Hosts ändert der Bootserver
+    nicht.</strong> Sie gehört dem Betreiber — die Karte liest sie nur ab.
+    Wer die Adresse ändern will, tut das auf dem Weg seines Systems; hier
+    wird sie danach übernommen.
+  </p>
+  <p class="muted">
+    Bis August 2026 stand hier ein Formular mit IP, Maske und Gateway, und
+    der Server schrieb die Adresse in <code>/etc/network/interfaces</code>.
+    Das ist weggefallen, aus drei Gründen: Es ist nicht seine Datei — wer
+    ein Netz eines fremden Hosts anfasst, müsste Bonding, VLANs und zweite
+    Karten mitdenken. Es ist der einzige Schritt, der den Server aus dem
+    Netz werfen kann. Und es war die einzige Stelle, an der Debian, Ubuntu
+    und Raspberry Pi OS wirklich auseinandergehen — ifupdown, netplan,
+    NetworkManager.
+  </p>
+
+  <h4>Der Ablauf: zwei Schritte</h4>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>1. Adresse ändern</strong></td>
+        <td class="muted">Auf deinem Weg — die Reservierung am Router
+          umtragen oder die feste Adresse am Host ändern. Der Bootserver ist
+          daran nicht beteiligt.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>2. Übernehmen</strong></td>
+        <td class="muted">Diese Karte öffnen und den Befehl auf dem Server
+          ausführen. Er liest die Adresse selbst ab.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted small">
+    Die Oberfläche bleibt dazwischen erreichbar: nginx antwortet unter jeder
+    Adresse, die der Host gerade hat. Nach Schritt 1 rufst du sie einfach
+    unter der neuen auf.
+  </p>
+
+  <h4>Was die Karte zeigt</h4>
+  <p class="muted">
+    Netzwerkkarte, IP-Adresse, Netzmaske, Gateway — und die Herkunft der
+    Adresse: <em>fest am Host eingetragen</em> oder <em>vom Router
+    vergeben</em>. Dazu den fertigen Befehl mit einem Knopf zum Kopieren; er
+    wird ja auf einer anderen Maschine eingegeben.
+  </p>
+  <p class="muted small">
+    <strong>„Vom Router vergeben" ist kein Fehler.</strong> Es sagt nur, dass
+    die Adresse per DHCP kommt — ob der Router sie diesem Server reserviert
+    hat, kann von hier aus niemand sehen; für den Kernel sieht beides gleich
+    aus. Mit einer Reservierung ist alles in Ordnung. Ohne eine kann der
+    Router beim nächsten Mal eine andere vergeben.
+  </p>
+
+  <h4>Was der Befehl anfasst</h4>
+  <p class="muted">
+    Die Adresse steht an <strong>vier</strong> Stellen, und alle vier
+    schreibt <code>install.sh</code> aus einer einzigen Quelle: die
+    dnsmasq-Konfiguration (dort nennt sie jeder bootende Rechner), den
+    nginx-Host, <code>pxeweb.env</code> und den NFS-Export. Es ist derselbe
+    Aufruf wie bei der Installation — <strong>ein zweiter Lauf schadet
+    nie</strong>.
+  </p>
+  <p class="muted small">
+    Warum die Oberfläche es nicht selbst tut: Sie darf nicht — und sie
+    soll auch nicht. Siehe
+    <a href="#einrichtung-warum-kein-knopf">Warum es dafür keinen Knopf
+    gibt</a> weiter oben.
+  </p>
+  <p class="muted small">
+    <strong>Zwischen den beiden Schritten</strong> nennt dnsmasq den
+    bootenden Rechnern noch die alte Adresse, während der Host schon die
+    neue trägt. In diesem Fenster startet kein Rechner über das Netz —
+    deshalb beides hintereinander erledigen.
+  </p>
+
+  <h4 id="einrichtung-werkseinstellung">Zurück auf Werkseinstellung</h4>
+  <p class="muted">
+    Setzt den Server auf den Zustand zurück, in dem er ausgeliefert wurde —
+    gedacht für einen Server, der weitergegeben wird oder von vorn anfangen
+    soll.
+  </p>
+  <p class="hint">
+    <strong>Dieser Knopf steht jedem offen, der den Browser erreicht.</strong>
+    Die Oberfläche hat keine Anmeldung, und was hier gelöscht wird, ist weg.
+    Deshalb sind es drei Schritte und nicht einer — und deshalb steht die
+    Karte ganz unten auf der Seite.
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>Gelöscht wird</strong></td>
+        <td class="muted">Alle Abbilder — geholte Systeme, hochgeladene
+          ISOs, selbst angelegte Einträge. Alle angemeldeten Rechner samt
+          Vorauswahl und Startverlauf. Eigene Adressen und Ausgabenlisten,
+          Freigaben, Reihenfolge der Gruppen, eigene Namen, die
+          Installationsprotokolle.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Erhalten bleibt</strong></td>
+        <td class="muted">Die Einrichtung des Servers selbst:
+          <code>/etc/pxeweb.env</code> mit Adresse und NFS-Pfad, der
+          iPXE-Bootloader, der Katalog — und <code>wimboot</code>, das für
+          Windows-Abbilder gebraucht wird. Das gehört zur Installation,
+          nicht zur Ablage.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted">
+    Drei Schritte, und keiner davon lässt sich überspringen: erst der Knopf
+    <em>Werkseinstellung</em>, dann das Wort <strong>Löschen</strong> in ein
+    Feld tippen — es steht <em>leer</em> da, das Wort ist nur ein grauer
+    Hinweis —, dann <em>Bestätigen</em>. Geprüft wird das Wort auf dem
+    Server, nicht im Browser.
+  </p>
+  <p class="muted small">
+    Danach steht der Server da wie nach einem frischen
+    <code>install.sh</code>: Unter <a href="/quellen">Quellen</a> trägt
+    <em>Prüfen</em> die aktuellen Ausgaben ein, und geholt wird von vorn.
+    Ein Neustart ist nicht nötig.
+  </p>
+</section>
+
+<section id="history" class="kapitel">
+  <header class="kapitelkopf">
+    <h2>History</h2>
+    <p class="zumregister"><a href="/history">Zum Register &rarr;</a></p>
+  </header>
+  <div class="abschnittskopf">
+    <h3 id="history-liste">Zuletzt gestartet</h3>
+    <p class="zurkarte"><a href="/history">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Sie zeigt, <strong>was wann von welchem Rechner gestartet wurde</strong>.
+    Jede Zeile entsteht in dem Moment, in dem ein Rechner sein Boot-Skript
+    abholt — hier steht also, was tatsächlich losgelaufen ist, nicht was
+    jemand vorgehabt hat.
+  </p>
+  <p class="muted">
+    Zwei Dinge lassen sich daran ablesen: <strong>ob eine Maschine
+    unbeabsichtigt über das Netz startet</strong> (dann taucht sie hier
+    regelmäßig auf, ohne dass jemand etwas freigegeben hätte) und
+    <strong>wann eine Installation gelaufen ist</strong> — praktisch, wenn
+    ein Rechner seit einem bestimmten Tag Ärger macht.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Je Startvorgang eine Zeile mit drei Spalten.
+  </p>
+  <table>
+    <tbody>
+      <tr><td class="nowrap"><strong>Zeitpunkt</strong></td>
+        <td class="muted">Wann es losging, in lesbarer Form. Der genaue
+          Zeitstempel steht im Tooltip.</td></tr>
+      <tr><td class="nowrap"><strong>Rechner</strong></td>
+        <td class="muted">Name, MAC-Adresse und die IP, die er dabei hatte.
+          Der Name stammt aus <a href="/clients">Clients</a> — steht dort
+          keiner, bleibt es bei der MAC-Adresse.</td></tr>
+      <tr><td class="nowrap"><strong>Eintrag</strong></td>
+        <td class="muted">Was er gestartet hat: ein System, das Menü oder
+          einen der Systempunkte.</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Nachsehen — mehr nicht. Die Liste hat keine Knöpfe: Sie ist ein
+    Nachweis, und ein Nachweis, an dem man etwas ändern kann, ist keiner.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="muted">
+    Angezeigt werden die <strong>letzten 100</strong> Startvorgänge; ältere
+    verbleiben in der Datenbank und verschwinden nur mit der
+    <a href="#einrichtung-ersteinrichtung">Werkseinstellung</a>. Gelöscht
+    wird hier nichts.
+  </p>
+  <p class="muted small">
+    Ein Eintrag heißt nicht, dass die Installation durchgelaufen ist — nur,
+    dass sie angefangen hat. Ob sie ankam, sagt der Rechner selbst; ist sie
+    abgebrochen, hilft die Karte
+    <a href="#clients-protokolle">Installationsprotokolle</a>.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    <em>Noch nichts gestartet</em> heißt, dass noch kein Rechner vom Netz
+    gebootet hat. Bei einem frisch aufgesetzten Server ist das der
+    Normalzustand. Bootet einer und steht trotzdem nichts hier, kommt seine
+    Anfrage nicht an — dann weiter im
+    <a href="/protokoll?einheit=dnsmasq">Protokoll von dnsmasq</a>.
+  </p>
+</section>
+
+<section id="faq" class="kapitel">
+  <h2>Häufige Fragen</h2>
+<p class="muted">
+    Fragen, die im Betrieb wirklich aufgetreten sind — mit der Stelle, an der
+    die Antwort steht.
+  </p>
+
+  <details class="frage">
+    <summary>Der Rechner bootet vom Netz, bekommt aber kein Menü</summary>
+    <p class="muted">
+      Das ist der eingebaute Normalfall, kein Fehler. Ein Rechner, der sich
+      zum ersten Mal meldet, wird nur in die Liste eingetragen und startet
+      dann von seiner Platte weiter. Erst der Haken <em>PXE Boot aktiv</em>
+      unter <a href="/clients">Clients</a> gibt den nächsten Netzwerkstart
+      frei. Der Haken gilt für genau einen Start.
+    </p>
+  </details>
+
+  <details class="frage">
+    <summary>Meine Test-VM in VirtualBox bootet nicht — iPXE, dann Timeout</summary>
+    <p class="muted">
+      Läuft auf diesem Server <strong>dnsmasq 2.92</strong> — etwa unter
+      Ubuntu 26.04 —, ist das ein bekanntes Problem und <strong>kein Fehler
+      deiner Installation</strong>. Das PXE-ROM von VirtualBox meldet sich
+      als iPXE, kann aber kein HTTP; diese dnsmasq-Fassung schickt es
+      daraufhin in eine Verhandlung, die es nicht zu Ende bringt.
+      Nachsehen mit <code>dnsmasq --version</code>. Im
+      <a href="/protokoll?einheit=dnsmasq">Protokoll von dnsmasq</a> siehst
+      du die beantwortete Anfrage — aber keine Übertragung der Bootdatei.
+    </p>
+    <p class="muted">
+      <strong>Zum Testen einen echten Rechner nehmen.</strong> Die booten
+      einwandfrei, auch von diesem Server. Ältere Fassungen sind nicht
+      betroffen — Debian 13.6 hat 2.91, Ubuntu 24.04 hat 2.90. Siehe auch <a href="#erste-schritte-grenzen">Wo sind die Grenzen?</a>
+    </p>
+  </details>
+
+  <details class="frage">
+    <summary>Der Rechner findet den Server gar nicht</summary>
+    <p class="muted">
+      Meldungen wie <em>„No configuration methods succeeded“</em> oder
+      <em>PXE-E53</em>. Sieh im
+      <a href="/protokoll?einheit=dnsmasq">Protokoll von dnsmasq</a> nach, ob
+      dort eine Anfrage von seiner MAC-Adresse steht. Steht dort nichts,
+      kommt er nicht bis hierher — dann liegt es am Netzwerk oder daran, dass
+      im BIOS der Netzwerkstart aus ist. Häufige Ursache in einer VM: die
+      Netzwerkkarte steht auf NAT statt auf Netzwerkbrücke.
+    </p>
+  </details>
+
+  <details class="frage">
+    <summary>Ein Menüpunkt fehlt</summary>
+    <p class="muted">
+      Dem Eintrag fehlen seine Dateien. Unter <a href="/systeme">Systeme</a>
+      steht er dann gar nicht mehr — dort steht nur, was startbereit ist.
+      Zu finden ist er unter <a href="/quellen">Quellen</a>: Dort führt jeder
+      Eintrag seine eigene Karte, auch der ohne Dateien, und sie nennt die
+      einzelne Datei, die fehlt. Nachladen in der Karte
+      <em>Katalog</em>. Schlägt das Laden fehl, ist meist die Adresse
+      veraltet, siehe <a href="#quellen">Quellen</a>.
+    </p>
+  </details>
+
+  <details class="frage">
+    <summary>Nach der Installation startet der Rechner wieder ins Menü</summary>
+    <p class="muted">
+      Das ist normal — in seiner Bootreihenfolge steht das Netzwerk noch vor
+      der Festplatte. Entweder im BIOS umstellen oder einfach warten: nach
+      Ablauf der Zeit startet ohnehin der Standardeintrag
+      <code>{{ menu_default }}</code>, und der bedeutet „von der Festplatte“.
+      Neu aufgesetzt wird dabei nichts: Der Haken ist nach dem ersten Start
+      schon wieder weg.
+    </p>
+  </details>
+
+  <details class="frage">
+    <summary>Ich habe den Server aktualisiert, aber es ändert sich nichts</summary>
+    <p class="muted">
+      Menüpunkte entstehen beim Verarbeiten eines Abbilds und bleiben dann,
+      wie sie sind. Nach einer Aktualisierung, die an den Einträgen etwas
+      ändert, einmal <em>Neu einlesen</em> beim betroffenen Abbild unter
+      <a href="/quellen">Quellen</a> drücken — erneut hochladen ist nicht
+      nötig. Siehe
+      <a href="#nuetzliches-windows">Windows über das Netz</a>.
+    </p>
+  </details>
+
+  <details class="frage">
+    <summary>Windows startet in ein Setup-Fenster statt in die Konsole</summary>
+    <p class="muted">
+      Im Abbild stecken zwei Systeme, und ab Werk startet das Setup. Über das
+      Netz findet es seine Quelldateien nicht und meldet, es fehle ein
+      <em>Medientreiber</em> — mit Treibern hat das nichts zu tun. Sofort
+      weiter kommst du mit <strong>Umschalt+F10</strong>, das öffnet dort eine
+      Eingabeaufforderung. Dauerhaft: <em>Neu einlesen</em>. Einzelheiten
+      unter <a href="#nuetzliches-windows">Windows über das Netz</a>.
+    </p>
+  </details>
+
+  <details class="frage">
+    <summary>Die Windows-Konsole startet nicht — etwas mit SYSTEMROOT</summary>
+    <p class="muted">
+      Das liegt am Medium: In seiner <code>boot.wim</code> steht fest
+      eingetragen, wo die Konsole sich selbst erwartet, und das passt beim
+      Netzstart nicht. <strong>Windows-10-Medien trifft es regelmäßig</strong>,
+      Windows 11 nicht — dort prüft Windows den Eintrag nicht mehr nach.
+      Abhilfe ist, ihn im Abbild einmal umzustellen
+      (<code>dism /Set-TargetPath</code>). <strong>Zum Installieren führt
+      daran kein Weg vorbei</strong>: Ein Setup, das aus der Konsole eines
+      anderen Mediums läuft, bricht bei 98 % ab. Einzelheiten unter
+      <a href="#nuetzliches-windows-startet-nicht">Wenn die Konsole gar nicht
+      startet</a>.
+    </p>
+  </details>
+
+  <details class="frage">
+    <summary>In der Windows-Konsole wird der USB-Stick nicht erkannt</summary>
+    <p class="muted">
+      Meistens ist er nur noch nicht fertig eingebunden — das dauert nach dem
+      Anstecken ein paar Sekunden. Einmal <code>list volume</code> in
+      <code>diskpart</code> wiederholen; hilft das nicht, dort
+      <code>rescan</code> eingeben.
+    </p>
+  </details>
+
+  <details class="frage">
+    <summary>Eine Installation scheitert, und ich will wissen warum</summary>
+    <p class="muted">
+      Solange das Live-System noch läuft, im Terminal des Rechners
+      <code>curl -sf {{ base_url }}/logs.sh | sudo sh</code> ausführen. Das
+      sammelt die Protokolle ein und legt sie unter
+      <a href="/clients">Clients</a> zum Abholen ab, bevor sie mit dem
+      Neustart verloren gehen.
+    </p>
+  </details>
+
+  <details class="frage">
+    <summary>Der Rechner startet nicht, obwohl Secure Boot egal sein sollte</summary>
+    <p class="muted">
+      Ist es nicht: iPXE ist nicht signiert. An Rechnern mit eingeschaltetem
+      Secure Boot bricht die Firmware den Start ab, meist ohne verständliche
+      Meldung. Im BIOS/UEFI abschalten.
+    </p>
+  </details>
+
+  {# Drei Fehlerbilder aus dem Betrieb, bis zum 28.08.2026 nur in
+     docs/03. Der Leser sitzt dabei vor einem Rechner, der nicht
+     hochkommt, und hat diese Oberflaeche im zweiten Fenster offen --
+     eine Datei im Projektordner hat er nicht. #}
+  <details class="frage">
+    <summary>Ein Live-System hängt beim Start: „Network is unreachable"</summary>
+    <p class="muted">
+      Kernel und Startdatei kamen schon an, sonst stünde die Meldung nicht
+      auf dem Bildschirm — <strong>am Server liegt es also nicht</strong>.
+      Sie kommt vom bootenden Rechner und heißt: Er hatte in diesem Moment
+      keine eigene Adresse im Netz.
+    </p>
+    <p class="muted">
+      <strong>Die Zeit sagt, welcher von zwei Fällen es ist.</strong>
+    </p>
+    <table>
+      <tbody>
+        <tr>
+          <td class="nowrap"><strong>in Sekunden</strong></td>
+          <td class="muted">Dann hat er es gar nicht erst versucht. Bei
+            selbst angelegten oder hochgeladenen Live-Systemen der
+            Debian-Art ist die Ursache fast immer ein
+            <code>ip=dhcp</code> in der Kommandozeile. Es sieht aus wie
+            „hol dir eine Adresse" und bewirkt bei dieser Familie das
+            Gegenteil — die Angabe muss <strong>ganz weg</strong>, dann
+            holt sich das System die Adresse von selbst. Bei den
+            mitgelieferten Einträgen steht sie schon richtig.</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><strong>nach einer Minute</strong></td>
+          <td class="muted">Dann hat er gefragt und nichts bekommen. Die
+            Verbindung braucht nach dem Start länger, als das System
+            wartet — ein Switch mit Spanning Tree oder eine
+            2,5-Gbit-Karte tun das regelmäßig. Die mitgelieferten
+            Einträge warten deshalb 60 Sekunden statt der üblichen 15.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="muted small">
+      Eine schnelle Gegenprobe: Startet <em>Linux Mint</em> auf demselben
+      Rechner, aber GParted nicht, ist weder der Export noch die
+      Netzwerkkarte schuld — Mint benutzt eine andere Startmechanik und
+      kennt dieses Verhalten nicht.
+    </p>
+  </details>
+
+  <details class="frage">
+    <summary>Der Start bricht mit „Could not select: Exec format error" ab</summary>
+    <p class="muted">
+      Kernel und Startdatei passen nicht zusammen, oder eine der beiden
+      ist unvollständig heruntergeladen. In der Karte des Eintrags unter
+      <a href="/quellen">Quellen</a> einmal <em>Dateien löschen</em> und
+      dann <em>Holen</em> — damit wird beides frisch geladen.
+    </p>
+  </details>
+
+  <details class="frage">
+    <summary>Ubuntu Desktop bricht beim Partitionieren ab</summary>
+    <p class="muted">
+      Der Installer läuft an, zeigt die Festplatten und steigt genau beim
+      Partitionieren aus. Ubuntu sieht dort nach, ob es die Platte
+      verschlüsselt einrichten könnte, und sucht dafür einen Ordner, den es
+      <strong>groß geschrieben</strong> erwartet. Wurde das Abbild von einer
+      älteren Fassung dieses Servers ausgepackt, liegt er klein
+      geschrieben da — und auf einem Linux-Dateisystem ist das ein anderer
+      Name.
+    </p>
+    <p class="muted">
+      Neu hochgeladene Abbilder haben das nicht mehr. Für ein vorhandenes
+      genügt <em>Neu einlesen</em> in seiner Karte unter
+      <a href="/quellen">Quellen</a>, solange das Abbild noch daliegt; ist
+      es schon weg, hilft nur erneutes Hochladen.
+    </p>
+    <p class="muted small">
+      Ubuntu <em>Server</em> war davon nie betroffen: Der bindet sein
+      Abbild als Ganzes ein, und darin stimmt die Schreibweise ohnehin.
+    </p>
+  </details>
+
+  <details class="frage">
+    <summary>Kein Platz mehr auf der Platte</summary>
+    <p class="muted">
+      Unter <a href="/">Server Health</a> steht in der Karte
+      <em>Speicherplatz</em>, aufgeklappt unter <em>Detailansicht</em>,
+      welcher Eintrag wie viel belegt — der größte oben. Weggeräumt wird unter <a href="/quellen">Quellen</a>: Uploads
+      und selbst angelegte Einträge über <em>Löschen</em>, eine alte Ausgabe
+      über <em>Version entfernen</em> in ihrer Zeile unter
+      <em>Adressen</em>, und bei allem anderen räumt
+      <em>Dateien löschen</em> die Dateien weg, ohne den Eintrag
+      mitzunehmen. Die Meldung sagt, wie viel dabei frei geworden ist.
+    </p>
+  </details>
+  <div class="abschnittskopf">
+    <h3 id="faq-nachlesen">Ausführlich nachlesen</h3>
+  </div>
+
+  <p class="muted">
+    Die vollständige Dokumentation liegt im Projektordner, nicht auf dem
+    Server — sie gehört zum Repository und wird dort gepflegt.
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><code>docs/01-voraussetzungen.md</code></td>
+        <td class="muted">Was die Maschine mitbringen muss, bevor
+          installiert wird</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><code>docs/02-installation.md</code></td>
+        <td class="muted">Den Bootserver installieren und den ersten Start
+          eines Rechners prüfen</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><code>docs/03-betrieb.md</code></td>
+        <td class="muted">Was am laufenden Server auf der <em>Konsole</em>
+          zu tun ist — einen neuen Stand übernehmen, eine geänderte Adresse
+          nachziehen. Alles, was im Browser geschieht, steht hier in der
+          Hilfe und nicht dort</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><code>docs/04-fehlersuche.md</code></td>
+        <td class="muted">Fehlersuche an der Konsole — für den Fall, dass
+          dieser Server gerade nicht antwortet und diese Hilfe damit nicht
+          erreichbar ist</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="nuetzliches" class="kapitel">
+  <header class="kapitelkopf">
+    <h2>Nützliches</h2>
+  </header>
+  <p class="muted">
+    Drei Dinge, die man einmal liest und danach nachschlägt: wie ein
+    Netzwerkstart im Einzelnen abläuft, warum manche Abbilder darüber gar
+    nicht starten und was es mit Windows auf sich hat. Zum Bedienen braucht
+    man nichts davon — bei einer Störung spart es viel Zeit.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="nuetzliches-ablauf">Wie ein Netzwerkstart abläuft</h3>
+  </div>
+  <p class="muted">
+    Acht Schritte, vom Einschalten bis zum Menü. Wer weiß, welcher Schritt
+    gerade scheitert, findet die Ursache meist sofort — deshalb lohnt es
+    sich, den Ablauf einmal gelesen zu haben.
+  </p>
+
+<pre class="ipxe">1. Rechner an        ──►  „Ist da jemand? Ich brauche eine Adresse.“   (DHCP)
+
+2. Router            ──►  „Deine Adresse ist 192.168.178.77.“
+   dieser Server     ──►  „Und dein Startsystem holst du bei mir.“
+
+3. Rechner  ──TFTP──►  iPXE                         ein kleiner Bootloader,
+                                                    wenige hundert KB
+
+4. iPXE startet und fragt noch einmal nach
+
+5. dieser Server     ──►  „Du bist iPXE — hol dir http://…/boot.ipxe“
+
+6. iPXE  ──HTTP──►  boot.ipxe  ──►  menu.ipxe       ab hier läuft alles
+                                                    über HTTP, also schnell
+
+7. Menü auf dem Bildschirm
+   ODER Vorauswahl aus der Weboberfläche  ──►  ohne Menü direkt weiter
+
+8. iPXE  ──HTTP──►  Kernel + Initrd  ──►  Das System startet</pre>
+
+  <p class="muted small">
+    Die Schritte 1 bis 3 laufen über <strong>TFTP</strong> — ein sehr altes,
+    langsames Verfahren, das aber jede Netzwerkkarte beherrscht. Deshalb geht
+    darüber nur der winzige Bootloader. Alles Große kommt ab Schritt 6 über
+    <strong>HTTP</strong>.
+  </p>
+
+  <p class="muted">
+    <strong>Kernel und Initrd</strong> sind die zwei Dateien, mit denen jedes
+    Linux startet: der Kernel ist das Betriebssystem selbst, die Initrd ein
+    kleines Dateisystem, das ihm beim Hochfahren zur Hand geht — sie sucht
+    die Festplatte, richtet das Netzwerk ein und holt den Rest. Was die
+    Initrd dabei sucht, entscheidet darüber, ob ein Abbild über das Netz
+    startet — siehe
+    <a href="#nuetzliches-netinst">Warum manche Abbilder nicht per Netzwerk
+    starten</a>.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="nuetzliches-netinst">Warum manche Abbilder nicht per Netzwerk starten</h3>
+  </div>
+  <p class="muted">
+    Der häufigste Stolperstein — und er sieht aus wie ein Fehler des Servers,
+    ist aber keiner. Eine <code>netinst</code>- oder Installer-CD, die in
+    VMware oder auf einem USB-Stick tadellos startet, verweigert über das
+    Netz den Dienst.
+  </p>
+
+  <p class="muted">
+    <strong>Der Grund ist die Initrd, nicht der Inhalt.</strong> Beim Start
+    von einem Laufwerk liest die Firmware den Bootsektor, startet Kernel und
+    Initrd — und die Initrd sucht danach ihr Installationsmedium: sie schaut
+    auf <code>/dev/sr0</code>, findet die CD und hat alles, was sie braucht.
+  </p>
+
+  <p class="muted">
+    Beim Netzwerkstart gibt es <strong>kein Laufwerk</strong>. iPXE lädt nur
+    Kernel und Initrd über das Netz in den Arbeitsspeicher und startet sie.
+    Dieselbe Initrd sucht dann ein CD-Laufwerk, findet keins und bleibt mit
+    <em>„No common CD-ROM drive was detected“</em> stehen. Das Abbild
+    auszupacken hilft nicht — der Installer sucht ja keine Dateien, sondern
+    ein Gerät.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Art des Abbilds</th><th>Die Initrd sucht …</th><th>Über PXE?</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>netinst / Installer-CD</strong>
+          <div class="muted small">Debian, Kali, Devuan</div></td>
+        <td>ein CD-Laufwerk</td>
+        <td><span class="badge missing">nein</span></td>
+      </tr>
+      <tr>
+        <td><strong>netboot</strong>
+          <div class="muted small"><code>linux</code> + <code>initrd.gz</code>
+            vom Spiegel</div></td>
+        <td>einen Spiegel im Netz</td>
+        <td><span class="badge ok">ja</span></td>
+      </tr>
+      <tr>
+        <td><strong>Anaconda-DVD</strong>
+          <div class="muted small">Fedora, Rocky, AlmaLinux</div></td>
+        <td>eine Paketquelle — auch per HTTP</td>
+        <td><span class="badge ok">ja</span></td>
+      </tr>
+      <tr>
+        <td><strong>linuxrc</strong>
+          <div class="muted small">openSUSE, SLE</div></td>
+        <td>eine Paketquelle — auch per HTTP</td>
+        <td><span class="badge ok">ja</span></td>
+      </tr>
+      <tr>
+        <td><strong>Live</strong>
+          <div class="muted small">Mint, Ubuntu Desktop, Kali Live, GParted</div></td>
+        <td>ein Dateisystem — auch über NFS</td>
+        <td><span class="badge ok">ja</span></td>
+      </tr>
+      <tr>
+        <td><strong>Windows</strong>
+          <div class="muted small">Windows 10, 11, Server</div></td>
+        <td>gar keine Initrd — siehe unten</td>
+        <td><span class="badge teils">teilweise</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p class="hint">
+    <strong>Betroffen ist nur die Debian-Familie.</strong> Bei Fedora, Rocky
+    und openSUSE bringt schon die DVD netzfähige Dateien mit, und
+    Live-Abbilder hängen ihr Dateisystem ohnehin über das Netz ein. Nur die
+    Debian-artigen Installer-CDs sind fürs Laufwerk gebaut — deshalb liefern
+    die Debian-Leute ein zweites Abbild dafür, den <em>netboot</em>-Installer.
+  </p>
+
+  <h4>Was du stattdessen nimmst</h4>
+
+  <p class="muted">
+    <strong>Online installieren</strong> —
+    <a href="/quellen">Quellen</a> → <em>Custom</em>, Bauart
+    <em>Debian-Abkömmling</em>. Du brauchst nur Spiegel und Suite, den
+    langen Pfad setzt der Server zusammen; er ist bei allen Abkömmlingen
+    derselbe. Bekannte Spiegel stehen in der Auswahlliste.
+  </p>
+
+  <table class="schmal">
+    <tbody>
+      <tr><td>Debian</td><td><code>http://deb.debian.org/debian</code></td><td><code>trixie</code></td></tr>
+      <tr><td>Kali</td><td><code>http://http.kali.org/kali</code></td><td><code>kali-rolling</code></td></tr>
+      <tr><td>Devuan</td><td><code>http://deb.devuan.org/merged</code></td><td><code>daedalus</code></td></tr>
+    </tbody>
+  </table>
+
+  <p class="muted small">
+    Rund 57 MB statt einer ganzen ISO. Der <code>current</code>-Pfad zeigt
+    immer auf die neueste Ausgabe — da veraltet nichts.
+    <strong>Ubuntu fehlt hier mit Absicht:</strong> dort wurde der
+    Debian-Installer aufgegeben, deshalb steht im Katalog die
+    <code>live-server</code>-ISO.
+  </p>
+
+  <p class="muted">
+    <strong>Offline installieren</strong> — dann brauchst du das
+    <em>Live</em>- oder <em>Installer</em>-Abbild (mehrere GB), nicht die
+    netinst. Hochladen oder per Adresse holen; der Server erkennt es als
+    Live-Familie, packt es aus und hängt es über NFS ein. Installiert wird
+    dann aus dem laufenden Live-System heraus.
+  </p>
+
+  <p class="hint">
+    Eine <strong>netinst-ISO ist für diesen Server der einzige Fall, der
+    gar nicht geht</strong>: zu klein, um offline zu installieren, und mit der
+    falschen Initrd für online. Lädst du sie trotzdem hoch, sagt der Server
+    das im Klartext, statt einen Menüpunkt anzulegen, der später vor der
+    Maschine scheitert.
+  </p>
+  
+
+  <div class="abschnittskopf">
+    <h3 id="nuetzliches-windows">Windows über das Netz</h3>
+  </div>
+  <p class="muted">
+    Lädst du eine ganz normale Windows-ISO hoch, legt der Server einen
+    Menüpunkt an. Der bootende Rechner landet dann in einer
+    Eingabeaufforderung, die vollständig im Arbeitsspeicher läuft. Seine
+    Festplatte wird dabei nicht angefasst.
+  </p>
+
+  <p class="muted">
+    <strong>Wie er heißt, hängt vom Abbild ab</strong> — und davon, ob die
+    Freigabe eingerichtet ist:
+  </p>
+
+  <table class="schmal">
+    <tr><th>Menüpunkt</th><th>Gruppe</th><th>Wann</th></tr>
+    <tr><td><strong>Windows-Setup (WinPE-Konsole)</strong></td>
+        <td>Offline-Installationen</td>
+        <td>die Installationsquellen liegen im Abbild <em>und</em> die
+            Freigabe steht — von hier aus lässt sich installieren</td></tr>
+    <tr><td><strong>Windows-Konsole (WinPE)</strong></td>
+        <td>Rettung und Wartung</td>
+        <td>sonst: ein Werkzeug, das an einem Rechner arbeitet, ohne von
+            seiner Platte zu starten</td></tr>
+  </table>
+
+  <p class="muted">
+    Gestartet wird in beiden Fällen dasselbe — die Konsole. Der Unterschied
+    ist, was daneben liegt.
+  </p>
+
+  <p class="muted">
+    Praktisch ist das für alles, was es nur als Windows-Programm gibt:
+    Werkzeuge der Hersteller für BIOS-Updates zum Beispiel. Du brauchst dafür
+    keinen Rechner, auf dem Windows installiert ist, und keinen Stick.
+  </p>
+
+  <p class="muted">
+    Windows startet dabei ganz anders als Linux — es gibt keinen Kernel und
+    keine Initrd. Der Windows-Bootmanager erwartet stattdessen eine Handvoll
+    Dateien unter festen Namen. Ein kleines Programm namens
+    <strong>wimboot</strong> legt sie ihm genau so hin. Aus der hochgeladenen
+    ISO holt der Server nur diese Startdateien heraus, das Abbild selbst
+    wird danach gelöscht. Was er dabei benutzt, ist das
+    <code>boot.wim</code> des Installationsmediums: die Umgebung, in der
+    sonst das Setup läuft — ein fertiges kleines Windows.
+  </p>
+  <p class="muted">
+    Die Konsole lädt dieses <code>boot.wim</code> vollständig in den
+    Arbeitsspeicher. Der bootende Rechner braucht dafür rund
+    <strong>2 GB</strong> — auf weniger startet sie nicht.
+  </p>
+  {# Bis zum 28.08.2026 nur in docs/03. Hier steht die Haelfte, die man
+     wissen WILL; wie das Lesen im Einzelnen geht, steht in webui/udf.py. #}
+  <p class="muted">
+    <strong>Warum ein Windows-Abbild von außen leer aussieht.</strong>
+    Öffnet man eine Windows-ISO mit den üblichen Werkzeugen, findet man
+    darin oft nur eine einzige Datei — einen Hinweis, dass hier ein
+    anderes Dateisystem nötig sei. Das ist kein Fehler im Abbild: Windows
+    legt seine Dateien in einem zweiten Dateisystem daneben ab, weil das
+    ältere je Datei bei 4 GB endet und die große Installationsdatei
+    darüber liegt. Dieser Server liest beide, deshalb genügt es, die ISO
+    hochzuladen, wie sie ist.
+  </p>
+
+  <h4>Wenn statt der Konsole ein Setup-Fenster kommt</h4>
+
+  <p class="muted">
+    In der <code>boot.wim</code> stecken <strong>zwei</strong> Systeme: die
+    Konsole und daneben das Windows-Setup. Ab Werk startet das Setup — und
+    über das Netz läuft das in eine Sackgasse: Es sucht die Dateien, aus
+    denen es installieren würde, an einem Ort, den es über das Netz nicht
+    gibt, und meldet daraufhin, es fehle ein <em>Medientreiber</em>. Mit
+    Treibern hat das nichts zu tun, die Meldung ist nur schlecht gewählt.
+    <em>Auch mit</em> eingerichteter Freigabe bleibt es dabei: Das Setup
+    findet sie nicht von allein, sie muss ihm gezeigt werden — siehe
+    <a href="#nuetzliches-windows-installieren">Windows installieren</a>.
+  </p>
+
+  <p class="muted">
+    Beim Aufnehmen des Abbilds sieht der Server nach, welches der beiden
+    Systeme die Konsole ist, und verlangt beim Start ausdrücklich dieses.
+    Siehst du das Setup-Fenster trotzdem, wurde das Abbild hochgeladen,
+    bevor der Server das konnte. Sofort weiter kommst du mit
+    <strong>Umschalt+F10</strong> — das öffnet die Eingabeaufforderung
+    mitten im Setup, und dort kannst du normal weiterarbeiten. Dauerhaft
+    behoben ist es mit <em>Neu einlesen</em> in der Karte des Abbilds unter
+    <a href="/quellen">Quellen</a>; erneut hochladen musst du es nicht.
+  </p>
+
+  <h4 id="nuetzliches-windows-startet-nicht">Wenn die Konsole gar nicht startet</h4>
+
+  <p class="muted">
+    Manche Windows-Medien bringen eine Konsole mit, die über das Netz nicht
+    startet. Der Rechner lädt sie vollständig, und dann steht da:
+  </p>
+
+  <p class="hint">
+    <em>Windows PE kann nicht gestartet werden, da das tatsächliche
+    SYSTEMROOT-Verzeichnis (<code>X:\Windows</code>) nicht dem konfigurierten
+    Verzeichnis (<code>X:\$windows.~bt\Windows</code>) entspricht.</em>
+  </p>
+
+  <p class="muted">
+    Das liegt am Medium, nicht am Server: In seiner
+    <code>boot.wim</code> steht fest eingetragen, wo die Konsole sich selbst
+    erwartet — und das ist nicht der Ort, an den sie beim Netzstart kommt.
+    <strong>Windows-10-Medien sind davon regelmäßig betroffen</strong>, auch
+    frisch von Microsoft geholte; Windows 11 nicht.
+  </p>
+
+  <p class="muted">
+    <strong>Der Eintrag lässt sich umstellen</strong> — einmal pro Medium,
+    danach startet die Konsole wie jede andere. Du brauchst dafür einen
+    Windows-Rechner und die <code>boot.wim</code> des Abbilds; sie liegt auf
+    der Freigabe unter <code>Z:\&lt;ordner&gt;\sources\boot.wim</code>. Kopier
+    sie dir, dann in einer <strong>Eingabeaufforderung als
+    Administrator</strong>:
+  </p>
+
+  <pre class="ipxe"><code>dism /Mount-Wim /WimFile:C:\temp\boot.wim /Index:1 /MountDir:C:\mount
+dism /Image:C:\mount /Set-TargetPath:X:\
+dism /Unmount-Wim /MountDir:C:\mount /Commit</code></pre>
+
+  <p class="hint">
+    <strong>Der mittlere Befehl endet auf <code>X:\</code></strong> — nicht
+    auf <code>X:\Windows</code>. Gemeint ist das Wurzelverzeichnis, an das
+    Windows selbst noch <code>\Windows</code> anhängt. Mit dem
+    naheliegenden Pfad steht danach <code>X:\windows\Windows</code> im
+    Abbild, und dieselbe Meldung kommt wieder.
+  </p>
+
+  <p class="muted">
+    Die reparierte Datei muss dann an die Stelle der alten. Dafür brauchst
+    du eine Anmeldung am Server — die Freigabe ist nur lesend. Sichere die
+    alte zuerst, dann ist der Rückweg ein einziger Befehl:
+  </p>
+
+  <pre class="ipxe"><code>cd /srv/pxe/assets/&lt;ordner&gt;/sources
+sudo cp -a boot.wim boot.wim.original
+sudo install -o pxeweb -g pxeweb -m 644 &lt;neue-datei&gt; boot.wim</code></pre>
+
+  <p class="muted">
+    Am 31.08.2026 an zwei Geräten erprobt: Windows 10 startet danach in
+    seine eigene Konsole und installiert durch.
+  </p>
+
+  <h5>Der Notbehelf, wenn du den Server nicht anfassen willst</h5>
+
+  <p class="muted">
+    Fürs bloße <em>Öffnen einer Konsole</em> reicht auch ein fremdes Medium:
+    Nimm im Bootmenü die Konsole eines Abbilds, das startet, häng die
+    Freigabe ein und ruf von dort die <code>setup.exe</code> des
+    gewünschten auf.
+  </p>
+
+  <p class="hint">
+    <strong>Zum Installieren taugt das nicht.</strong> Ein Windows-10-Setup
+    in einer Windows-11-Konsole kopiert die Dateien und bricht dann bei
+    98 % ab — gemeldet als <em>beschädigte Installationsdatei</em>, in
+    Wahrheit ein Modul aus der falschen Windows-Fassung. <strong>Zum
+    Installieren muss die Konsole zum Medium passen.</strong>
+  </p>
+
+  <h4 id="nuetzliches-windows-installieren">Windows installieren</h4>
+
+  <p class="muted">
+    Das geht seit August 2026 — aber in zwei Schritten von Hand, nicht auf
+    Knopfdruck. Der Grund steckt im Setup selbst: Es lädt seine
+    Quelldateien, allen voran die mehrere Gigabyte große
+    <code>install.wim</code>, <strong>nur über eine Windows-Dateifreigabe
+    (SMB)</strong> nach. Weder HTTP noch NFS helfen dabei, obwohl beides auf
+    diesem Server läuft.
+  </p>
+
+  <p class="muted">
+    Deshalb gibt es eine dritte Freigabe. Sie ist <strong>nur lesend</strong>,
+    gilt nur im eigenen Netz und enthält nichts als die ausgepackten
+    Abbilder. Erkennt der Server beim Aufnehmen einer Windows-ISO die
+    Installationsquellen, packt er das ganze Medium aus statt nur der
+    Startdateien — aus ein paar hundert MB werden dann mehrere Gigabyte.
+    In der Karte des Abbilds steht dann <em>über SMB</em>.
+  </p>
+
+{% if smb and smb.da %}
+  <p class="muted">
+    So geht es. Starte den Rechner über das Netz, wähle
+    <strong>Windows-Konsole (WinPE)</strong> und tippe dort zwei Zeilen:
+  </p>
+
+  <pre class="ipxe"><code>net use Z: \\{{ smb.server }}\install /user:{{ smb.benutzer }} {{ smb.passwort }}
+Z:\&lt;ordner&gt;\setup.exe</code></pre>
+
+  <p class="muted">
+    Für <code>&lt;ordner&gt;</code> steht der Name, unter dem das Abbild
+    abgelegt ist — er steht in der Karte des Abbilds unter
+    <a href="/quellen">Quellen</a>. Mit <code>dir Z:\</code> siehst du alle.
+  </p>
+
+  <p class="muted">
+    Dieselbe Karte nennt auch, <strong>welche Ausgaben das Medium
+    mitbringt</strong> — Home, Pro, Education und so fort. Das Setup fragt
+    danach, und die Auswahl lässt sich nachher nicht mehr ändern; wer sie
+    vorher nachliest, rät nicht. Daneben stehen Generation, Fassung und
+    Sprache, alles aus dem Medium selbst gelesen und nicht aus seinem
+    Dateinamen.
+  </p>
+
+  <p class="hint">
+    <strong>Die Tastatur ist englisch.</strong> In WinPE gibt es kein
+    deutsches Layout: <kbd>Y</kbd> und <kbd>Z</kbd> sind vertauscht, und die
+    Sonderzeichen liegen woanders. Das Passwort oben besteht deshalb nur aus
+    Kleinbuchstaben und Ziffern — die liegen auf beiden Layouts gleich.
+  </p>
+
+  <p class="hint">
+    <strong>Zum Ausprobieren taugt eine virtuelle Maschine hier nur
+    bedingt.</strong> In VirtualBox kommt ein Windows-Abbild nur im
+    <em>BIOS</em>-Modus vollständig an; im UEFI-Modus bricht das Laden nach
+    wenigen Megabyte ab. Für Windows 10 reicht das, denn es braucht kein
+    UEFI. <strong>Windows 11 verlangt UEFI und lässt sich in VirtualBox
+    deshalb gar nicht über das Netz installieren</strong> — dafür braucht
+    es einen echten Rechner.
+  </p>
+{% else %}
+  <p class="hint">
+    <strong>Auf diesem Server ist die Freigabe nicht eingerichtet.</strong>
+    Damit bleibt es bei der Konsole: Windows startet, installieren lässt
+    sich damit nichts. Eingerichtet wird sie von <code>install.sh</code>;
+    fehlt sie, war das Paket <code>samba</code> nicht installierbar. Auf
+    <a href="/health">Server Health</a> steht, ob der Dienst läuft.
+  </p>
+{% endif %}
+
+  <p class="muted">
+    <strong>Warum zwei Zeilen und kein Menüpunkt?</strong> Weil der Weg
+    dorthin durch das Abbild selbst führt: Damit die Konsole beides von
+    allein täte, müsste beim Hochladen ein Startskript in die
+    <code>boot.wim</code> geschrieben werden. Das ist vorgemerkt, aber nicht
+    gebaut — ein verändertes Abbild ist etwas anderes als ein
+    weitergereichtes, und solange die zwei Zeilen gehen, wiegt der
+    Unterschied schwerer als die Bequemlichkeit.
+  </p>
+
+  <p class="muted">
+    Für eine <em>einzelne</em> Installation bleibt ein USB-Stick der
+    schnellere Weg. Der Netzstart lohnt sich, wenn mehrere Rechner
+    nacheinander drankommen — oder wenn gerade kein Stick da ist.
+  </p>
+
+  <h4>Kommt man an einen USB-Stick heran?</h4>
+
+  <p class="muted">
+    <strong>Ja.</strong> Dass die Konsole über das Netz geladen wurde, ändert
+    daran nichts: Die Treiber für USB-Datenträger stecken im Abbild, und
+    angesteckte Geräte werden auch im Betrieb erkannt. Ein Stick, der beim
+    Start schon steckt, ist meist sofort als Laufwerk da. Nachsehen kannst du
+    so:
+  </p>
+
+<pre class="ipxe">X:\Windows\System32&gt; <b class="gewaehlt">diskpart</b>
+
+DISKPART&gt; <b class="gewaehlt">list volume</b>
+
+  Volume ###  Bst  Bezeichnung  DS     Typ         Größe    Status
+  ----------  ---  -----------  -----  ----------  -------  ---------
+  Volume 0     C                NTFS   Partition     476 GB  Fehlerfr.
+  Volume 1     D   USB-STICK    FAT32  Wechselmed.    29 GB  Fehlerfr.
+
+DISKPART&gt; <b class="gewaehlt">exit</b></pre>
+
+  <p class="muted">
+    <code>X:</code> ist immer die Konsole selbst — sie liegt im
+    Arbeitsspeicher. Alles andere sind echte Datenträger des Rechners.
+    FAT32 und NTFS werden gelesen, neuere Abbilder können auch exFAT.
+  </p>
+
+  <p class="hint">
+    <strong>Gib dem Stick ein paar Sekunden.</strong> Wer ihn erst in der
+    laufenden Konsole ansteckt, sieht ihn nicht sofort — WinPE braucht einen
+    Moment, bis es ihn eingebunden hat. Das sieht aus, als würde er nicht
+    erkannt. Einfach noch einmal <code>list volume</code> aufrufen; wenn er
+    dann immer noch fehlt, hilft in <code>diskpart</code> der Befehl
+    <code>rescan</code>.
+  </p>
+
+  <p class="muted">
+    Damit ist der übliche Weg für ein BIOS-Update: die
+    Hersteller-<code>.exe</code> auf einen Stick, hier das Laufwerk suchen,
+    Programm starten. Auf dem Rechner muss dafür kein Windows installiert
+    sein, und an seiner Festplatte ändert sich nichts.
+  </p>
+
+  <p class="hint">
+    Wo es klemmen kann: Sehr neue Chipsätze und USB-C-Docks bringen manchmal
+    Controller mit, für die im Abbild kein Treiber liegt — dann bleibt der
+    Stick unsichtbar. Deshalb möglichst eine <strong>aktuelle
+    Windows-ISO</strong> hochladen: je neuer das Abbild, desto mehr Treiber
+    bringt es mit. Notfalls hilft ein Stick an einem älteren Anschluss direkt
+    am Gerät statt am Dock.
+  </p>
+
+  <p class="muted small">
+    Dateien vom Server holen statt vom Stick geht möglicherweise auch — mit
+    <code>curl</code>, falls es im Abbild enthalten ist; <code>where
+    curl</code> beantwortet das in der Konsole sofort. Ein Netzlaufwerk mit
+    <code>net use</code> geht dagegen nicht, dafür fehlt dem Server die
+    Windows-Dateifreigabe.
+  </p>
+
+  <p class="muted small">
+    Zwei Kleinigkeiten: Der Rechner braucht rund 2 GB Arbeitsspeicher, weil
+    das Abbild komplett hineingeladen wird. Und steht in der Systeme-Liste
+    beim Menüpunkt, dass <code>wimboot/wimboot</code> fehlt, dann konnte der
+    Server dieses Hilfsprogramm nicht herunterladen — es kommt beim
+    Einrichten aus dem Internet.
+  </p>
+  
+</section>
+
+<section id="lizenz" class="kapitel">
+  <header class="kapitelkopf">
+    <h2>Lizenz und Förderung</h2>
+  </header>
+  {# Dieselben zwei Abschnitte stehen im README des Projekts. Die Doppelung
+     ist gewollt und der einzige Fall davon: Das README liest, wer sich noch
+     entscheidet, ob er den Server ueberhaupt nimmt -- hier liest, wer ihn
+     seit Monaten benutzt und weiss, was er ihm erspart. Das ist der
+     Adressat, den der zweite Abschnitt meint, und er kaeme sonst nie an ihn
+     heran. Wer einen der beiden Texte aendert, aendert beide. #}
+  <p class="muted">
+    Zwei Dinge, die sonst nirgends in dieser Oberfläche stehen: unter
+    welchen Bedingungen dieser Server benutzt werden darf, und was ich mir
+    von denen wünsche, die ihn im Betrieb einsetzen.
+  </p>
+
+  <div class="abschnittskopf">
+    <h3 id="lizenz-agpl">Unter welcher Lizenz das hier steht</h3>
+  </div>
+
+  <p class="muted">
+    Der Quelltext steht unter der <strong>GNU Affero General Public
+    License, Version 3</strong>. Der volle Text liegt dem Projekt als Datei
+    <code>LICENSE</code> bei. Kurz und ohne Juristendeutsch:
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>Benutzen</strong></td>
+        <td class="muted">kostet nichts und verpflichtet zu nichts. Wer
+          diesen Server installiert und betreibt, hat mit der Lizenz nichts
+          weiter zu tun — zu Hause wie im Betrieb.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Ändern und weitergeben</strong></td>
+        <td class="muted">geht, aber die Änderungen gehen unter derselben
+          Lizenz mit. Das gilt auch dann, wenn die geänderte Fassung nicht
+          als Datei weitergereicht, sondern nur über das Netz benutzbar
+          gemacht wird — das ist der Unterschied zwischen AGPL und GPL.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Name und Logo</strong></td>
+        <td class="muted">sind davon ausgenommen. Die Lizenz gilt für den
+          Quelltext, nicht für die Marke: Wer eine eigene Fassung
+          weitergibt, gibt ihr bitte einen eigenen Namen.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="abschnittskopf">
+    <h3 id="lizenz-betrieb">Wenn dieser Server bei Ihnen im Betrieb läuft</h3>
+  </div>
+
+  <p class="muted">
+    Privat, im Verein, in der Ausbildung: <strong>nehmen Sie ihn, kostenlos
+    und ohne Gegenleistung.</strong> Genau dafür ist die Lizenz da, und es
+    wird nie jemand nachfragen.
+  </p>
+  <p class="muted">
+    <strong>Im Betrieb ist die Lage eine andere.</strong> Ein Werkzeug, das
+    Ihnen diese Arbeit abnimmt, hätten Sie sonst einkaufen müssen — mit
+    Lizenzkosten pro Jahr und pro Gerät. Geleistet wurde die Arbeit
+    trotzdem: von einer Person, in ihrer Zeit, auf ihre Kosten.
+    <strong>Die Lizenz verlangt dafür nichts. Sie kann es nicht, und das
+    soll auch so bleiben.</strong>
+  </p>
+  <p class="muted">
+    Deshalb keine Bedingung, sondern eine Bitte — und sie richtet sich an
+    das Haus, nicht an die Person, die diesen Server aufgesetzt hat:
+  </p>
+  <blockquote>
+    <p class="muted">
+      <strong>Melden Sie sich.</strong> Schon ein Satz darüber, wo dieser
+      Server läuft und was er bei Ihnen ersetzt hat, ist etwas wert — er
+      sagt mir, wofür ich das hier eigentlich baue, und niemand sonst kann
+      mir das sagen. Und wenn Ihr Haus die Arbeit darüber hinaus anerkennen
+      möchte — finanziell oder mit Hardware, an der sich testen lässt —,
+      dann ist das der Weg dorthin.
+    </p>
+  </blockquote>
+  <p class="muted">
+    Ein Betrieb, der ein freies Werkzeug jahrelang produktiv nutzt und dem,
+    der es gebaut hat, nie ein Wort schreibt, tut nichts Unrechtes. Er tut
+    nur nichts.
+  </p>
+</section>
+
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Protokoll — MARLEI Boot{% endblock %}
+
+{% block content %}
+
+<section id="protokoll">
+  <div class="kartenkopf">
+    <h2>Protokoll</h2>
+    <a class="kartenhilfe" href="/hilfe#serverhealth-protokoll"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+  <p class="muted">
+    Dasselbe, was auf dem Server <code>journalctl -u {{ einheit }} -f</code>
+    zeigt. Beim Einrichten ist <strong>dnsmasq</strong> das nützlichste davon:
+    dort steht, ob ein Rechner überhaupt anfragt und was ihm geantwortet wird.
+  </p>
+
+  <div class="row">
+    {% for e in einheiten %}
+    <a class="knopf {{ 'gewaehlt' if e == einheit }}"
+       href="/protokoll?einheit={{ e }}&amp;zeilen={{ zeilen }}">{{ e }}</a>
+    {% endfor %}
+    <label class="inline">
+      <input type="checkbox" id="mitlesen" checked> mitlesen
+    </label>
+    <span class="muted small" id="stand"></span>
+  </div>
+
+  {% if hinweis %}<p class="hint">{{ hinweis }}</p>{% endif %}
+
+{# Die Kennung heisst NICHT "protokoll": So heisst schon die Karte
+   darum herum, und getElementById nimmt das erste Element im Dokument --
+   also die Karte. Das Skript unten schrieb damit den Protokolltext ueber
+   den ganzen Karteninhalt, drei Sekunden nach dem Oeffnen, weil
+   "mitlesen" von Haus aus gesetzt ist. Gefunden am 28.08.2026 von der
+   Pruefung auf doppelte Kennungen in tests/test_app.py. #}
+<pre class="ipxe" id="protokolltext">{{ protokoll }}</pre>
+
+  <p class="muted small">
+    Die letzten {{ zeilen }} Zeilen, alle drei Sekunden nachgeholt — kein
+    dauerhaft offener Datenstrom. Gezeigt werden nur die vier Dienste dieses
+    Servers; ein beliebiges Journal lässt sich hier nicht abrufen.
+    Als reiner Text:
+    <a href="/protokoll.txt?einheit={{ einheit }}&amp;zeilen={{ zeilen }}">/protokoll.txt</a>
+  </p>
+</section>
+
+<script>
+// Die letzten Zeilen regelmaessig nachholen und ans Ende springen -- wie
+// "journalctl -f", nur ohne offene Verbindung.
+(function () {
+  var feld = document.getElementById("protokolltext");
+  var haken = document.getElementById("mitlesen");
+  var stand = document.getElementById("stand");
+  if (!feld) { return; }
+
+  var adresse = "/protokoll.txt?einheit={{ einheit }}&zeilen={{ zeilen }}";
+  feld.scrollTop = feld.scrollHeight;
+
+  function holen() {
+    if (document.hidden || !haken.checked) { setTimeout(holen, 3000); return; }
+    fetch(adresse)
+      .then(function (r) { return r.text(); })
+      .then(function (t) {
+        if (t !== feld.textContent) {
+          // Nur ans Ende springen, wenn man auch dort steht -- sonst reisst
+          // es einem beim Zurueckblaettern die Stelle weg.
+          var unten = feld.scrollHeight - feld.scrollTop - feld.clientHeight < 40;
+          feld.textContent = t;
+          if (unten) { feld.scrollTop = feld.scrollHeight; }
+        }
+        stand.textContent = "";
+        setTimeout(holen, 3000);
+      })
+      .catch(function () {
+        stand.textContent = "nicht erreichbar";
+        setTimeout(holen, 10000);
+      });
+  }
+  setTimeout(holen, 3000);
+})();
+</script>
+
+{% endblock %}

@@ -1,0 +1,31 @@
+__pycache__/
+*.pyc
+venv/
+*.db
+*.iso
+*.part
+webui/pxeweb.db
+
+# Eingesammelte Protokolle von Clients: nuetzlich zur Fehlersuche, aber
+# nichts fuers Repository (Geraetenamen, Partitionierung, Benutzernamen).
+diagnose/*
+!diagnose/README.md
+
+# Der Stempel, den install.sh in /opt/pxeweb hinterlaesst. Falls er einmal
+# im Projektordner landet, gehoert er trotzdem nicht ins Repository: Er
+# beschreibt eine Installation, nicht den Quelltext.
+webui/VERSION
+
+# Mappe: die fuenf Dokumente, die dieses Projekt steuern (Vision, Roadmap,
+# Meilensteine, Backlog, Quittungsbuch), dazu Zuarbeit wie Logo-Entwuerfe,
+# PNGs zum Nachzeichnen, Screenshots und Vorlagen. Ueberlegungen und
+# Absichten, keine Anleitung -- bewusst der ganze Ordner, damit nichts
+# versehentlich mitgeht.
+mappe/
+
+# Was tools/hilfe-vorschau.py ausgibt: die gerenderte Hilfe samt den
+# Dateien, auf die sie verweist. Erzeugt, nicht gepflegt -- und eine
+# zweite Fassung der Hilfe im Repository waere genau die stille
+# Doppelung, gegen die das Kapitel "Der erste Durchgang" gebaut ist.
+build/
+

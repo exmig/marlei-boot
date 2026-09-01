@@ -1,0 +1,23 @@
+{# NFS laeuft nicht. Der Server arbeitet weiter -- nur die grossen
+   Live-Systeme nicht, die ihr Wurzeldateisystem ueber das Netz einhaengen
+   statt es in den Arbeitsspeicher zu laden.
+
+   Das ist der Fall, fuer den die mittlere Stufe am 28.08.2026 erweitert
+   wurde: Er laeuft auf nichts zu, er ist bereits kaputt -- aber nur zum
+   Teil. Siehe webui/befunde.py und docs/gestaltung.md, "Die Karte und
+   ihre drei Bereiche". #}
+<p>
+  <code>nfs-server</code> läuft nicht. Betroffen sind nur Einträge, die ihr
+  Wurzeldateisystem über das Netz einhängen — große Live-Systeme also. Alles
+  andere startet weiter, auch die Installationen.
+</p>
+<p>
+  Wer jetzt einen solchen Eintrag wählt, kommt bis zum Ladebalken und bleibt
+  dann stehen. Im Bootmenü sieht man ihm nichts an.
+</p>
+<p class="kartenfuss">
+  Was los ist, zeigt auf dem Server
+  <code>sudo journalctl -u nfs-server -n 40</code>
+  &middot; <a href="/protokoll?einheit=nfs-server">Protokoll ansehen &rarr;</a>
+  &middot; <a href="/systeme">Welche Einträge NFS brauchen &rarr;</a>
+</p>

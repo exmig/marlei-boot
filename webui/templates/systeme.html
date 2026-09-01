@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+{% block title %}Systeme — MARLEI Boot{% endblock %}
+
+{% block content %}
+
+{# Eine Karte je Gruppe des Bootmenues, in derselben Reihenfolge wie dort.
+   Was die Gruppen unterscheidet, stand hier einmal in vier Absaetzen --
+   es steht vollstaendig in der Hilfe, hier bleibt der Weg dorthin.
+   "grau" gibt es nicht mehr: Wem die Dateien fehlen, der steht seit
+   August 2026 gar nicht mehr in der Tabelle, sondern in der Zeile
+   darunter. #}
+
+{# Das Formular steht ausserhalb der Karten: es umspannt alle drei, und ein
+   <form> um mehrere <section> waere zwar erlaubt, wuerde die Karten aber in
+   einen gemeinsamen Kasten zwingen. Die Felder haengen sich stattdessen
+   ueber ihr form-Attribut daran -- derselbe Weg wie bei den Clients. #}
+<form id="seite" method="post" action="/systeme/speichern"></form>
+
+{% for gruppe, eintraege in gruppen.items() %}
+<section>
+  <div class="kartenkopf">
+    <h2>{{ gruppe }}</h2>
+    <label class="folge">
+      Reihenfolge
+      <input type="text" inputmode="numeric" name="folge:{{ gruppe }}"
+             form="seite" value="{{ folge[gruppe] }}" size="2"
+             data-war="{{ folge[gruppe] }}"
+             title="Stelle dieser Gruppe -- auf dieser Seite und im Bootmenü">
+    </label>
+    {# Ein Knopf fuer die ganze Seite, nicht einer je Karte: gespeichert
+       werden ohnehin immer alle Felder, drei Knoepfe taeuschten drei
+       Vorgaenge vor. Er steht in der ersten Karte, weil dort auch der Weg
+       in die Hilfe steht -- oben, wo man zu lesen anfaengt. #}
+    {% if loop.first %}
+    <button type="submit" form="seite" class="folgeknopf"
+            title="Alles auf dieser Seite speichern — Reihenfolge wie Freigabe">Speichern</button>
+    {% endif %}
+    <a class="kartenhilfe" href="/hilfe#systeme-gruppen"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+
+  <table class="eng systemliste">
+    <thead>
+      <tr>
+        <th>Eintrag</th>
+        <th class="sichtbarspalte">sichtbar in</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in eintraege %}
+      <tr class="{{ '' if e.ready else 'dim' }}">
+        <td>
+          {# Nur ansehen, nicht aendern: Name, Version und Menue-Info
+             entstehen unter Quellen, bei dem Abbild, aus dem der Eintrag
+             stammt. Hier standen sie eine Zeit lang als Felder -- dann gab
+             es zwei Orte fuer dieselbe Angabe, und auf einer Seite, die
+             "was steht bereit?" beantwortet, ist das Bearbeiten ein
+             zweiter Gedanke. Systeme zeigt, Quellen bearbeitet. #}
+          <div class="bezeichnung">
+            <strong>{{ e.name }}</strong>
+            {% if e.version %}<span class="version">{{ e.version }}</span>{% endif %}
+          </div>
+          {# Eine eigene Zeile, keine Fortsetzung hinter den Feldern: neben
+             ihnen bleibt so wenig Platz, dass die Erklaerung mal umbricht
+             und mal nicht. Ungleiche Zeilenhoehen in einer Liste lesen sich
+             schlechter als eine Zeile mehr. #}
+          {# Der kurze Satz, nicht der lange: Diese Liste hat eine Zeile
+             je Eintrag. Was eine Distribution ausmacht, steht in ihrer
+             Karte unter Quellen -- hier steht, was im Menue steht. #}
+          {% if e.menue_text %}
+          <div class="muted erklaerung">{{ e.menue_text }}</div>
+          {% endif %}
+          {# Ohne "pcbios, efi": Wofuer ein Eintrag taugt, steht in
+             seiner Karte unter Quellen. Hier beantwortet die Zeile
+             eine andere Frage -- unter welcher Kennung liegt er? #}
+          <div class="kennung"><code>{{ e.slug }}</code></div>
+        </td>
+        {# Zwei Stufen der Freigabe, untereinander in einer Spalte: als
+           zwei Spalten brauchten allein die Ueberschriften mehr Platz als
+           ihr Inhalt. Beide Haken haengen am Formular der Seite und werden
+           mit demselben Knopf gesichert wie Reihenfolge und Bezeichnung.
+           Ein Eintrag, dem die Dateien fehlen, kann nirgends angeboten
+           werden -- dort steht deshalb kein Kaestchen, das sich anhaken
+           liesse, ohne dass etwas passiert. #}
+        <td class="sichtbarspalte">
+          {% if e.ready %}
+          {# Ein Kaestchen ohne Haken schickt nichts ab. Dieses Feld sagt
+             dem Server, dass die beiden ueberhaupt auf der Seite standen --
+             sonst waere "abgewaehlt" nicht von "gar nicht angezeigt" zu
+             unterscheiden, und ein Formular ohne Kaestchen wuerde stumm
+             alles zurueckziehen. #}
+          <input type="hidden" name="haken:{{ e.slug }}" form="seite" value="1">
+          <label title="Im Bootmenü anbieten — alle freigegebenen Rechner sehen den Eintrag">
+            <input type="checkbox" name="menue:{{ e.slug }}" form="seite" value="1"
+                   {% if e.im_menue %}checked{% endif %}
+                   data-war="{{ 1 if e.im_menue else 0 }}">
+            BootMenü
+          </label>
+          <label title="Unter Clients zur Auswahl stellen — für einen einzelnen Rechner">
+            <input type="checkbox" name="optionen:{{ e.slug }}" form="seite" value="1"
+                   {% if e.in_optionen %}checked{% endif %}
+                   data-war="{{ 1 if e.in_optionen else 0 }}">
+            Boot-Optionen
+          </label>
+          {% endif %}
+        </td>
+        <td>
+          {# Dasselbe Abzeichen wie auf den Karten unter Quellen -- beide
+             fragen _zustand() in app.py. Zwei Fassungen desselben Satzes
+             hatten sich bereits auseinandergelebt. #}
+          <span class="badge {{ 'ok' if e.zustand.gut else 'missing' }}">{{ e.zustand.text }}</span>
+          {% if e.zustand.meldung %}<div class="muted small">{{ e.zustand.meldung }}</div>{% endif %}
+          {% if not e.zustand.gut and e.missing %}
+          <div class="muted small">
+            {% for path in e.missing %}{{ path }}<br>{% endfor %}
+          </div>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {# Fusszeile der Karte: was in dieser Gruppe bereitsteht, aber noch
+     niemandem angeboten wird. Bis zum 27.08.2026 stand das als eine
+     gemeinsame Zeile unter allen drei Karten -- angekreuzt wird aber je
+     Karte, und dann sucht man, in welcher. #}
+  {% if wartend[gruppe] %}
+  {% set n = wartend[gruppe] | length %}
+  <p class="kartenfuss">
+    {{ n }} {{ "Eintrag" if n == 1 else "Einträge" }} noch nicht freigegeben:
+    {% for e in wartend[gruppe] %}<strong>{{ e.name }}{% if e.version %} {{ e.version }}{% endif %}</strong>{{ ", " if not loop.last }}{% endfor %}.
+  </p>
+  {% endif %}
+</section>
+{% endfor %}
+
+{# Beides gilt fuer alle drei Gruppen, nicht fuer eine -- in der ersten
+   Karte zu stehen hiesse, es haette mit Offline-Installationen zu tun.
+   Also zwischen den Karten, auf dem Seitengrund, und hinter den Tabellen:
+   die Frage, was ein grauer Eintrag bedeutet, entsteht beim Lesen, nicht
+   davor. #}
+{# Befund, keine Erklaerung: was ist, was daraus folgt, wo es sich
+   beheben laesst. Warum manche Bauarten NFS brauchen, steht in der Hilfe
+   unter "Wenn ein Eintrag NFS braucht" -- bis zum 27.08.2026 standen die
+   vier Saetze hier im roten Kasten. #}
+{% if ohne_nfs %}
+{% set n = ohne_nfs | length %}
+<p class="hint">
+  {{ n }} {{ "Eintrag braucht" if n == 1 else "Einträge brauchen" }} NFS und
+  {{ "findet" if n == 1 else "finden" }} keins:
+  {% for e in ohne_nfs %}<strong>{{ e.name }}{% if e.version %} {{ e.version }}{% endif %}</strong>{{ ", " if not loop.last }}{% endfor %}.
+  {{ "Er wird" if n == 1 else "Sie werden" }} deshalb nicht angeboten.
+  Einrichten lässt sich NFS unter <a href="/einrichtung">Einrichtung</a>.
+</p>
+{% endif %}
+
+
+<p class="seitenzeile">
+  <a href="/hilfe#systeme">Was die Gruppen unterscheidet, und warum hier nur
+  steht, was startet &rarr;</a>
+</p>
+
+<section id="vorschau">
+  {# Frueher zugeklappt. Sie zeigt aber die Antwort auf die Frage, mit der
+     man auf diese Seite kommt -- was steht dem bootenden Rechner zur
+     Auswahl? --, und eine Antwort gehoert nicht hinter einen Klick. #}
+  <div class="kartenkopf">
+    <h2>PXE BootMenü - Vorschau</h2>
+    <a class="kartenhilfe" href="/hilfe#systeme-vorschau"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+  <div class="row">
+    <a class="knopf {{ 'gewaehlt' if ansicht == 'efi' }}" href="/systeme?ansicht=efi">UEFI</a>
+    <a class="knopf {{ 'gewaehlt' if ansicht == 'pcbios' }}" href="/systeme?ansicht=pcbios">BIOS</a>
+  </div>
+
+{# Jede Zeile wird hier zweimal ausgegeben: bis zur Bildschirmbreite
+   normal, der Rest blass. iPXE schneidet auf dem bootenden Rechner ab,
+   was nicht mehr auf die Zeile passt -- eine Vorschau, die stattdessen
+   einen Rollbalken anbietet, zeigt etwas, das es dort nicht gibt.
+   Weggelassen wird der Rest trotzdem nicht: Man will ja sehen, was
+   fehlt, und um wie viel. #}
+{% macro gekuerzt(text) %}{{ text[:menue_breite] }}{% if text[menue_breite:] %}<span class="ueberrand">{{ text[menue_breite:] }}</span>{% endif %}{% endmacro %}
+<pre class="ipxe" id="menuvorschau">{{ titel }}
+
+{% for gruppe, eintraege in vorschau.items() %}   {{ gruppe }}
+{% for e in eintraege %}{% if e.slug == menu_default %}<b class="gewaehlt">      {{ gekuerzt(e | menuezeile) }}</b>
+{% else %}      {{ gekuerzt(e | menuezeile) }}
+{% endif %}{% endfor %}
+{% endfor %}   System
+{% for slug, text in systempunkte %}{% if slug == menu_default %}<b class="gewaehlt">      {{ text }}</b>
+{% else %}      {{ text }}
+{% endif %}{% endfor %}
+{% if menu_timeout %}   Startet in {{ menu_timeout }} s von selbst: {{ menu_default }}{% else %}   Wartet ohne Zeitbegrenzung auf eine Auswahl{% endif %}</pre>
+  {# Fusszeile der Karte. Warum manches blass steht und wie man eine Zeile
+     kuerzt, stand bis zum 27.08.2026 hier und steht jetzt in der Hilfe,
+     unter "Die Vorschau des Bootmenues". Ein eigener Verweis darauf stand
+     hier ebenfalls und ist auf Markus' Wunsch entfallen -- die Seitenzeile
+     ueber dieser Karte fuehrt in denselben Abschnitt. #}
+  <p class="kartenfuss">Aktualisierung bei Neuladen des Browsers</p>
+</section>
+
+
+<script>
+// Der Knopf der Seite. Er sichert, was hier eingetragen werden kann --
+// die Stelle jeder Karte und die Freigabe jedes Eintrags. Grau
+// bleibt er, solange nichts anders dasteht als beim Aufbau der Seite;
+// ausgeliefert wird er aktiv, damit ohne JavaScript ueberhaupt gespeichert
+// werden kann.
+(function () {
+  var felder = document.querySelectorAll('.folge input[name^="folge:"]');
+  // Die Freigabe-Kaestchen gehoeren dazu: ohne sie bliebe der Knopf grau,
+  // wenn man nur einen Haken setzt -- und die Freigabe waere gar nicht zu
+  // aendern.
+  var kaesten = document.querySelectorAll(
+    '.sichtbarspalte input[type="checkbox"]');
+  var knoepfe = document.querySelectorAll(".folgeknopf");
+  if (!felder.length && !kaesten.length) { return; }
+
+  function geaendert() {
+    var text = Array.prototype.some.call(felder, function (f) {
+      return f.value.trim() !== f.dataset.war;
+    });
+    var haken = Array.prototype.some.call(kaesten, function (k) {
+      return (k.checked ? "1" : "0") !== k.dataset.war;
+    });
+    return text || haken;
+  }
+
+  function pruefen() {
+    var offen = geaendert();
+    Array.prototype.forEach.call(knoepfe, function (k) {
+      k.disabled = !offen;
+      k.title = offen
+        ? "Alles auf dieser Seite speichern — Reihenfolge wie Freigabe"
+        : "Nichts geändert — es gibt nichts zu speichern";
+    });
+  }
+
+  Array.prototype.forEach.call(felder, function (f) {
+    f.addEventListener("input", pruefen);
+  });
+  Array.prototype.forEach.call(kaesten, function (k) {
+    k.addEventListener("change", pruefen);
+  });
+  pruefen();
+})();
+</script>
+
+
+{% endblock %}

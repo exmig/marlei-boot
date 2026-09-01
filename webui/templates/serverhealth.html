@@ -1,0 +1,523 @@
+{% extends "base.html" %}
+{% block title %}Server Health — MARLEI Boot{% endblock %}
+
+{% block content %}
+
+{# Vier Karten, von oben nach unten: was der Server gerade leistet, wer ihn
+   in Anspruch nimmt, was er anzubieten hat, und ob die Dienste laufen.
+   Auslastung und laufende Uebertragungen frischen sich selbst auf -- der
+   Server liefert beide Stuecke fertig gerendert nach (siehe unten). #}
+
+{# Der Adressbefund stand bis zum 28.08.2026 hier, als Absatz ueber den
+   Karten. Er steht jetzt als Seitenkarte in base.html und damit auf jeder
+   Seite -- er gehoert zum Server, nicht zu dieser einen. Siehe
+   webui/befunde.py. #}
+
+<section id="auslastung">
+  <div class="kartenkopf">
+    <h2>Auslastung</h2>
+    <a class="kartenhilfe" href="/hilfe#serverhealth-auslastung"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+
+  <div data-teil="auslastung">
+    <div class="kacheln">
+      {% include "_auslastung.html" %}
+    </div>
+    {% include "_vorgaenge.html" %}
+  </div>
+
+  {# Fusszeile der Karte: Sie spricht ueber den Inhalt, statt ihn zu sein.
+     Nimmt man sie weg, fehlt keine Angabe, die man zum Handeln braucht.
+     Bewusst ausserhalb von data-teil -- was dort drinsteht, tauscht das
+     Skript alle fuenf Sekunden aus. #}
+  <p class="kartenfuss">Aktualisierung alle 5 Sekunden</p>
+
+</section>
+
+<section id="registrierte-clients">
+  <div class="kartenkopf">
+    <h2>Registrierte Clients</h2>
+    <a class="kartenhilfe" href="/hilfe#serverhealth-clients"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+  {# Eine Zeile statt zweier Kacheln: die Beschriftung unter der Zahl kostet
+     hier mehr Platz, als sie an Klarheit bringt -- es sind nur zwei Werte,
+     und sie ergeben zusammen einen Satz. #}
+  <p class="kennzeile">
+    <span class="zahl">{{ clients_anzahl }}</span> Clients registriert,
+    <span class="zahl">{{ laufend | length }}</span> werden installiert.
+  </p>
+
+  <div data-teil="laufend">
+    {% include "_laufend.html" %}
+  </div>
+</section>
+
+<section id="betriebssysteme">
+  <div class="kartenkopf">
+    <h2>Betriebssysteme</h2>
+    <a class="kartenhilfe" href="/hilfe#serverhealth-systeme"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+  <p class="kennzeile">
+    <span class="zahl">{{ bereit }}</span> Betriebssysteme startbereit,
+    <span class="zahl">{{ gesamt }}</span> erfasst.
+  </p>
+
+  {# Name und Ausgabe, durch ein Leerzeichen getrennt. Beide kommen aus
+     bezeichnungen.wende_an() -- also aus den Feldern unter Quellen, mit
+     catalog.yaml als Rueckfall, wenn dort nichts eingetragen ist. Wird
+     ein Name dort geaendert, steht hier ohne weiteres Zutun der neue.
+
+     Die Ausgabe gehoert dazu, weil eine Distribution mehrfach
+     bereitstehen darf: "Rocky Linux" allein beantwortet dann nicht
+     mehr, was ein bootender Rechner angeboten bekommt. #}
+  {% if startbereit %}
+  <p class="muted small">Startbar im Bootmenü:</p>
+  <ul class="namensliste">
+    {% for e in startbereit %}
+    <li>{{ e.name }}{% if e.version %} {{ e.version }}{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="hint">
+    Noch kein Eintrag ist startbereit — es fehlen überall die Dateien. Unter
+    <a href="/systeme">Systeme</a> lassen sie sich nachladen.
+  </p>
+  {% endif %}
+</section>
+
+{# Steht direkt unter den Betriebssystemen, weil es dieselbe Frage von der
+   anderen Seite ist: Warum ein Eintrag nicht startbereit ist, liegt oft
+   nicht am Server, sondern daran, dass die Adresse beim Anbieter tot ist.
+
+   Anders als die verwaisten Ordner verschwindet diese Karte nicht, wenn
+   sie nichts zu melden hat. Ein Befund, den man nicht sieht, ist von
+   einem Waechter, der nie gelaufen ist, nicht zu unterscheiden -- und
+   genau das soll die Karte ja beantworten. Sie sagt deshalb auch dann
+   etwas, wenn alles in Ordnung ist: wann zuletzt nachgesehen wurde. #}
+{# Ohne Knopf, mit Absicht: Diese Seite beantwortet "ist alles in
+   Ordnung?", sie ist keine Werkbank. Angestossen wird der Lauf vom
+   Waechter selbst -- und wer ihn von Hand braucht, hat unter Quellen an
+   jeder Karte ihr eigenes "Pruefen", also naeher an dem, was danach zu
+   tun ist. Der Endpunkt /quelleninfo/pruefen bleibt es trotzdem; ein
+   Skript kann ihn rufen. #}
+<section id="quelleninfo"{% if quelleninfo.laeuft %} data-laeuft="1"{% endif %}>
+  <div class="kartenkopf">
+    <h2>Quelleninfo</h2>
+    <a class="kartenhilfe" href="/hilfe#serverhealth-quelleninfo"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+
+  <div>
+  {# Der Schalter sagt nur, ob von selbst nachgesehen wird. Ein Befund von
+     vorhin gilt weiter, auch wenn der Waechter seither abgeschaltet
+     wurde -- ihn dann zu verschweigen hiesse, eine tote Adresse
+     verschwinden zu lassen, indem man den Waechter abstellt. #}
+  {% if not quelleninfo.zeit %}
+  <p class="muted">
+    Noch nicht nachgesehen.
+    {% if quelleninfo.intervall %}Der Wächter geht alle
+    {{ quelleninfo.intervall }} Tage{% else %}Der Wächter ist abgeschaltet; er ginge sonst
+    regelmäßig{% endif %}
+    die Download-Adressen des <a href="/quellen">Katalogs</a> durch: welche
+    tot ist, und wo es beim Anbieter etwas Neueres gibt.
+  </p>
+  {% if not quelleninfo.intervall %}
+  <p class="muted small">
+    Abgeschaltet über <code>PXE_QUELLENWACHT</code> in
+    <code>/etc/pxeweb.env</code> — geprüft wird, wenn jemand drückt.
+  </p>
+  {% endif %}
+  {% else %}
+  <p class="kennzeile">
+    <span class="zahl">{{ quelleninfo.tot | length }}</span>
+    {{ "Adresse" if quelleninfo.tot | length == 1 else "Adressen" }} tot,
+    <span class="zahl">{{ quelleninfo.neu | length }}</span> mit einer neueren
+    Ausgabe.
+  </p>
+  {% if quelleninfo.tot %}
+  <table>
+    <thead>
+      <tr><th>Tote Adresse</th><th>Was der Anbieter sagt</th></tr>
+    </thead>
+    <tbody>
+      {% for q in quelleninfo.tot %}
+      {% for a in q.adressen %}
+      <tr>
+        <td class="nowrap">
+          {# Der Name des Systems zuerst -- danach sucht, wer hier liest.
+             Die Variable darunter ist der Name der Karte unter Quellen und
+             zugleich die Sprungmarke, ueber die dieser Verweis dort
+             ankommt. #}
+          <a href="/quellen#{{ q.ziel or q.name }}">{{ q.titel }}</a>
+          <div class="muted small"><code>{{ q.name }}</code>{% if a.version %}
+            · Ausgabe {{ a.version }}{% endif %}</div>
+        </td>
+        <td class="muted">{{ a.meldung }}
+          {% if a.url %}<div class="small umbrechen">{{ a.url }}</div>{% endif %}</td>
+      </tr>
+      {% endfor %}
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="muted small">
+    Eine tote Adresse heißt meist nicht, dass es das System nicht mehr gibt
+    — oft hat nur der Dateiname sich geändert. In den
+    <a href="/quellen">Quellen</a> findet <em>Prüfen</em> die richtige und
+    trägt sie ein.
+  </p>
+  {% endif %}
+
+  {% if quelleninfo.neu %}
+  <p class="muted small">Beim Anbieter liegt etwas Neueres:</p>
+  <ul class="namensliste">
+    {% for q in quelleninfo.neu %}
+    <li><a href="/quellen#{{ q.ziel or q.name }}">{{ q.titel }}</a>
+      — {{ q.version }}
+      <span class="muted small"><code>{{ q.name }}</code></span></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if quelleninfo.ohne_netz %}
+  <p class="hint">
+    Nicht erreicht: {% for q in quelleninfo.ohne_netz %}{{ q.titel }}{% if
+    not loop.last %}, {% endif %}{% endfor %}. Das ist kein
+    Befund über die Adresse, sondern über die Leitung — zu diesen Quellen
+    kam der Server beim letzten Durchgang gar nicht hin.
+  </p>
+  {% endif %}
+
+  {% if not quelleninfo.tot and not quelleninfo.neu and not quelleninfo.ohne_netz %}
+  {# Statt "nichts Neueres in Sicht" die Frage beantworten, die man
+     tatsaechlich hat, wenn alles in Ordnung ist: wann wieder nachgesehen
+     wird. Die Frist ist die frueheste -- der Waechter sieht stuendlich
+     nach und nur, solange die Anwendung laeuft. #}
+  <p class="muted">
+    Alle Adressen erreichbar{% if quelleninfo.naechste %} &mdash; nächste
+    Prüfung {{ quelleninfo.naechste | frist }}{% elif not quelleninfo.intervall
+    %} &mdash; der Wächter ist abgeschaltet{% endif %}.
+  </p>
+  {% endif %}
+  {# Fusszeile der Karte: sie gilt dem ganzen Befund -- wann nachgesehen
+     wurde, wie lange es dauerte und wann es sich wiederholt. Zum Handeln
+     braucht man sie nicht. #}
+  <p class="kartenfuss">
+    {{ quelleninfo.geprueft }} Quellen durchgesehen
+    {{ quelleninfo.zeit | zeit }}{% if quelleninfo.dauer %} in
+    {{ "%.0f"|format(quelleninfo.dauer) }} s{% endif %} ·
+    {% if quelleninfo.intervall %}alle {{ quelleninfo.intervall }} Tage von
+    selbst{% else %}nicht von selbst — abgeschaltet über
+    <code>PXE_QUELLENWACHT</code>{% endif %}{% if quelleninfo.laeuft %}
+    · <strong>läuft gerade</strong>{% endif %}
+  </p>
+  {% endif %}
+  </div>
+</section>
+
+<section id="speicherplatz">
+  <div class="kartenkopf">
+    <h2>Speicherplatz</h2>
+    <a class="kartenhilfe" href="/hilfe#serverhealth-speicherplatz"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+  {% if platz %}
+  <p class="kennzeile">
+    <span class="zahl">{{ "%.0f"|format(platz.belegt / 1073741824) }}</span> GB belegt,
+    <span class="zahl">{{ "%.0f"|format(platz.frei / 1073741824) }}</span> GB frei,
+    davon <span class="zahl">{{ "%.1f"|format(aufteilung.gesamt / 1073741824) }}</span> GB Abbilder.
+  </p>
+
+  {# Ein Balken sagt beim Speicherplatz mehr als die Zahlen: 700 von 900 GB
+     rechnet niemand im Kopf in "wird knapp" um. Ab drei Vierteln faerbt er
+     sich, ab neun Zehnteln warnt er -- ein volles Abbild braucht mehrere
+     Gigabyte, da ist der Rest schnell weg. #}
+  <div class="balken {{ 'voll' if platz.anteil >= platte_voll else ('knapp' if platz.anteil >= platte_knapp) }}"
+       title="{{ platz.anteil }} % belegt">
+    <span style="width: {{ platz.anteil }}%"></span>
+  </div>
+  {% else %}
+  <p class="hint">
+    Die Belegung der Platte ist von hier aus nicht abfragbar.
+  </p>
+  {% endif %}
+
+  {# Zugeklappt, weil die Karte zuerst die kurze Antwort geben soll: belegt,
+     frei, wie viel davon Abbilder. Wer aufklappt, hat schon eine andere
+     Frage -- "wo ist der Platz hin?" --, und darauf antwortet die Liste von
+     oben nach unten. Sie steht ausserhalb der Abfrage auf "platz": Was die
+     Eintraege belegen, wissen wir auch dann, wenn die Platte selbst keine
+     Auskunft gibt. #}
+  <details class="klappe spaced">
+    <summary>Speicherplatz — Detailansicht</summary>
+
+    <p class="muted small">
+      Was jeder Eintrag unter <code>{{ assets_dir }}</code> wirklich belegt:
+      sein ganzer Ordner, nicht nur die Dateien, mit denen er startet. Der
+      größte steht oben. Dieselbe Zahl steht als „Belegt“ in seiner Karte
+      unter <a href="/systeme">Systeme</a>.
+    </p>
+
+    {% if aufteilung.eintraege %}
+    <table>
+      <thead>
+        <tr><th>Eintrag</th><th class="belegungsspalte">Belegt</th></tr>
+      </thead>
+      <tbody>
+        {% for e in aufteilung.eintraege %}
+        <tr>
+          <td>
+            <strong>{{ e.name }}</strong>{% if e.version %} {{ e.version }}{% endif %}
+            {# Der interessanteste Fall auf dieser Seite: Dateien liegen da,
+               starten laesst sich damit trotzdem nichts. Ein abgebrochener
+               Download steht in keiner Startbereit-Liste -- hier schon. #}
+            {% if not e.ready %}
+            <span class="badge missing">nicht startbereit</span>
+            {% endif %}
+            {# Der Ordner beantwortet die Frage "wo liegt das?". Wo es
+               keinen eigenen gibt -- Memtest legt BIOS- und UEFI-Datei
+               nebeneinander --, steht die Kennung da: sonst waeren die
+               beiden Zeilen nicht auseinanderzuhalten, und die kleine Zahl
+               daneben saehe nach einem Fehler aus statt nach "hier zaehlen
+               nur die eigenen Dateien". #}
+            {% if e.ablage %}
+            <div class="muted small"><code>{{ e.ablage }}</code></div>
+            {% else %}
+            <div class="muted small"><code>{{ e.slug }}</code> —
+              nur die eigenen Dateien, der Ordner gehört mehreren</div>
+            {% endif %}
+          </td>
+          <td class="belegungsspalte">{{ e.bytes | groesse }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      {# Die Summenzeilen gehen genau auf: Eintraege plus verwaist plus
+         Sonstiges ist die ganze Ablage. Geht eine Zahl nicht dorthin, wo man
+         sie vermutet, sieht man hier, wohin sie stattdessen ging. #}
+      <tfoot>
+        <tr>
+          <td>{{ aufteilung.eintraege | length }}
+            {{ "Eintrag" if aufteilung.eintraege | length == 1 else "Einträge" }}
+            zusammen</td>
+          <td class="belegungsspalte">{{ aufteilung.eintraege_bytes | groesse }}</td>
+        </tr>
+        {% if aufteilung.verwaist_anzahl %}
+        <tr>
+          <td><a href="#verwaist">{{ aufteilung.verwaist_anzahl }}
+              verwaiste{{ "r" if aufteilung.verwaist_anzahl == 1 }} Ordner</a>
+            <div class="muted small">gehör{{ "t" if aufteilung.verwaist_anzahl == 1 else "en" }}
+              zu keinem Eintrag</div></td>
+          <td class="belegungsspalte">{{ aufteilung.verwaist_bytes | groesse }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+          {# Eine Summe, die ihre Posten auf Wunsch zeigt. Zugeklappt, weil
+             es meistens nur wimboot ist -- aber wenn dort plötzlich sechs
+             Gigabyte stehen, will man wissen, was das ist, und muss dafür
+             nicht auf die Konsole. #}
+          <td>
+            {% if aufteilung.sonstiges %}
+            <details class="posten">
+              <summary>Sonstiges</summary>
+              <table class="schmal">
+                <tbody>
+                  {% for s in aufteilung.sonstiges %}
+                  <tr>
+                    <td><code>{{ s.name }}</code>
+                      {% if s.hinweis %}
+                      <div class="muted small">{{ s.hinweis }}</div>
+                      {% endif %}
+                    </td>
+                    <td class="belegungsspalte">{{ s.bytes | groesse }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </details>
+            {% else %}
+            Sonstiges
+            {% endif %}
+            <div class="muted small">was weder einem Eintrag noch einem
+              verwaisten Ordner gehört</div>
+          </td>
+          <td class="belegungsspalte">{{ aufteilung.sonstiges_bytes | groesse }}</td>
+        </tr>
+        <tr class="summe">
+          <td>Abbilder gesamt</td>
+          <td class="belegungsspalte">{{ aufteilung.gesamt | groesse }}</td>
+        </tr>
+      </tfoot>
+    </table>
+    {% else %}
+    <p class="hint">
+      Kein Eintrag belegt etwas — unter <code>{{ assets_dir }}</code> liegt
+      nichts, was zu einem gehört.
+    </p>
+    {% endif %}
+
+
+    {# Fusszeile der Unterkarte: Sie sagt, wie die Zahlen darueber
+       zustande kommen -- fuer alle, und ohne dass man sie zum Handeln
+       braucht. #}
+    <p class="kartenfuss">
+      Gemessen beim Aufbau der Seite und 30 Sekunden lang gemerkt &mdash; ein
+      ausgepacktes Abbild hat leicht 50.000 Dateien.
+    </p>
+  </details>
+
+  {# Bis August 2026 eine eigene Karte, seither die zweite Klappe dieser:
+     Verwaistes ist belegter Platz, der zu nichts gehoert -- dieselbe
+     Frage wie die Detailansicht darueber, nur die andere Haelfte der
+     Antwort. Als eigene Karte stand sie weit weg von der Zeile, die auf
+     sie verweist.
+
+     Sie bleibt stehen, auch wenn nichts gefunden wurde: Eine Klappe, die
+     verschwindet, laesst offen, ob nichts da war oder niemand gesucht
+     hat. Zugeklappt sagt sie deshalb schon in der Zeile, woran man ist.
+
+     Offen steht sie nur, wenn es etwas zu melden gibt -- sonst zeigte die
+     Zeile aus der Detailansicht ("2 verwaiste Ordner") auf einen
+     geschlossenen Kasten. #}
+  <details class="klappe spaced" id="verwaist"{% if verwaist %} open{% endif %}>
+    <summary>Verwaiste Ordner{% if verwaist %} — {{ verwaist | length }} gefunden{% else %} — keine{% endif %}</summary>
+
+    {% if not verwaist %}
+    <p class="muted small">
+      Keine verwaisten Ordner — geprüft werden Unterordner von
+      <code>{{ assets_dir }}</code>.
+    </p>
+    {% else %}
+    <p class="muted small">Folgende Ordner gefunden:</p>
+    <table>
+      <thead>
+        <tr><th>Ordner</th><th>Belegt</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for v in verwaist %}
+        <tr>
+          <td><code>{{ v.name }}</code>
+            <div class="muted small">{{ v.dateien }} Datei{{ "" if v.dateien == 1 else "en" }}</div></td>
+          <td class="nowrap">{{ v.bytes | groesse }}</td>
+          <td class="nowrap">
+            {# Ein Knopf je Fund und nicht einer fuer alle: Mehrere Gigabyte
+               auf einen Klick sind eine Entscheidung zu viel auf einmal, und
+               so kann die Rueckfrage sagen, um welchen Ordner es geht. #}
+            <form method="post" action="/verwaist/loeschen"
+                  onsubmit="return confirm('{{ v.name }} mit {{ v.dateien }} Dateien löschen? Das lässt sich nicht rückgängig machen.')">
+              <input type="hidden" name="pfad" value="{{ v.pfad }}">
+              <button type="submit" class="danger">Löschen</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </details>
+
+  {# Fusszeile der Karte: der Prozentsatz gilt der Platte und damit allem,
+     was in dieser Karte steht -- nicht dem Balken allein, unter dem er
+     vorher stand. Der Hinweis auf die Groesse eines Live-Abbilds ist
+     entfallen: Er beantwortet eine Frage, die hier niemand stellt. #}
+  {% if platz %}
+  <p class="kartenfuss">
+    {{ platz.anteil }} % von {{ "%.0f"|format(platz.gesamt / 1073741824) }} GB belegt.
+  </p>
+  {% endif %}
+</section>
+
+<section id="dienste">
+  <div class="kartenkopf">
+    <h2>Dienste</h2>
+    <a class="kartenhilfe" href="/hilfe#serverhealth-dienste"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+  <table class="schmal">
+    <tbody>
+      {% for d in dienste %}
+      <tr>
+        <td class="nowrap">
+          <span class="ampel {{ 'an' if d.laeuft else ('unklar' if d.zustand == 'unbekannt' else 'aus') }}"></span>
+          <strong>{{ d.name }}</strong>
+        </td>
+        <td>
+          {% if d.laeuft %}
+            <span class="badge ok">läuft</span>
+          {% elif d.zustand == "unbekannt" %}
+            <span class="muted small">nicht abfragbar</span>
+          {% else %}
+            <span class="badge missing">{{ d.zustand }}</span>
+          {% endif %}
+        </td>
+        <td class="muted small">{{ d.wofuer }}</td>
+        <td class="nowrap"><a href="/protokoll?einheit={{ d.name }}">Protokoll</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if dienste and dienste[0].zustand == "unbekannt" %}
+  <p class="muted small">
+    <code>systemctl</code> ist von hier aus nicht erreichbar — auf dem Server
+    nachsehen mit <code>systemctl is-active nginx dnsmasq pxeweb nfs-server</code>.
+  </p>
+  {% endif %}
+  {# Laeuft ein Dienst nicht, stand hier bis zum 28.08.2026 ein Satz dazu --
+     und zwar derselbe fuer alle vier, obwohl sie nicht gleich viel wert
+     sind. Er steht jetzt als Seitenkarte ueber jeder Seite, aufgeteilt: rot,
+     wenn der Bootweg haengt, gelb, wenn nur NFS fehlt. Die Tabelle daneben
+     bleibt, was sie war -- sie sagt, welcher Dienst wofuer da ist, und das
+     ist keine Meldung, sondern eine Auskunft. #}
+</section>
+
+<script>
+// Auslastung und laufende Uebertragungen werden vom Server fertig gerendert
+// nachgeliefert und hier nur eingesetzt -- so gibt es die Darstellung genau
+// einmal, in der Vorlage. Eine Antwort enthaelt beide Stuecke, jedes mit
+// seinem data-teil; sie landen in den gleichnamigen Behaeltern der Seite.
+// Ohne JavaScript zeigt die Seite denselben Stand wie beim Aufruf.
+(function () {
+  function verteilen(text) {
+    var neu = document.createElement("div");
+    neu.innerHTML = text;
+    neu.querySelectorAll("[data-teil]").forEach(function (stueck) {
+      var ziel = document.querySelector('[data-teil="' + stueck.dataset.teil + '"]');
+      if (ziel) { ziel.innerHTML = stueck.innerHTML; }
+    });
+  }
+
+  function holen() {
+    // Im Hintergrundtab nicht nachfragen: das waere Last fuer niemanden.
+    if (document.hidden) { setTimeout(holen, 5000); return; }
+    fetch("/status.html")
+      .then(function (r) { return r.text(); })
+      .then(function (t) { verteilen(t); setTimeout(holen, 5000); })
+      .catch(function () { setTimeout(holen, 15000); });
+  }
+  setTimeout(holen, 5000);
+})();
+</script>
+
+<script>
+// War beim Aufbau der Seite gerade ein Durchgang unterwegs, warten wir
+// sein Ende ab und laden neu. Sonst stuende "laeuft gerade" da, bis
+// jemand von sich aus neu laedt -- und das waere ein Stand von vorhin.
+// Laeuft keiner, wird auch nicht gefragt: Die Karte zeigt einen Befund,
+// der Tage alt sein darf, dafuer braucht es keinen Sekundentakt.
+(function () {
+  var karte = document.querySelector("#quelleninfo[data-laeuft]");
+  if (!karte) { return; }
+
+  function sehen() {
+    fetch("/quelleninfo.json").then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.laeuft) { setTimeout(sehen, 2000); } else { location.reload(); }
+      })
+      .catch(function () { setTimeout(sehen, 10000); });
+  }
+  setTimeout(sehen, 2000);
+})();
+</script>
+
+{% endblock %}

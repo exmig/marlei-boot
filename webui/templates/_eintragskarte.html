@@ -1,0 +1,221 @@
+{# Ein Eintrag als eigene Karte statt als Tabellenzeile.
+
+   Vier Spalten nebeneinander wurden unruhig, sobald in ihnen mehr stand
+   als ein Wort -- der Name eines Abbilds ist lang, der Pfad auch. Als
+   Karte steht oben, was man sucht (der Name, aenderbar), und der Rest
+   klappt auf, wenn man ihn braucht.
+
+   Benutzt wird das Makro mit einem Rumpf: darin stehen die Angaben als
+   <div> mit <dt> und <dd>. So bringt jede der drei Listen ihre eigenen
+   mit, ohne dass das Geruest dreimal dasteht.
+
+     {% call karte(e) %}
+       <div><dt>Datei</dt><dd>...</dd></div>
+     {% endcall %}
+#}
+{# "zurueck" ist die Sprungmarke der Karte, in der dieses Makro gerade
+   steht -- upload, katalog, download oder custom. Dieselbe Eintragskarte
+   steht in allen vier, und die drei Knoepfe unten leiten danach weiter.
+   Ohne die Angabe landet man nach dem Klick ganz oben und muss sich
+   zurueckscrollen. Der Server prueft sie gegen app.SPRUNGMARKEN. #}
+{% macro karte(e, zustand="", meldung="", loeschen="", neu_einlesen="",
+               neu_titel="", zeitpunkt="", zeit_titel="",
+               dateien_weg=false, offen=true, gut=false,
+               menue_info=false, zurueck="") %}
+{# Offen, solange etwas in Arbeit ist oder schiefging: was man wissen
+   muss, gehoert nicht hinter einen Klick. Ein "bereit" ist kein Grund
+   dafuer ("gut") -- da gibt es nichts zu tun.
+
+   Der Katalog schaltet das ganz ab ("offen=false"). Dort heisst der
+   Zustand oft "fehlt", und das ist kein Zwischenfall, sondern der
+   Normalzustand fuer alles, was noch nie geholt wurde -- acht von
+   vierzehn Karten stuenden sonst offen. Zu sehen ist es trotzdem: das
+   Abzeichen steht neben dem Namen. #}
+{# Die Sprungmarke: Server Health verweist von einem Befund des
+   Wächters hierher, und bei einem selbst angelegten Eintrag ist das
+   Ziel er selbst -- nicht eine Quelle, die es für ihn nicht gibt. #}
+<details class="eintragskarte" id="eintrag-{{ e.slug }}"
+         {% if zustand and offen and not gut %}open{% endif %}>
+  <summary>
+    {# Das Namensfeld ist die Ueberschrift. Ein Klick hinein darf die
+       Karte nicht auf- und zuklappen -- darum kuemmert sich das Skript
+       unten auf der Seite. #}
+    <div class="bezeichnung">
+      {# maxlength haelt schon beim Tippen an: Name und Version stehen im
+         Menue in einer Spalte, und die ist so breit, wie die Bildschirmzeile
+         daneben noch Platz fuer die Info laesst. Ein vorgegebener Name darf
+         laenger sein -- maxlength schneidet Vorhandenes nicht ab, es
+         verhindert nur weiteres Tippen. #}
+      <input type="text" class="name" name="name:{{ e.slug }}" form="seite"
+             value="{{ e.name }}" data-war="{{ e.name }}"
+             maxlength="{{ max_zeile }}"
+             placeholder="{{ e.name_vorgabe }}"
+             title="Name im Bootmenü — leer heißt: wieder »{{ e.name_vorgabe }}«">
+      <input type="text" class="version" name="version:{{ e.slug }}" form="seite"
+             value="{{ e.version }}" data-war="{{ e.version }}"
+             maxlength="{{ max_version }}"
+             title="Steht im Bootmenü hinter dem Namen — zusammen höchstens {{ max_zeile }} Zeichen">
+    </div>
+    {# Was nicht mehr auf die Bildschirmzeile passt, schneidet iPXE ab --
+       stillschweigend, erst vor dem bootenden Rechner. Ein langer Name
+       kommt regelmaessig vom Abbild selbst und wird deshalb nicht
+       abgelehnt; gesagt werden muss es trotzdem. Der Vermerk steht in der
+       Kopfzeile und nicht in der Karte, weil die Katalogeintraege
+       zugeklappt dastehen -- drinnen sieht ihn niemand.
+
+       Die Zahlen stehen als data-Werte daneben: Das Skript unten rechnet
+       beim Tippen mit, und maxlength allein reicht nicht -- Name und
+       Version sind einzeln erlaubt und zusammen zu lang. #}
+    {% set zeile_laenge = (e.name ~ (" " ~ e.version if e.version else "")) | length %}
+    {% set info_laenge = (e.menue_text or "") | length %}
+    <span class="gekuerzt" data-max-zeile="{{ max_zeile }}" data-max-info="{{ max_info }}"
+          {% if zeile_laenge <= max_zeile and info_laenge <= max_info %}hidden{% endif %}
+          title="Die Zeile ist länger, als im Bootmenü Platz hat — dort wird sie abgeschnitten">
+      im Menü gekürzt
+    </span>
+    {# Rechts in der Kopfzeile steht, was zu diesem Eintrag zu sagen ist:
+       ob er bereitsteht oder fehlt, und der Knopf, der ihn wieder
+       abschafft. Beides kann zugleich zutreffen -- eine Ausgabe, die nie
+       geholt wurde, darf man trotzdem aus der Liste nehmen.
+
+       Dasselbe Abzeichen wie in der Liste unter Systeme, mit denselben
+       Worten und denselben Farben: Beide fragen dieselbe Stelle
+       (_zustand() in app.py). Vorher stand hier nur, was fehlte -- wer von
+       Systeme herueberkam, sah dieselben Systeme ohne ihr gruenes
+       "bereit" und musste raten, ob das etwas heissen soll. #}
+    {% if zustand %}
+    <span class="badge {{ 'ok' if gut else 'missing' }}">{{ zustand }}</span>
+    {% endif %}
+  </summary>
+
+  {% if meldung %}<p class="hint">{{ meldung }}</p>{% endif %}
+
+  <dl class="angaben">
+    {# Was im Bootmenue hinter Name und Version steht -- und zwar genau
+       das, was hier im Feld steht. Vorbelegt ist es mit dem Abgelesenen
+       (die Zeile darunter); wer es leert, bekommt es zurueck. Deshalb
+       steht es oben: erst was jeder sieht, dann woher es kommt. #}
+    {% if menue_info %}
+    <div>
+      <dt>Menü-Info</dt>
+      <dd class="weit">
+        <input type="text" class="menueinfo" name="info:{{ e.slug }}" form="seite"
+               value="{{ e.menue_text }}" data-war="{{ e.menue_text }}"
+               maxlength="{{ max_info }}"
+               placeholder="{{ e.info_vorgabe }}"
+               title="Steht im Bootmenü ganz rechts, höchstens {{ max_info }} Zeichen — leer heißt: wieder »{{ e.info_vorgabe }}«">
+      </dd>
+    </div>
+    {% endif %}
+    {{ caller() }}
+    {# Was wirklich auf der Platte liegt. Stand bisher nur unter
+       Uebersicht -- es ist aber eine Angabe zu diesem einen Eintrag und
+       gehoert damit hierher. Fehlt eine Datei, faellt das hier auf, ohne
+       dass man die Seite wechselt. #}
+    {# Diese drei stehen in jeder Karte gleich und kommen deshalb von hier
+       und nicht aus den einzelnen Vorlagen. #}
+    {# Bereit, aber niemand bekommt es zu sehen. Seit die Freigabe leer
+       anfaengt, ist das der Normalzustand von allem Frischen -- und ohne
+       diese Zeile waere "ich hab hochgeladen und es ist nicht im Menue"
+       ein Raetsel. Sie steht nur, solange beide Haken fehlen: Wer bewusst
+       nur die Boot-Optionen angehakt hat, erprobt gerade und braucht
+       keinen Hinweis. #}
+    {% if e.ready and not e.im_menue and not e.in_optionen %}
+    <div><dt>Freigabe</dt>
+      <dd><span class="badge missing">wird nicht angeboten</span>
+        <span class="muted small">— unter
+          <a href="/systeme">Systeme</a> ankreuzen, dann steht es im
+          Bootmenü</span></dd></div>
+    {% endif %}
+    <div><dt>Zieht der Client</dt><dd>{{ e.zugriff }}</dd></div>
+    {% if zeitpunkt %}
+    <div><dt>{{ zeit_titel or "Aufgenommen" }}</dt>
+      <dd><span title="{{ zeitpunkt }}">{{ zeitpunkt | zeit }}</span></dd></div>
+    {% endif %}
+    <div><dt>Kennung</dt><dd><code>{{ e.slug }}</code></dd></div>
+    {# Fuer welche Firmware der Eintrag taugt. Steht hier und nicht nur
+       unter Systeme, weil es dieselbe Art Angabe ist wie die daneben:
+       abgelesen an dem, was er laedt (siehe _plattformen in app.py), und
+       nicht eingetragen. Ein Eintrag, der noch laedt, hat noch keine. #}
+    {% if e.platforms %}
+    <div>
+      <dt>Plattform</dt>
+      <dd><span title="Abgelesen an dem, was der Eintrag lädt — pcbios ist Legacy/CSM, efi ein UEFI-Rechner">{{ e.platforms | join(", ") }}</span></dd>
+    </div>
+    {% endif %}
+
+    {# Ab hier die Pfade, alle drei beisammen: erst der gemeinsame Anfang,
+       dann der Ordner dieses Eintrags, dann seine Dateien. Der Anfang
+       steht einmal in seiner eigenen Zeile und nicht in jedem Pfad -- bei
+       Windows waeren das sieben Wiederholungen. Wer einen ganzen Pfad zum
+       Kopieren braucht, bekommt ihn beim Draufzeigen. #}
+    <div><dt>Ablage</dt><dd><code>{{ assets_dir }}</code></dd></div>
+    {% if e.ablage %}
+    <div><dt>Liegt unter</dt>
+      <dd><code title="{{ assets_dir }}/{{ e.ablage }}">{{ e.ablage }}</code></dd></div>
+    {% endif %}
+    {# Was dieser Eintrag von der Platte nimmt. Nicht die Groesse der Datei,
+       die einmal hereinkam -- die steht weiter oben und beschreibt die
+       Herkunft. Ein ausgepacktes Abbild ist ein Vielfaches davon, und die
+       ISO dazu ist meist geloescht. #}
+    {% if e.belegt %}
+    <div><dt>Belegt</dt>
+      <dd>{{ e.belegt | groesse }}
+        <span class="muted small">auf der Platte</span></dd></div>
+    {% endif %}
+    {% if e.dateien %}
+    <div>
+      <dt>Dateien</dt>
+      <dd>
+        <table class="schmal">
+          <tbody>
+            {% for d in e.dateien %}
+            <tr>
+              <td><code title="{{ d.voll }}">{{ d.pfad }}</code></td>
+              <td class="nowrap muted small">
+                {% if d.da %}{{ d.bytes | groesse }}{% else %}fehlt{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </dd>
+    </div>
+    {% endif %}
+  </dl>
+
+  {# Die Knoepfe zuletzt: erst sieht man, womit man es zu tun hat, dann
+     kann man es wegwerfen. #}
+  {% if loeschen or neu_einlesen or dateien_weg %}
+  <div class="row kartenknoepfe">
+    {# Nur die Dateien, nicht den Eintrag: Ein Katalogeintrag ueberlebt das
+       Wegraeumen -- er steht danach auf "fehlt", und der Abgleich holt ihn
+       wieder. Bei einem Upload waere dasselbe das Ende des Eintrags,
+       deshalb heisst es dort schlicht "Loeschen". #}
+    {% if dateien_weg %}
+    <form method="post" action="/quellen/dateien/loeschen"
+          onsubmit="return confirm('Dateien von {{ e.name }} löschen? Der Eintrag bleibt und lässt sich neu holen.')">
+      <input type="hidden" name="slug" value="{{ e.slug }}">
+      {% if zurueck %}<input type="hidden" name="zurueck" value="{{ zurueck }}">{% endif %}
+      <button type="submit" class="danger"
+              title="Macht den Platz frei — der Eintrag steht danach auf »fehlt«">
+        Dateien löschen
+      </button>
+    </form>
+    {% endif %}
+    {% if neu_einlesen %}
+    <form method="post" action="{{ neu_einlesen }}">
+      {% if zurueck %}<input type="hidden" name="zurueck" value="{{ zurueck }}">{% endif %}
+      <button type="submit" {% if neu_titel %}title="{{ neu_titel }}"{% endif %}>Neu einlesen</button>
+    </form>
+    {% endif %}
+    {% if loeschen %}
+    <form method="post" action="{{ loeschen }}">
+      {% if zurueck %}<input type="hidden" name="zurueck" value="{{ zurueck }}">{% endif %}
+      <button type="submit" class="danger">Löschen</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+</details>
+{% endmacro %}

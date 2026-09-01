@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}History — MARLEI Boot{% endblock %}
+
+{% block content %}
+
+<section id="zuletzt-gestartet">
+  <div class="kartenkopf">
+    <h2>Zuletzt gestartet</h2>
+    <a class="kartenhilfe" href="/hilfe#history-liste"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+  {% if recent %}
+  {# "startliste" gibt den drei Spalten feste Breiten: Zeitpunkt und
+     Rechner so schmal, wie ihr Inhalt es zulaesst, der Rest fuer den
+     Eintrag. Ohne das teilt der Browser gleichmaessig auf, und die
+     Rechnerspalte bricht um, obwohl daneben Platz frei bleibt. #}
+  <table class="startliste">
+    <thead><tr><th>Zeitpunkt</th><th>Rechner</th><th>Eintrag</th></tr></thead>
+    <tbody>
+      {% for r in recent %}
+      <tr>
+        <td class="nowrap" title="{{ r['ts'] }}">{{ r["ts"] | zeit }}</td>
+        {# Name, MAC und IP auf einer Zeile: Die Seite ist breit genug,
+           und drei Angaben ueber denselben Rechner untereinander lesen
+           sich wie drei Zeilen. #}
+        <td class="nowrap">
+          {% if namen.get(r["mac"]) %}<strong>{{ namen[r["mac"]] }}</strong>{% endif %}
+          <code>{{ r["mac"] }}</code> <span class="muted small">{{ r["ip"] }}</span>
+        </td>
+        <td>{{ r["entry"] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="hint">
+    Noch nichts gestartet. Sobald ein Rechner vom Netz bootet, steht er hier.
+  </p>
+  {% endif %}
+
+  {# Fusszeile der Karte: wie weit die Liste zurueckreicht -- die Frage,
+     die man an einer solchen Tabelle hat und die die Ueberschrift offen
+     laesst. Die Zahl ist das LIMIT der Abfrage in app.py; geloescht wird
+     aus boot_log nie. #}
+  {% if recent %}
+  <p class="kartenfuss">
+    Angezeigt werden die letzten 100 Startvorgänge &mdash; ältere verbleiben
+    in der Datenbank.
+  </p>
+  {% endif %}
+</section>
+
+{% endblock %}

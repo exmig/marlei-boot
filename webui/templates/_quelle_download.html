@@ -1,0 +1,77 @@
+{# "with context": ohne das sieht das Makro die Werte der Seite nicht,
+   und der Pfad-Vorspann bliebe leer. #}
+{% from "_eintragskarte.html" import karte with context %}
+{# Was der Server selbst von einer Adresse holt. Eingebunden von
+   quellen.html.
+
+   Gebaut wie die Upload-Karte daneben: dieselben Hinweise, dieselbe
+   Zeile, derselbe Balken, dieselbe Rueckfrage. Es ist auch dieselbe
+   Sache -- ein Abbild kommt herein und wird eingeordnet. Verschieden ist
+   nur, wer es traegt: dort schickt der Browser, hier holt der Server. #}
+  {% include "_ohne_nfs.html" %}
+
+  {# Dieselben Masse wie in der Katalog-Karte daneben: Die Seite zeigt
+     vier Karten untereinander, und Knoepfe in zwei Groessen lesen sich
+     wie zwei verschiedene Wichtigkeiten. Nur der Eingabeteil -- die
+     Eintragsliste darunter bringt ihre eigenen mit. #}
+  <div class="kompakt">
+  <form method="post" action="/uploads/holen" class="row spaced" id="holen">
+    <input type="text" name="url" id="holen-url" size="50" required
+           placeholder="https://… Adresse einer ISO-Datei">
+    {# Wird von der Rueckfrage gesetzt, wenn danebengelegt werden soll. #}
+    <input type="hidden" name="neu" id="holen-neu" value="">
+    <button type="submit">Von Adresse holen</button>
+  </form>
+  {# Der Balken zeigt hier nicht, was der Browser schickt, sondern was der
+     Server geladen hat -- die Seite fragt es im Sekundentakt nach. Ohne
+     bekannte Gesamtgroesse (kein Content-Length) bleibt er weg, und es
+     steht nur da, wie viel schon da ist. #}
+  <progress id="holen-fortschritt" max="100" value="0" hidden></progress>
+  <p id="holen-meldung" class="hint" hidden></p>
+
+  {# Dieselbe Rueckfrage wie beim Upload: Die Kennung entsteht auch hier
+     aus dem Dateinamen am Ende der Adresse, die Kollision ist dieselbe. #}
+  <div id="holen-frage" class="hint" hidden>
+    <p id="holen-frage-text"></p>
+    <div class="row">
+      <button type="button" id="holen-ersetzen" class="danger">Vorhandenes ersetzen</button>
+      <button type="button" id="holen-daneben">Als neue Ausgabe holen</button>
+      <button type="button" id="holen-abbrechen" class="ghost">Abbrechen</button>
+    </div>
+  </div>
+  </div>
+
+{% if geholt %}
+{# Dieselben Angaben wie beim Upload -- nur steht hier zusaetzlich die
+   Adresse, von der geladen wurde. Sie ist bei diesem Weg das
+   Interessante und war bisher nirgends zu sehen. #}
+{% for e in geholt %}
+{% call karte(e, e.zustand.text, e.upload.meldung, gut=e.zustand.gut,
+              menue_info=true,
+              loeschen="/uploads/" + e.slug + "/delete",
+              neu_einlesen="/uploads/" + e.slug + "/reload" if e.upload.neu_lesbar else "",
+              neu_titel="Abbild noch einmal einordnen" if e.upload.iso_da
+                        else "Menüpunkt neu bauen — das Abbild selbst ist nach dem Entpacken nicht mehr da",
+              zeitpunkt=e.upload.hochgeladen, zeit_titel="Geholt",
+            zurueck="download") %}
+  {# Dieselbe Zeile wie im Katalog und mit demselben Namen: was das
+     Abbild ueber sich selbst sagt. "Meldet sich als" hiess sie, solange
+     es sie nur hier gab. #}
+  <div><dt>Beschreibung</dt><dd>{{ e.beschreibung }}</dd></div>
+  <div><dt>Datei</dt>
+    <dd>{{ e.upload.datei }}
+      &middot; {{ e.upload.groesse | groesse }}{% if e.upload.familie %}
+      &middot; erkannt als {{ e.upload.familie }}{% endif %}</dd></div>
+  <div><dt>Geholt von</dt><dd class="umbrechen">{{ e.upload.quelle }}</dd></div>
+{% endcall %}
+{% endfor %}
+{% endif %}
+
+{% set weg = "geholt" %}
+{% include "_belegt.html" %}
+
+{# Fusszeile der Karte: der Weg in die Hilfe. Stand bis zum
+   27.08.2026 oben unter der Ueberschrift. #}
+<p class="kartenfuss">
+  <a href="/systeme">Was hier hereinkommt, steht danach unter Systeme &rarr;</a>
+</p>

@@ -1,0 +1,25 @@
+#!ipxe
+# ---------------------------------------------------------------------------
+# Ein ISO-Abbild direkt als virtuelles Laufwerk anbieten (sanboot).
+#
+# Achtung: Das funktioniert nur mit ISOs, die als CD gebootet werden koennen
+# und deren Startsystem hinterher kein echtes CD-Laufwerk sucht. Viele
+# Linux-Live-Systeme scheitern daran -- fuer die ist der Typ "kernel"
+# mit fetch=/archiso_http_srv= der zuverlaessigere Weg.
+# ---------------------------------------------------------------------------
+
+set base {{ base }}
+set assets {{ base }}/assets
+
+echo
+echo   Starte {{ entry.name }} als virtuelles Laufwerk ...
+echo
+
+sanboot ${assets}/{{ entry.iso }} || goto fehler
+
+:fehler
+echo
+echo   {{ entry.name }} konnte nicht gestartet werden.
+echo
+prompt --timeout 20000 Taste druecken fuer das Menue...
+chain ${base}/menu.ipxe?mac={{ mac }}&platform=${platform}&arch=${buildarch} || shell

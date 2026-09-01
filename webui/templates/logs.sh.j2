@@ -1,0 +1,59 @@
+#!/bin/sh
+# ===========================================================================
+# Sammelt die Protokolle einer misslungenen Installation und legt sie auf
+# dem Bootserver ab.
+#
+# Im Live-System des betroffenen Rechners aufrufen:
+#
+#     curl -sf {{ base }}/logs.sh | sudo sh
+#
+# Danach stehen sie in der Weboberflaeche unter "Installationsprotokolle"
+# zum Herunterladen bereit. Das ist der Sinn der Sache: das Dateisystem
+# eines Live-Systems liegt im Arbeitsspeicher und ist mit dem naechsten
+# Neustart weg -- die Protokolle waeren es damit auch.
+# ===========================================================================
+set -eu
+
+SERVER="{{ base }}"
+
+if [ "$(id -u)" -ne 0 ]; then
+  echo "Bitte mit sudo aufrufen -- /var/log/installer gehoert root." >&2
+  exit 1
+fi
+
+command -v curl >/dev/null || { echo "curl fehlt." >&2; exit 1; }
+
+# Die MAC der Karte, ueber die dieser Rechner ins Netz geht. Unter genau
+# dieser Adresse fuehrt der Server den Rechner auch sonst.
+KARTE="$(ip -4 route show default | awk '{print $5; exit}')"
+[ -n "${KARTE:-}" ] || { echo "Keine Netzwerkkarte mit Standardroute." >&2; exit 1; }
+MAC="$(tr ':' '-' < "/sys/class/net/$KARTE/address")"
+
+SAMMLUNG="$(mktemp -d)"
+trap 'rm -rf "$SAMMLUNG"' EXIT
+mkdir -p "$SAMMLUNG/protokolle"
+
+# Jeder Punkt einzeln abgesichert: fehlt eine Quelle auf diesem System,
+# soll trotzdem alles Uebrige ankommen.
+cp -a /var/log/installer      "$SAMMLUNG/protokolle/" 2>/dev/null || true
+cp -a /var/log/syslog         "$SAMMLUNG/protokolle/" 2>/dev/null || true
+journalctl -b --no-pager    > "$SAMMLUNG/protokolle/journal.txt"  2>/dev/null || true
+dmesg -T                    > "$SAMMLUNG/protokolle/dmesg.txt"    2>/dev/null || true
+cat /proc/cmdline           > "$SAMMLUNG/protokolle/cmdline.txt"  2>/dev/null || true
+free -h                     > "$SAMMLUNG/protokolle/speicher.txt" 2>/dev/null || true
+lsblk -f                    > "$SAMMLUNG/protokolle/platten.txt"  2>/dev/null || true
+mount                       > "$SAMMLUNG/protokolle/mounts.txt"   2>/dev/null || true
+
+PAKET="$SAMMLUNG/protokolle.tgz"
+tar czf "$PAKET" -C "$SAMMLUNG" protokolle
+
+GROESSE="$(wc -c < "$PAKET")"
+echo "Sende $((GROESSE / 1024)) KB von $KARTE ($MAC) an $SERVER ..."
+
+if curl -sf --max-time 300 -T "$PAKET" "$SERVER/logs/$MAC/protokolle.tgz"; then
+  echo ""
+  echo "Abgelegt. Abzuholen in der Weboberflaeche unter $SERVER/"
+else
+  echo "Das Hochladen ist fehlgeschlagen. Laeuft $SERVER noch?" >&2
+  exit 1
+fi
