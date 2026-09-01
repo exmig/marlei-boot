@@ -206,6 +206,12 @@ Ein Betrieb, der ein freies Werkzeug jahrelang produktiv nutzt und dem, der
 es gebaut hat, nie ein Wort schreibt, tut nichts Unrechtes. Er tut nur
 nichts.
 
+**Der Weg dorthin: [kontakt@exmig.de](mailto:kontakt@exmig.de).** Ein
+Satz genügt. Alles, was den Server selbst betrifft — ein Fehler, eine
+Frage, ein Vorschlag —, ist in den *Issues* und *Discussions* dieses
+Repositorys besser aufgehoben; dort steht es öffentlich und hilft dem
+Nächsten mit.
+
 ---
 
 *Wer am Quelltext arbeitet: [docs/aufbau.md](docs/aufbau.md) sagt, welche

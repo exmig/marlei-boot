@@ -6,7 +6,7 @@
 #     ./setup/git-deploy.sh
 #
 # Danach vom Windows-Rechner aus:
-#     git remote add vm ssh://BENUTZER@192.168.178.30/~/pxe-server.git
+#     git remote add vm ssh://BENUTZER@SERVER/~/pxe-server.git
 #     git push vm main
 #
 # Jeder Push aktualisiert automatisch das Arbeitsverzeichnis in der VM.

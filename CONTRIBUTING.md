@@ -49,6 +49,16 @@ den Zeitpunkt.*
 danach. Wenn sich jemand ernsthaft meldet, ist das der Anlass, die
 Vereinbarung aufzusetzen.
 
+## Wenn es nicht in ein Issue gehört
+
+**Lizenz, Support, Förderung, die Rechtefrage — dafür gibt es
+[kontakt@exmig.de](mailto:kontakt@exmig.de).** Ein Betrieb, der über so
+etwas reden will, schreibt es nicht öffentlich, und ein Freiwilliger, der
+die Nutzungsrechte klären möchte, meist auch nicht.
+
+**Eine Sicherheitslücke gehört ebenfalls nicht in ein offenes Issue.** Wie
+sie gemeldet wird, steht in [SECURITY.md](SECURITY.md).
+
 ## Sprache
 
 Deutsch. Der Server richtet sich an den deutschsprachigen Raum, und die
