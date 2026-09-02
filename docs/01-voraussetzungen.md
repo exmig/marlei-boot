@@ -195,4 +195,63 @@ nimmt dafür also einen Blechrechner.
 
 ---
 
+## 1.6 Zum Abhaken, bevor es losgeht
+
+Alles aus diesem Kapitel auf einer Seite. **Wo etwas offenbleibt, steht
+der Abschnitt daneben, in dem es erklärt ist** — die Liste ersetzt ihn
+nicht, sie erinnert nur daran. Zwei Punkte tragen keine Nummer: Sie
+stehen in diesem Kapitel nicht und gehören trotzdem geprüft.
+
+**Die Maschine**
+
+- [ ] Betriebssystem ist **Debian 12/13** oder **Ubuntu 26.04** — oder
+      eines der unterstützten, mit dem Wissen, dass es noch niemand ganz
+      durchgespielt hat *(1.1)*
+- [ ] Mindestens **1 GB** Arbeitsspeicher, besser 2 *(1.2)*
+- [ ] Mindestens **20 GB** Platte frei — 60 GB, wenn eigene Abbilder
+      dazukommen, und eher 100 GB bei mehreren Windows-Ausgaben *(1.2)*
+- [ ] Die Uhr geht richtig und wird abgeglichen — `timedatectl` sagt
+      *System clock synchronized: yes*. Eine falsche Uhr fällt erst
+      später auf, an Protokollen und Zertifikaten
+
+**Das Netz**
+
+- [ ] **Kabel** ins selbe Netz wie die Rechner, die davon starten sollen
+      — kein WLAN, auch keine Brücke darüber *(1.4)*
+- [ ] Die Maschine hat eine **Adresse, die bleibt**: Reservierung am
+      Router oder feste Adresse auf der Maschine. Eine gewöhnliche
+      DHCP-Lease genügt nicht *(1.4)*
+- [ ] Im Netz gibt es **genau einen** DHCP-Server — den Router. Der
+      Bootserver bringt keinen mit: Er antwortet als *proxyDHCP* nur mit
+      dem Hinweis auf sein Startsystem, die Adressvergabe bleibt beim
+      Router
+
+**Der Zugang**
+
+- [ ] Ein Benutzer, der **`sudo`** darf. Auf Debian fehlt `sudo`, wenn bei
+      der Installation ein Root-Passwort vergeben wurde — dann erst
+      nachrüsten *(siehe [02-installation.md](02-installation.md),
+      Abschnitt 2.0)*
+- [ ] **`git`** ist installiert (`sudo apt install git`). Es wird zum
+      Holen des Projekts gebraucht und ist **nicht** Teil von
+      `install.sh` — das liegt ja im Klon
+- [ ] Wenn die Maschine aus der Ferne bedient wird: **SSH** läuft und der
+      Zugang ist geprüft
+
+**Die Rechner, die davon starten**
+
+- [ ] **Secure Boot ist aus** — iPXE ist nicht signiert und wird sonst
+      abgelehnt, ohne dass eine Meldung erschiene *(1.5)*
+- [ ] Netzwerkstart (PXE) ist in der Firmware eingeschaltet
+- [ ] Für den **ersten Test** steht ein Blechrechner bereit, keine VM
+      *(1.5 — dnsmasq 2.92 und der UEFI-Abbruch bei großen Abbildern)*
+
+> **Bleibt hier etwas offen, ist das kein Abbruchgrund** — außer bei den
+> ersten beiden Punkten unter *Das Netz*. Ohne Kabel ins selbe Netz und
+> ohne bleibende Adresse startet später kein Rechner, und die Ursache
+> sieht man dem Bootserver nicht an: Er läuft dann kerngesund vor sich
+> hin, während nichts ankommt.
+
+---
+
 Weiter mit [02-installation.md](02-installation.md).
