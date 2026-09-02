@@ -130,27 +130,43 @@
   setTimeout(holen, 10000);
 })();
 
-// Wie hoch die Reiterleiste baut.
+// Wie hoch das klebt, was oben klebt.
 //
-// Sie bleibt beim Scrollen oben stehen, und alles andere, was ebenfalls
-// klebt, muss unter ihr halten statt dahinter -- heute die Kopfzeilen der
-// langen Tabellen unter Systeme. Ihre Hoehe haengt daran, wieviele Zeilen
-// die sieben Reiter brauchen: eine bis vier, je nach Fensterbreite. Statt
-// vier Zahlen im Stylesheet zu pflegen, wird gemessen.
+// Die Reiterleiste bleibt beim Scrollen stehen, und die Befunde haengen
+// sich darunter. Alles andere, was ebenfalls klebt, muss UNTER beiden
+// halten statt dahinter -- heute die Kopfzeilen der langen Tabellen unter
+// Systeme. Die Hoehe schwankt gleich zweifach: Die sieben Reiter brauchen
+// je nach Fensterbreite eine bis vier Zeilen, und die Befunde kommen und
+// gehen. Statt Zahlen im Stylesheet zu pflegen, wird gemessen.
 //
-// Der Wert in style.css bleibt als Rueckfall stehen und stimmt fuer die
-// einzeilige Leiste -- ohne dieses Stueck sieht die Seite also richtig aus,
-// nur beim schmalen Fenster geraet eine Tabellenkopfzeile hinter die Leiste.
+// --leiste-hoehe ist dabei die Leiste ALLEIN: Die Befunde haengen sich an
+// ihr auf und duerfen sich nicht selbst mitrechnen. Was darunter halten
+// soll, nimmt --klebt-hoehe.
+//
+// Die Werte in style.css bleiben als Rueckfall stehen und stimmen fuer die
+// einzeilige Leiste ohne Befund -- ohne dieses Stueck sieht die Seite also
+// richtig aus, nur beim schmalen Fenster oder bei einem Befund geraet eine
+// Tabellenkopfzeile darunter.
 (function () {
   var leiste = document.querySelector(".reiterleiste");
   if (!leiste) { return; }
+  var kasten = document.getElementById("befunde");
+
   function melden() {
-    document.documentElement.style.setProperty(
-      "--leiste-hoehe", leiste.getBoundingClientRect().height + "px");
+    var oben = leiste.getBoundingClientRect().height;
+    var wurzel = document.documentElement.style;
+    wurzel.setProperty("--leiste-hoehe", oben + "px");
+    wurzel.setProperty("--klebt-hoehe",
+      (oben + (kasten ? kasten.getBoundingClientRect().height : 0)) + "px");
   }
   melden();
-  if (window.ResizeObserver) { new ResizeObserver(melden).observe(leiste); }
-  else { window.addEventListener("resize", melden); }
+  if (window.ResizeObserver) {
+    var wacht = new ResizeObserver(melden);
+    wacht.observe(leiste);
+    if (kasten) { wacht.observe(kasten); }
+  } else {
+    window.addEventListener("resize", melden);
+  }
 })();
 
 // Einen Befehl in die Zwischenablage legen.

@@ -32,6 +32,11 @@
      Rueckfall fuer den Fall, dass das nicht laeuft -- er stimmt fuer die
      einzeilige Leiste. */
   --leiste-hoehe: 3.45rem;
+  /* Und wie hoch alles zusammen klebt: Leiste plus die Befunde, die sich
+     darunter haengen. Was ebenfalls oben halten soll, nimmt diesen Wert --
+     sonst geriete es hinter einen Befund. Ohne Befund sind beide gleich,
+     und das ist der Rueckfall. */
+  --klebt-hoehe: var(--leiste-hoehe);
 
   /* Der Seitengrund ist die mig-Haelfte der Marke, stark aufgehellt --
      er kommt damit aus dem Logo und nicht von aussen. Gerade so viel Ton,
@@ -375,10 +380,10 @@ th.wolspalte button { letter-spacing: .04em; }
    Hintergrund ist noetig, sonst scheinen die Zeilen darunter durch. */
 table.eng thead th {
   position: sticky;
-  /* Nicht 0: Dort steht die Reiterleiste, und die Kopfzeile verschwaende
-     dahinter. Beide holen die Hoehe aus derselben Zahl -- siehe
-     --leiste-hoehe. */
-  top: var(--leiste-hoehe);
+  /* Nicht 0: Dort stehen die Reiterleiste und die Befunde, und die
+     Kopfzeile verschwaende dahinter. Alle holen die Hoehe aus derselben
+     Zahl -- siehe --klebt-hoehe. */
+  top: var(--klebt-hoehe);
   z-index: 1;
   background: var(--panel);
 }
@@ -1188,6 +1193,29 @@ section > *:last-child { margin-bottom: 0; }
   background: var(--info-bg);
   border-left-color: var(--info-kante);
 }
+
+/* Die Befunde kleben unter der Reiterleiste.
+
+   Sie standen bis zum 02.09.2026 oben auf der Seite und waren damit nur
+   dort zu sehen: Wer unten die Dienste im Blick hatte, sah eine neue
+   Karte erst beim Hochscrollen. Ein Befund gilt aber, waehrend man
+   arbeitet -- er soll nicht warten, bis jemand zufaellig nach oben sieht.
+
+   z-index 9, also unter der Reiterleiste (10): Die Reiter bleiben oben,
+   die Karten schieben sich darunter. Der Hintergrund ist Pflicht, sonst
+   scheint der Inhalt durch, und die volle Breite auch -- dieselbe
+   Ueberlegung wie bei der Leiste selbst.
+
+   Warum so: docs/gestaltung.md, "Die Seitenkarte". */
+#befunde {
+  position: sticky;
+  top: var(--leiste-hoehe);
+  z-index: 9;
+  background: var(--bg);
+  margin: 0 -1.25rem;
+  padding: .35rem 1.25rem 0;
+}
+#befunde > * { max-width: 60rem; margin-left: auto; margin-right: auto; }
 
 /* Was jemand zur Kenntnis genommen hat: eine graue Zeile statt einer
    farbigen Karte. Sie verschwindet NICHT -- wer nicht selbst geklickt hat,

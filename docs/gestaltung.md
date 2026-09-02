@@ -628,12 +628,29 @@ statt vorbeizuscrollen.
 jemand sieht, und muss deshalb die *Folge* nennen, nicht den Vorgang:
 „Kein Rechner findet seine Dateien", nicht „Die Adresse hat sich geändert".
 
+**Sie kleben unter der Reiterleiste** (seit 02.09.2026). Bis dahin standen
+sie oben auf der Seite und waren nur dort zu sehen: Wer unten die Dienste
+im Blick hatte, bemerkte eine neue Karte erst beim Hochscrollen. *Ein
+Befund gilt aber, während man arbeitet* — er soll nicht warten, bis jemand
+zufällig nach oben sieht.
+
+Der Kasten nimmt `z-index: 9`, also **unter** der Reiterleiste (10): Die
+Reiter bleiben oben, die Karten schieben sich darunter. Hintergrund und
+volle Breite sind dabei Pflicht, sonst scheint der Inhalt durch — dieselbe
+Überlegung wie bei der Leiste.
+
+**Damit kleben zwei Dinge übereinander, und ein drittes muss darunter
+halten.** Die Kopfzeilen der langen Tabellen nehmen deshalb
+`--klebt-hoehe` statt `--leiste-hoehe`: Leiste plus Befunde. Beide Zahlen
+werden gemessen, denn beide schwanken — die Reiter brauchen je nach
+Fensterbreite ein bis vier Zeilen, und die Befunde kommen und gehen.
+
 **Warum unterhalb der Reiter und nicht darüber:** Der `header` ist Kopf und
 Navigation, ein Befund ist Inhalt. Vor allem aber schöbe eine auftauchende
 Karte über den Reitern die Navigation nach unten und beim Verschwinden
 wieder hoch — Reiter werden aus dem Gedächtnis angesteuert, nicht gelesen.
-Und der Seitenkopf soll einmal ein durchgehendes Navy-Band werden; dort läge
-die Karte im Weg.
+Und der Seitenkopf trägt seit dem 02.09.2026 das Navy-Band; dort läge die
+Karte im Weg.
 
 Die Farbwerte stehen in *Die Farbtoken*, die Rechnung dazu in *Regeln, nach denen Farbe vergeben wird*. Wo die Befunde
 entstehen: `webui/befunde.py`. Der Text je Befund:
