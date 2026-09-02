@@ -405,6 +405,42 @@
     sieht aus wie eine Seite ohne diese Karten.
   </p>
 
+  <h4>Welche Karte wann kommt</h4>
+  {# Die Tabelle kommt aus befunde.KATALOG -- derselben Quelle, aus der
+     die Karten selbst entstehen. Von Hand geschrieben waere sie ein
+     vierter Ort fuer dieselbe Angabe, und der veraltet: Bis zum
+     02.09.2026 fehlte hier smbd, weil er im Quelltext in keiner Stufe
+     stand. Ein Befund ohne Zeile in dieser Tabelle laesst sich seither
+     nicht mehr bauen. #}
+  <table>
+    <thead>
+      <tr><th>Karte</th><th>Farbe</th><th>Wann sie kommt</th>
+        <th>Wegklicken</th></tr>
+    </thead>
+    <tbody>
+      {% for k in katalog %}
+      <tr>
+        <td class="nowrap"><strong>{{ k.titel }}</strong></td>
+        <td class="nowrap">
+          {% if k.stufe == "fehler" %}Rot{% elif k.stufe == "warnung" %}Gelb{% else %}Blau{% endif %}
+        </td>
+        <td class="muted">{{ k.wodurch }}</td>
+        <td class="muted">
+          {% if k.wieder %}ja — kommt wieder {{ k.wieder }}{% else %}nein{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="muted small">
+    <strong>Wegklicken heißt nicht weg.</strong> Eine weggeklickte Karte
+    schrumpft auf eine graue Zeile über der Seite — <em>„1 Befund zur
+    Kenntnis genommen"</em>, aufklappbar. Wer nicht selbst geklickt hat,
+    findet sie also trotzdem. Eine rote Karte lässt sich nicht wegklicken:
+    Ein Server, der seine Arbeit nicht tut, soll nie aussehen wie einer,
+    der sie tut.
+  </p>
+
   <div class="abschnittskopf">
     <h3 id="erste-schritte-dabei">Was passiert dabei — und was nicht?</h3>
   </div>

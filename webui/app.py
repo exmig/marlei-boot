@@ -1109,6 +1109,11 @@ def _rahmen(**ctx) -> dict:
         # install.sh hierhergekommen ist -- dann steht dort nichts statt
         # einer erfundenen Nummer, siehe versionsstand.py.
         "stand_kurz": versionsstand.kurz(),
+        # Der Katalog der Befunde. Die Hilfe rendert daraus die Tabelle
+        # "Welche Karte wann kommt" -- aus derselben Quelle, aus der die
+        # Karten entstehen. Von Hand geschrieben waere sie ein zweiter Ort
+        # fuer dieselbe Angabe, und der veraltet.
+        "katalog": befunde.KATALOG,
         "menu_default": MENU_DEFAULT,
         "menu_timeout": MENU_TIMEOUT,
         # Wieviel auf die Menuezeile passt. Die Felder tragen es als

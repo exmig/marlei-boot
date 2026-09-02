@@ -4299,6 +4299,7 @@ with TestClient(pxeapp.app) as c:
     # Stand muss dabei weg, sonst antwortet der Puffer statt des Patches.
     import app as pxeapp_
     import befunde as befunde_
+    import kenntnis as kenntnis_
     TITEL = "Kein Rechner findet seine Dateien"
     echt = serveradresse.netzlage
 
@@ -4365,6 +4366,58 @@ with TestClient(pxeapp.app) as c:
     # grossen Live-Systeme nicht (gelb). Bis zum 28.08.2026 sagte die
     # Oberflaeche zu beidem denselben Satz -- und zwar nur auf einer Seite.
     import dienste as dienste_
+    # -- Der Katalog: jede Karte einmal beschrieben
+    #
+    # Zwei Pruefungen, und die erste haette die Luecke vom 02.09.2026
+    # gefunden: smbd stand in dienste.EINHEITEN, erschien in der Karte
+    # Dienste -- und in keiner Stufe. Es fiel aus, und die Oberflaeche
+    # schwieg. Vier Dienste hatten eine Stufe, der fuenfte nicht.
+    print("\n-- Der Befund-Katalog")
+    import befunde as befunde_
+    import kenntnis as kenntnis_
+    ohne_stufe = [n for n in dienste_.EINHEITEN
+                  if n not in befunde_.BOOTDIENSTE
+                  and n not in befunde_.TEILDIENSTE]
+    doppelt = [n for n in befunde_.BOOTDIENSTE if n in befunde_.TEILDIENSTE]
+    check("jeder ueberwachte Dienst hat genau eine Stufe",
+          not ohne_stufe and not doppelt,
+          "ohne Stufe: %s, doppelt: %s" % (ohne_stufe, doppelt))
+
+    # Jede Katalogzeile hat eine Vorlage, jede Vorlage eine Zeile -- sonst
+    # rendert ein Befund ins Leere oder eine Datei liegt tot herum.
+    vorlagen = {p.stem for p in
+                (PROJ / "webui" / "templates" / "befunde").glob("*.html")}
+    kennungen = {e["kennung"] for e in befunde_.KATALOG}
+    check("jede Karte hat ihre Vorlage und umgekehrt",
+          vorlagen == kennungen,
+          "nur im Katalog: %s, nur als Datei: %s"
+          % (sorted(kennungen - vorlagen), sorted(vorlagen - kennungen)))
+
+    # Rot ist nicht wegklickbar -- der Katalog sagt es, indem "wieder"
+    # leer bleibt. Waere dort etwas eingetragen, widerspraeche der Text in
+    # der Hilfe dem Verhalten der Oberflaeche.
+    # Die Hilfe rendert denselben Katalog -- geprueft an der Seite selbst,
+    # damit die Tabelle nicht still leer bleibt.
+    hilfe = c.get("/hilfe").text
+    check("die Hilfe fuehrt jede Karte auf",
+          all(e["titel"] in hilfe for e in befunde_.KATALOG)
+          and all(e["wodurch"][:40] in hilfe for e in befunde_.KATALOG))
+
+    # Und die Vorschau ohne Server auch: Sie rendert dieselbe Vorlage und
+    # ist am 02.09.2026 daran zerbrochen, dass eine Karte nach "request"
+    # griff. Das faellt sonst erst auf, wenn jemand die Seite baut.
+    import subprocess as _sub
+    lauf = _sub.run([sys.executable, str(PROJ / "tools" / "hilfe-vorschau.py")],
+                    capture_output=True, text=True)
+    check("die Hilfe-Vorschau rendert ohne laufenden Server",
+          lauf.returncode == 0, lauf.stderr[-200:])
+
+    check("bei Rot bleibt das Wiederkommen leer",
+          all(not e["wieder"] for e in befunde_.KATALOG
+              if e["stufe"] == "fehler")
+          and all(e["wieder"] for e in befunde_.KATALOG
+                  if e["stufe"] in kenntnis_.WEGKLICKBAR))
+
     BOOT = "Kein Rechner kann gerade starten"
     NFS = "Live-Systeme starten gerade nicht"
     SMB = "Windows lässt sich gerade nicht installieren"

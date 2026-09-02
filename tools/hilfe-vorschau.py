@@ -37,10 +37,13 @@ STATISCH = WEBUI / "static"
 
 # Die Anwendung selbst wird NICHT importiert: app.py liest beim Laden
 # Umgebung, Katalog und Zustandsdateien und braucht einen eingerichteten
-# Server. Gebraucht wird hier nur das Modul mit den Laengenangaben -- die
-# stehen in den Titeln der Eingabefelder und sollen die echten sein.
+# Server. Gebraucht werden hier zwei Module: die Laengenangaben -- sie
+# stehen in den Titeln der Eingabefelder und sollen die echten sein -- und
+# der Katalog der Befunde, aus dem die Hilfe ihre Tabelle rendert. Beide
+# tun beim Laden nichts; sie sind reine Angaben.
 sys.path.insert(0, str(WEBUI))
 import bezeichnungen  # noqa: E402
+import befunde  # noqa: E402
 
 from jinja2 import Environment, FileSystemLoader  # noqa: E402
 
@@ -59,6 +62,14 @@ BEISPIEL = {
     # eine Fehlerkarte eine Aussage ueber eine Maschine, die den Leser
     # nichts angeht.
     "befunde": [],
+    # Wohin der Knopf einer Karte zurueckfuehrte. Hier fuehrt nichts
+    # zurueck -- aber ohne die Angabe griffe die Vorlage nach "request",
+    # und das gibt es in einer Vorschau nicht.
+    "hier": "/",
+    # Der Katalog dagegen gehoert dazu: Er sagt, WELCHE Karten es gibt und
+    # wann sie kommen -- eine Auskunft ueber das Produkt, nicht ueber diese
+    # Maschine. Genau die will jemand lesen, der noch keinen Server hat.
+    "katalog": befunde.KATALOG,
     # Die Anhaengsel gegen den Zwischenspeicher des Browsers. Hier
     # stoeren sie nur: Die Dateien liegen daneben und heissen wie sie.
     "stil_version": "",

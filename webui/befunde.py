@@ -74,12 +74,76 @@ BOOTDIENSTE = ("nginx", "dnsmasq", "pxeweb")
 # -- siehe B-053 Reine Windows- oder Linux-Konfiguration.
 TEILDIENSTE = ("nfs-server", "smbd")
 
-# Je Teildienst: die Kennung der Vorlage und der Satz, der zugeklappt
-# dasteht. Beides gehoert zusammen und steht deshalb an einer Stelle.
+# Welcher Teildienst welche Karte bekommt.
 TEILBEFUND = {
-    "nfs-server": ("teildienst", "Große Live-Systeme starten gerade nicht"),
-    "smbd": ("windowsdienst", "Windows lässt sich gerade nicht installieren"),
+    "nfs-server": "teildienst",
+    "smbd": "windowsdienst",
 }
+
+# ---------------------------------------------------------- der Katalog
+#
+# Jede Karte, die es gibt -- einmal beschrieben, an einer Stelle.
+#
+# Warum als Daten und nicht verstreut: Die Angaben standen bis zum
+# 02.09.2026 an drei Orten -- die Bedingung hier im Quelltext, die Stufe
+# in der Mappe, die Beispiele in der Hilfe. Drei Orte laufen auseinander,
+# und sie taten es: "smbd" stand in keiner Stufe, fiel aus, und die
+# Oberflaeche schwieg. Jetzt holt sich sammeln() Stufe und Titel von hier,
+# und die Hilfe rendert dieselbe Tabelle. Ein Befund ohne Katalogzeile
+# laesst sich nicht mehr bauen.
+#
+# Die Felder:
+#
+#   kennung   heisst auch die Vorlage: templates/befunde/<kennung>.html
+#   stufe     fehler | warnung | info
+#   titel     der Satz, der zugeklappt dasteht -- er nennt die FOLGE,
+#             nicht den Vorgang. Zugeklappt ist er das Einzige, was
+#             jemand sieht, und "Die Adresse hat sich geaendert" sagt
+#             nicht, was daran schlimm ist. Wo die Folge von etwas
+#             abhaengt, das wir nicht wissen -- wie gross das naechste
+#             Abbild ist --, nennt er den Zustand; behaupten ist
+#             schlimmer als beschreiben.
+#   wodurch   wann die Karte kommt, in einem Satz. Fuer die Hilfe.
+#   wieder    wann sie nach dem Wegklicken zurueckkommt, oder "" bei Rot
+#             -- Rot laesst sich nicht wegklicken.
+KATALOG = (
+    {"kennung": "adresse", "stufe": "fehler",
+     "titel": "Kein Rechner findet seine Dateien",
+     "wodurch": "Der Host läuft unter einer anderen Adresse als der "
+                "eingerichteten. Alle Dienste laufen, aber jedes "
+                "Boot-Skript zeigt ins Leere.",
+     "wieder": ""},
+    {"kennung": "bootdienst", "stufe": "fehler",
+     "titel": "Kein Rechner kann gerade starten",
+     "wodurch": "Einer der Dienste nginx, dnsmasq oder pxeweb läuft "
+                "nicht. Ohne sie kommt kein Rechner durch.",
+     "wieder": ""},
+    {"kennung": "teildienst", "stufe": "warnung",
+     "titel": "Große Live-Systeme starten gerade nicht",
+     "wodurch": "nfs-server läuft nicht. Betroffen sind nur Einträge, "
+                "die ihr Wurzeldateisystem über das Netz einhängen.",
+     "wieder": "wenn der Dienst zwischendurch wieder lief"},
+    {"kennung": "windowsdienst", "stufe": "warnung",
+     "titel": "Windows lässt sich gerade nicht installieren",
+     "wodurch": "smbd läuft nicht. Die Windows-Installationsquellen "
+                "liegen auf einer Freigabe dieses Servers.",
+     "wieder": "wenn der Dienst zwischendurch wieder lief"},
+    {"kennung": "platte", "stufe": "warnung",
+     "titel": "Die Platte ist fast voll",
+     "wodurch": "Die Belegung erreicht %d %%. Ab dort bleibt beim "
+                "nächsten Abbild leicht ein halber Eintrag liegen."
+                % dienste.VOLL,
+     "wieder": "bei der nächsten Fünferstufe — 95, dann 100"},
+)
+
+
+def aus_katalog(kennung: str) -> dict:
+    """Stufe und Titel einer Karte -- geschrieben steht beides nur oben."""
+    for eintrag in KATALOG:
+        if eintrag["kennung"] == kennung:
+            return {"stufe": eintrag["stufe"], "kennung": kennung,
+                    "titel": eintrag["titel"]}
+    raise KeyError("kein Katalogeintrag fuer %r" % kennung)
 
 # Wie lange die abgelesene Netzlage gilt, in Sekunden.
 #
@@ -170,14 +234,10 @@ def sammeln(eingerichtete_ip: str, assets_dir=None,
     # nur, dass jemand etwas tut.
     abweichung = serveradresse.abweichung(eingerichtete_ip, netzlage())
     if abweichung:
-        befunde.append({
-            "stufe": "fehler",
-            "kennung": "adresse",
-            "titel": "Kein Rechner findet seine Dateien",
-            "marke": 0,
-            "eingerichtet": eingerichtete_ip,
-            "tatsaechlich": abweichung,
-        })
+        befunde.append(dict(aus_katalog("adresse"),
+                            marke=0,
+                            eingerichtet=eingerichtete_ip,
+                            tatsaechlich=abweichung))
 
     # -- Die Dienste. Ein ausgefallener Dienst ist nicht wie der andere:
     # Ohne dnsmasq kommt kein Rechner durch, ohne nfs-server nur die
@@ -191,13 +251,9 @@ def sammeln(eingerichtete_ip: str, assets_dir=None,
            if not d["laeuft"] and d["zustand"] != "unbekannt"}
 
     if aus & set(BOOTDIENSTE):
-        befunde.append({
-            "stufe": "fehler",
-            "kennung": "bootdienst",
-            "titel": "Kein Rechner kann gerade starten",
-            "marke": 0,
-            "dienste": [d for d in zustand if d["name"] in aus & set(BOOTDIENSTE)],
-        })
+        befunde.append(dict(
+            aus_katalog("bootdienst"), marke=0,
+            dienste=[d for d in zustand if d["name"] in aus & set(BOOTDIENSTE)]))
 
     # Je ausgefallenem Teildienst eine eigene Karte, in der Reihenfolge
     # von TEILDIENSTE. Zwei zugleich sind zwei Karten -- sie treffen
@@ -205,17 +261,13 @@ def sammeln(eingerichtete_ip: str, assets_dir=None,
     for name in TEILDIENSTE:
         if name not in aus:
             continue
-        kennung, titel = TEILBEFUND[name]
-        befunde.append({
-            "stufe": "warnung",
-            "kennung": kennung,
-            "titel": titel,
+        befunde.append(dict(
+            aus_katalog(TEILBEFUND[name]),
             # Ein Dienst, ein Befund: Die Marke kann nur 1 sein. Sie steht
             # trotzdem da, damit jeder Befund dieselben Felder hat -- und
             # weil das Wegklicken sie liest.
-            "marke": 1,
-            "dienste": [d for d in zustand if d["name"] == name],
-        })
+            marke=1,
+            dienste=[d for d in zustand if d["name"] == name]))
 
     # -- Der Platz. Ein Abbild braucht mehrere Gigabyte; geht der Platz
     # mittendrin aus, bleibt ein halber Eintrag liegen. Die Schwelle ist
@@ -223,15 +275,12 @@ def sammeln(eingerichtete_ip: str, assets_dir=None,
     belegung = platz if platz is not None else (
         dienste.platz(assets_dir) if assets_dir else {})
     if belegung and belegung.get("anteil", 0) >= dienste.VOLL:
-        befunde.append({
-            "stufe": "warnung",
-            "kennung": "platte",
-            "titel": "Die Platte ist fast voll",
+        befunde.append(dict(
+            aus_katalog("platte"),
             # Die erreichte Fuenferstufe: 90, 95, 100. Wer bei 91 Prozent
             # wegklickt, sieht die Karte bei 95 wieder -- und nicht schon
             # bei 92, sonst waere das Wegklicken keines.
-            "marke": int(belegung.get("anteil", 0)) // 5 * 5,
-            "platz": belegung,
-        })
+            marke=int(belegung.get("anteil", 0)) // 5 * 5,
+            platz=belegung))
 
     return sortiert(befunde)
