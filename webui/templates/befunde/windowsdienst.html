@@ -1,0 +1,26 @@
+{# Samba laeuft nicht. Der Server arbeitet weiter -- nur Windows nicht.
+
+   Seit dem 30.08.2026 holt sich die WinPE-Konsole die Installationsquellen
+   ueber diese Freigabe: Der Client startet, die Konsole kommt, und dann
+   scheitert "net use". Im Bootmenue sieht man dem Eintrag nichts an --
+   derselbe Fall wie bei NFS, nur mit anderer Folge und anderen
+   Betroffenen. Deshalb eine eigene Karte und nicht dieselbe.
+
+   Siehe webui/befunde.py und docs/gestaltung.md, "Die Seitenkarte". #}
+<p>
+  <code>smbd</code> läuft nicht. Betroffen sind die Windows-Einträge: Die
+  Installationsquellen liegen auf einer Freigabe dieses Servers, und ohne
+  <code>smbd</code> kommt niemand an sie heran. Alles andere startet
+  weiter, auch die Linux-Installationen.
+</p>
+<p>
+  Wer jetzt einen Windows-Eintrag wählt, bekommt die WinPE-Konsole zu
+  sehen und darin einen Fehler beim Einhängen der Freigabe. Im Bootmenü
+  sieht man dem Eintrag nichts an.
+</p>
+<p class="kartenfuss">
+  Was los ist, zeigt auf dem Server
+  <code>sudo journalctl -u smbd -n 40</code>
+  &middot; <a href="/protokoll?einheit=smbd">Protokoll ansehen &rarr;</a>
+  &middot; <a href="/hilfe#systeme">Wie Windows-Einträge starten &rarr;</a>
+</p>

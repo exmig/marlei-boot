@@ -4367,6 +4367,7 @@ with TestClient(pxeapp.app) as c:
     import dienste as dienste_
     BOOT = "Kein Rechner kann gerade starten"
     NFS = "Live-Systeme starten gerade nicht"
+    SMB = "Windows lässt sich gerade nicht installieren"
     VOLL = "Die Platte ist fast voll"
     echte_zustaende, echter_platz = dienste_.zustaende, dienste_.platz
 
@@ -4396,6 +4397,25 @@ with TestClient(pxeapp.app) as c:
         check("... und sagt, dass der Rest weiterlaeuft",
               "andere startet weiter" in seite)
         check("... aber keine Fehlerkarte", BOOT not in seite)
+
+        # Samba traegt die andere Haelfte des Repertoires. Eigene Karte und
+        # nicht dieselbe: Der Titel nennt die Folge, und die ist hier eine
+        # andere. Aufgefallen am 02.09.2026, als smbd in keiner Stufe stand.
+        laufen(smbd=False)
+        seite = c.get("/").text
+        check("ein totes Samba wird zur Warnkarte",
+              'class="seitenkarte stufe-warnung"' in seite and SMB in seite)
+        check("... und nennt den Dienst samt Weg ins Protokoll",
+              "journalctl -u smbd" in seite
+              and 'href="/protokoll?einheit=smbd"' in seite)
+        check("... und nicht den NFS-Satz", NFS not in seite)
+
+        laufen(smbd=False, **{"nfs-server": False})
+        seite = c.get("/").text
+        check("beide Teildienste geben zwei Karten",
+              NFS in seite and SMB in seite)
+        check("... in der Reihenfolge von TEILDIENSTE",
+              seite.index(NFS) < seite.index(SMB))
 
         # Beides zugleich: rot ueber gelb, ohne Ausnahme.
         laufen(dnsmasq=False, **{"nfs-server": False})
@@ -4493,6 +4513,18 @@ with TestClient(pxeapp.app) as c:
         platte(95)
         check("und danach faengt er offen an",
               'class="seitenkarte stufe-warnung"' in c.get("/").text)
+
+        # Zwei Karten, eine weggeklickt: Die andere bleibt stehen. Beide
+        # sind gelb, aber es sind zwei Befunde und nicht einer.
+        kenntnis.zuruecksetzen()
+        platte(50)
+        laufen(smbd=False, **{"nfs-server": False})
+        c.post("/befund/kenntnis", data={"kennung": "teildienst", "zurueck": "/"},
+               follow_redirects=False)
+        seite = c.get("/").text
+        check("die weggeklickte Karte ist leise", NFS not in seite.split('bekanntzeile')[0])
+        check("... die andere steht weiter offen da",
+              'class="seitenkarte stufe-warnung"' in seite and SMB in seite)
 
         # Rot laesst sich nicht wegklicken -- weder im Formular noch am
         # Endpunkt vorbei.

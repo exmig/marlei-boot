@@ -62,10 +62,24 @@ STUFEN = ("fehler", "warnung", "info")
 # dass zwei Dinge immer zugleich ausfallen.
 BOOTDIENSTE = ("nginx", "dnsmasq", "pxeweb")
 
-# Und welcher nur einen Teil traegt. Ohne NFS starten die grossen
-# Live-Systeme nicht; alles andere laeuft weiter. Das ist der Fall, fuer
-# den die mittlere Stufe erweitert wurde.
-TEILDIENSTE = ("nfs-server",)
+# Und welche nur einen Teil tragen. Jeder bekommt einen eigenen Befund,
+# denn der Titel nennt die Folge -- und die ist bei den beiden eine
+# andere: Ohne NFS starten die grossen Live-Systeme nicht, ohne Samba
+# kommt kein Windows-Setup an seine Quellen. Ein gemeinsamer Titel waere
+# fuer beide Faelle ungenau.
+#
+# Dass beide Dienste auf einem Server laufen, der nur eine Haelfte
+# braucht, ist der bekannte Preis: Das Repertoire aus Windows UND Linux
+# ist der Standard. Wer eine Haelfte entfernt, bekommt einen Dauerbefund
+# -- siehe B-053 Reine Windows- oder Linux-Konfiguration.
+TEILDIENSTE = ("nfs-server", "smbd")
+
+# Je Teildienst: die Kennung der Vorlage und der Satz, der zugeklappt
+# dasteht. Beides gehoert zusammen und steht deshalb an einer Stelle.
+TEILBEFUND = {
+    "nfs-server": ("teildienst", "Große Live-Systeme starten gerade nicht"),
+    "smbd": ("windowsdienst", "Windows lässt sich gerade nicht installieren"),
+}
 
 # Wie lange die abgelesene Netzlage gilt, in Sekunden.
 #
@@ -185,16 +199,22 @@ def sammeln(eingerichtete_ip: str, assets_dir=None,
             "dienste": [d for d in zustand if d["name"] in aus & set(BOOTDIENSTE)],
         })
 
-    if aus & set(TEILDIENSTE):
+    # Je ausgefallenem Teildienst eine eigene Karte, in der Reihenfolge
+    # von TEILDIENSTE. Zwei zugleich sind zwei Karten -- sie treffen
+    # verschiedene Leute und haben verschiedene Wege hinaus.
+    for name in TEILDIENSTE:
+        if name not in aus:
+            continue
+        kennung, titel = TEILBEFUND[name]
         befunde.append({
             "stufe": "warnung",
-            "kennung": "teildienst",
-            "titel": "Große Live-Systeme starten gerade nicht",
-            # Wieviele es sind. Faellt ein weiterer aus, ist es ein neuer
-            # Befund -- der eine, den man zur Kenntnis genommen hat, war
-            # ein anderer.
-            "marke": len(aus & set(TEILDIENSTE)),
-            "dienste": [d for d in zustand if d["name"] in aus & set(TEILDIENSTE)],
+            "kennung": kennung,
+            "titel": titel,
+            # Ein Dienst, ein Befund: Die Marke kann nur 1 sein. Sie steht
+            # trotzdem da, damit jeder Befund dieselben Felder hat -- und
+            # weil das Wegklicken sie liest.
+            "marke": 1,
+            "dienste": [d for d in zustand if d["name"] == name],
         })
 
     # -- Der Platz. Ein Abbild braucht mehrere Gigabyte; geht der Platz
