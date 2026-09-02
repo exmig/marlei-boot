@@ -1238,6 +1238,59 @@ hierhergekommen"*, und das ist etwas anderes als Version 0.
 
 ---
 
+### Ein Server, der nicht die Produktion ist
+
+Gebaut am 02.09.2026. **Wer zwei Server offen hat, ändert sonst
+irgendwann etwas auf dem falschen.** Steht in `/etc/pxeweb.env` ein Wort
+unter `PXE_KENNZEICHNUNG`, sagt die Oberfläche es auf zwei Wegen:
+
+```
+PXE_KENNZEICHNUNG=Entwicklung
+```
+
+- **Der Seitengrund wechselt auf Sand** (`#faf1de`), im dunklen Thema auf
+  `#1c1811`.
+- **Das Wort steht in der Kopfzeile**, neben der Adresse, umrandet statt
+  gefüllt — eine gefüllte Fläche sähe aus wie ein Knopf, und dort ist
+  nichts zu klicken.
+
+**Der Grund und nicht das Band, und das ist der Kern.** Ein gefärbtes Band
+wäre naheliegend — es ist die auffälligste Fläche der Seite. Nur *scrollt
+es weg*: Seit die Reiterleiste klebt, sieht man das Band nur ganz oben.
+Eine Kennzeichnung, die man beim Arbeiten nicht sieht, taugt keine. Der
+Seitengrund dagegen ist immer da — **und die Reiterleiste nimmt ihren
+Hintergrund von dort**, färbt sich also mit.
+
+Gerechnet gegen den Sandgrund:
+
+| | |
+|---|---|
+| Text `--ink` | 14,75 : 1 |
+| Verweise `--accent` | 5,29 : 1 |
+| Weiße Karten | 1,12 : 1 — **besser abgesetzt als sonst** (1,07) |
+| Nebentext `--muted` | 4,22 : 1 — unter der Norm, wie auf dem gewöhnlichen Grund auch (4,41) |
+
+**Im dunklen Thema war die Auswahl klein.** Von drei durchgerechneten
+warmen Tönen hält nur `#1c1811` alle vier Werte; eine Stufe wärmer, und
+die Verweise fallen unter 4,5.
+
+#### Leer heißt Produktion
+
+**Der produktive Server bleibt unverändert, ohne dass dort jemand etwas
+einträgt.** Das ist keine Kleinigkeit: Eine Kennzeichnung, die man
+*abschalten* müsste, wäre auf dem einen Server, auf dem es zählt,
+irgendwann versehentlich an.
+
+#### Keine freie Farbe
+
+`PXE_KENNZEICHNUNG` nimmt ein Wort, keinen Farbwert. **Kontrast wird in
+diesem Projekt gerechnet und nicht geraten** — ein freies Farbfeld hieße
+geraten. Dass damit alle Nicht-Produktionsserver gleich aussehen, ist kein
+Verlust, sondern die Aussage: *nicht die Produktion.* Kommt einmal ein
+dritter Fall, der sich unterscheiden muss, wird er dann entschieden.
+
+---
+
 ### Das Logo in der Kopfzeile
 
 Es steht rechtsbündig in derselben Zeile wie Titel und Adresse, geschoben

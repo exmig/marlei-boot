@@ -15,7 +15,7 @@
   <link rel="icon" type="image/svg+xml"
         href="/static/exmig-zeichen.svg?v={{ marken_version }}">
 </head>
-<body>
+<body{% if kennzeichnung %} class="gekennzeichnet"{% endif %}>
   <!-- Der Seitenkopf sind zwei Geschwister und kein Element, weil sich die
        beiden Teile verschieden verhalten: Das Band scrollt weg, die
        Reiterleiste bleibt oben kleben. Ein sticky Kind klebt nur innerhalb
@@ -25,6 +25,14 @@
     <div class="kopfzeile">
       <h1>MARLEI Boot</h1>
       <span class="muted small"><code>{{ base_url }}</code></span>
+      {# Ist das hier nicht die Produktion, steht es hier -- und der
+         Seitengrund wechselt dazu auf Sand. Die Farbe allein waere ein
+         Code, den man kennen muss; das Wort laesst keinen Zweifel.
+         Warum so: docs/gestaltung.md, "Ein Server, der nicht die
+         Produktion ist". #}
+      {% if kennzeichnung %}
+      <span class="kennzeichnung">{{ kennzeichnung }}</span>
+      {% endif %}
       <!-- Die Marke steht am rechten Ende derselben Zeile. Breite und Hoehe
            stehen dran, damit der Platz schon vor dem Laden stimmt und die
            Zeile nicht springt; die sichtbare Groesse macht das Stylesheet.

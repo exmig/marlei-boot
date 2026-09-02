@@ -166,6 +166,44 @@ main, footer { max-width: 60rem; margin: 0 auto; }
   padding: 1.5rem 1.25rem 1.2rem;
 }
 .kopfband h1 { color: var(--band-schrift); }
+
+/* Ein Server, der nicht die Produktion ist.
+
+   Der Seitengrund wechselt auf Sand -- und weil die Reiterleiste ihren
+   Hintergrund von dort nimmt, faerbt sie sich mit. Genau das ist der
+   Punkt: Das Band scrollt weg, die Leiste klebt. Eine Kennzeichnung, die
+   man nur ganz oben sieht, taugt keine.
+
+   Gerechnet gegen den Sandgrund: Text 14,75 -- Verweise 5,29 -- die
+   weissen Karten 1,12, also besser abgesetzt als auf dem gewoehnlichen
+   Grund (1,07). Der Nebentext liegt mit 4,22 unter der Norm, wie er es
+   auf dem gewoehnlichen Grund auch schon tut (4,41).
+
+   Im dunklen Thema ein eigener Wert: #1c1811 ist der einzige warme Ton,
+   der alle vier Werte haelt -- eine Stufe waermer, und die Verweise
+   fallen durch.
+
+   Warum so: docs/gestaltung.md, "Ein Server, der nicht die Produktion
+   ist". */
+body.gekennzeichnet { --bg: #faf1de; }
+@media (prefers-color-scheme: dark) {
+  body.gekennzeichnet { --bg: #1c1811; }
+}
+
+/* Das Wort dazu, im Band neben der Adresse. Umrandet und nicht gefuellt:
+   Eine gefuellte Flaeche saehe aus wie ein Knopf, und hier ist nichts zu
+   klicken. */
+.kennzeichnung {
+  align-self: center;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--band-schrift);
+  border: 1px solid var(--band-neben);
+  border-radius: 999px;
+  padding: .1rem .55rem;
+}
 .kopfband .muted { color: var(--band-neben); }
 
 /* Die Reiterleiste bleibt beim Scrollen oben stehen: Wer unten in einer

@@ -105,6 +105,21 @@ MENU_TIMEOUT = int(os.environ.get("PXE_MENU_TIMEOUT", "30"))
 GRUPPEN = [uploads.OHNE_NETZ, uploads.MIT_NETZ, "Rettung und Wartung"]
 MENU_DEFAULT = os.environ.get("PXE_MENU_DEFAULT", "local")
 
+# Ist das hier die Produktion, oder nicht?
+#
+# Wer zwei Server offen hat, aendert sonst irgendwann etwas auf dem
+# falschen. Steht hier ein Wort, faerbt sich der Seitengrund und das Wort
+# steht in der Kopfzeile -- LEER heisst Produktion, und damit bleibt der
+# produktive Server unveraendert, ohne dass dort jemand etwas eintraegt.
+#
+# Nur ein Wort und keine Farbe: Kontrast wird in diesem Projekt gerechnet
+# und nicht geraten, und ein freies Farbfeld hiesse geraten. Alle
+# Nicht-Produktionsserver sehen deshalb gleich aus -- was auch die
+# richtige Aussage ist.
+#
+# Gekuerzt, weil es in die Kopfzeile passen muss.
+KENNZEICHNUNG = os.environ.get("PXE_KENNZEICHNUNG", "").strip()[:20]
+
 app = FastAPI(title="MARLEI Boot", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
@@ -1109,6 +1124,10 @@ def _rahmen(**ctx) -> dict:
         # install.sh hierhergekommen ist -- dann steht dort nichts statt
         # einer erfundenen Nummer, siehe versionsstand.py.
         "stand_kurz": versionsstand.kurz(),
+        # Steht hier ein Wort, ist das nicht die Produktion: Der Seitengrund
+        # wechselt auf Sand, und das Wort steht als Marke in der Kopfzeile.
+        # Siehe docs/gestaltung.md, "Ein Server, der nicht die Produktion ist".
+        "kennzeichnung": KENNZEICHNUNG,
         # Der Katalog der Befunde. Die Hilfe rendert daraus die Tabelle
         # "Welche Karte wann kommt" -- aus derselben Quelle, aus der die
         # Karten entstehen. Von Hand geschrieben waere sie ein zweiter Ort
@@ -2926,6 +2945,10 @@ def einrichtung_seite(request: Request, meldung: str = "", schritt: str = ""):
          "wofuer": "was nach Ablauf startet"},
         {"name": "PXE_WOL_BROADCAST", "wert": wol.BROADCAST,
          "wofuer": "Rundrufadresse fuer die Weckpakete"},
+        {"name": "PXE_KENNZEICHNUNG", "wert": KENNZEICHNUNG,
+         "wofuer": "Steht hier ein Wort -- etwa \"Entwicklung\" --, faerbt "
+                   "sich der Seitengrund und das Wort steht in der "
+                   "Kopfzeile. Leer heisst: das ist die Produktion"},
     ]
 
     netzlage = serveradresse.netzlage()

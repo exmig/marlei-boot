@@ -4411,6 +4411,34 @@ with TestClient(pxeapp.app) as c:
             if z in vorlage]
     check("keine harte Mehrzahl auf Server Health", not hart, str(hart))
 
+    # -- Ein Server, der nicht die Produktion ist
+    #
+    # Leer heisst Produktion: Der produktive Server bleibt unveraendert,
+    # ohne dass dort jemand etwas eintraegt. Das ist die wichtigere
+    # Haelfte der Pruefung -- eine Kennzeichnung, die versehentlich
+    # ueberall erschiene, waere schlimmer als keine.
+    seite = c.get("/").text
+    check("ohne Kennzeichnung bleibt die Seite, wie sie war",
+          'class="gekennzeichnet"' not in seite
+          and 'class="kennzeichnung"' not in seite)
+
+    vorher = pxeapp.KENNZEICHNUNG
+    try:
+        pxeapp.KENNZEICHNUNG = "Entwicklung"
+        seite = c.get("/").text
+        check("mit Kennzeichnung faerbt sich der Grund",
+              'class="gekennzeichnet"' in seite)
+        check("... und das Wort steht in der Kopfzeile",
+              '<span class="kennzeichnung">Entwicklung</span>' in seite)
+        check("... auf jedem Reiter",
+              'class="gekennzeichnet"' in c.get("/systeme").text)
+        stil = (PROJ / "webui" / "static" / "style.css").read_text(encoding="utf-8")
+        check("der Sandgrund steht im Stylesheet, hell wie dunkel",
+              "body.gekennzeichnet { --bg: #faf1de; }" in stil
+              and "body.gekennzeichnet { --bg: #1c1811; }" in stil)
+    finally:
+        pxeapp.KENNZEICHNUNG = vorher
+
     check("die Hilfe fuehrt jede Karte auf",
           all(e["titel"] in hilfe for e in befunde_.KATALOG)
           and all(e["wodurch"][:40] in hilfe for e in befunde_.KATALOG))
