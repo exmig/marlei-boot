@@ -133,6 +133,20 @@
     {% for e in wartend[gruppe] %}<strong>{{ e.name }}{% if e.version %} {{ e.version }}{% endif %}</strong>{{ ", " if not loop.last }}{% endfor %}.
   </p>
   {% endif %}
+
+  {# Derselbe Verweis in allen drei Karten, und das mit Absicht: Eine Karte
+     traegt ihren Weg in die Hilfe selbst. Bis zum 02.09.2026 stand er
+     einmal zwischen den Karten -- das trug nur, solange alle drei da sind.
+     Sie koennen aber verschwinden: Im Offline-Betrieb faellt
+     "Online-Installationen" weg, und "Rettung und Wartung" soll sich
+     ausblenden lassen. Dann haengt eine Zeile ueber einer einzigen Karte
+     und behauptet, sie gelte allen.
+
+     Die andere Haelfte der alten Zeile ("was die Gruppen unterscheidet")
+     ist entfallen: Dorthin fuehrt das Fragezeichen im Kartenkopf. #}
+  <p class="kartenfuss">
+    <a href="/hilfe#systeme-inhalt">Warum hier nur steht, was startet &rarr;</a>
+  </p>
 </section>
 {% endfor %}
 
@@ -157,17 +171,12 @@
 {% endif %}
 
 
-<p class="seitenzeile">
-  <a href="/hilfe#systeme">Was die Gruppen unterscheidet, und warum hier nur
-  steht, was startet &rarr;</a>
-</p>
-
 <section id="vorschau">
   {# Frueher zugeklappt. Sie zeigt aber die Antwort auf die Frage, mit der
      man auf diese Seite kommt -- was steht dem bootenden Rechner zur
      Auswahl? --, und eine Antwort gehoert nicht hinter einen Klick. #}
   <div class="kartenkopf">
-    <h2>PXE BootMenü - Vorschau</h2>
+    <h2>Vorschau</h2>
     <a class="kartenhilfe" href="/hilfe#systeme-vorschau"
        title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
   </div>

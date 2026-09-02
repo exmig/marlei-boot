@@ -413,15 +413,6 @@ table.eng thead th {
 .quittung.gut { color: var(--ok-ink); }
 .quittung.schlecht { color: var(--danger); }
 
-/* Ein Hinweis, der zur Seite gehoert und nicht zu einer Karte -- er steht
-   deshalb zwischen ihnen, auf dem Seitengrund statt auf dem Papier einer
-   Karte. Rueckt nah an die Karte darueber heran, auf die er sich bezieht. */
-.seitenzeile {
-  margin: -.6rem .3rem 1.25rem;
-  font-size: .82rem;
-  color: var(--muted);
-}
-
 /* Wo ein Eintrag angeboten wird: eine Spalte, zwei Zeilen. Als zwei
    Spalten brauchten allein die Ueberschriften ("BOOTMENÜ",
    "BOOT-OPTIONEN") mehr Platz als ihr Inhalt -- ein Kaestchen. Die

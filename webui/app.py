@@ -1069,7 +1069,7 @@ def marken_version() -> int:
 # langen Seiten unter Quellen und Clients jedes Mal. Markus am 28.08.2026:
 # "Das habe ich schon an mehreren Stellen gefunden."
 #
-# Zwei Stellen machten es schon richtig (/#quelleninfo und die
+# Zwei Stellen machten es schon richtig (der Quellenwaechter und die
 # Werkseinstellung); der Rest zog nach.
 #
 # Geprueft wird gegen diese Liste, weil ein Teil der Marken aus dem
@@ -1081,7 +1081,7 @@ SPRUNGMARKEN = {
     "registrierte-clients", "manuelle-registrierung",   # Clients
     "installationsprotokolle",
     "stand", "ablageorte", "einstellungen", "ersteinrichtung",  # Einrichtung
-    "quelleninfo",                                      # Server Health
+    "quellenwaechter",                                  # Server Health
 }
 
 
@@ -2707,7 +2707,7 @@ def quelleninfo_pruefen():
     /quelleninfo.json, so wie die Download-Karte ihren Download.
     """
     quellenwacht.starte_lauf()
-    return RedirectResponse("/#quelleninfo", status_code=303)
+    return RedirectResponse("/#quellenwaechter", status_code=303)
 
 
 @app.get("/uploads.json")

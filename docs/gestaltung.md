@@ -423,6 +423,56 @@ Abstand nach unten mit** (`section > *:last-child { margin-bottom: 0 }`).
 Sonst stehen unter ihm sein eigener Abstand *und* die Polsterung der Karte
 — zusammen zwei Zentimeter, und die Karte wirkt unten aufgerissen.
 
+### Was eine Kartenüberschrift nennt
+
+Am 02.09.2026 festgelegt, nachdem siebzehn Überschriften nebeneinander
+lagen. **Die Kartenüberschrift nennt, wovon die Karte handelt — als
+Substantiv, nicht als Satz.** Dazu drei Schärfungen:
+
+- **Kein Füllwort.** *Info*, *Übersicht*, *Verwaltung* sagen nichts über
+  die Karte, sondern nur, dass sie eine ist.
+- **Vorgang oder Gegenstand — je nachdem, was die Karte ist.** Wo man
+  etwas tut, darf die Handlung dastehen: *Manuelle Registrierung* ist ein
+  Formular, und das Formular ist der Gegenstand. Wo etwas gezeigt wird,
+  steht die Sache: *Auslastung*, *Dienste*, *Speicherplatz*.
+- **Der Reiter wird nicht wiederholt.** Die Karte steht auf einer Seite,
+  deren Name in der Reiterleiste steht — und die klebt oben.
+
+**Die Seitenkarte ist die Ausnahme, und sie bleibt es.** Sie nennt die
+*Folge* und nicht den Gegenstand — „Kein Rechner findet seine Dateien",
+nicht „Die Adresse hat sich geändert". Warum, steht unter *Die Seitenkarte*.
+
+**Die Sprungmarke zieht mit.** Sie ist der Kartenname, klein geschrieben
+und ohne Umlaute (`#quellenwaechter`, `#letzte-starts`) — wer eine Karte
+umbenennt, benennt Sprungmarke, Hilfeanker und alle Verweise darauf mit.
+*Das ist der Preis, und er ist beim Umbenennen zu bedenken, nicht danach.*
+
+#### Der Durchgang vom 02.09.2026
+
+Dreizehn von siebzehn erfüllten die Regel schon. Drei wurden geändert:
+
+| vorher | jetzt | woran es lag |
+|---|---|---|
+| *Quelleninfo* | **Quellenwächter** | *Info* war das Füllwort — und dieses Dokument nannte die Karte an anderer Stelle längst so |
+| *Zuletzt gestartet* | **Letzte Starts** | der einzige Satzfetzen unter allen Überschriften |
+| *PXE BootMenü - Vorschau* | **Vorschau** | Bindestrich statt Halbgeviert, Binnenmajuskel, und *PXE* wiederholte den Reiter. Sprungmarke und Hilfeanker hießen ohnehin schon `vorschau` |
+
+**Die Endpunkte behalten ihre Namen.** `/quelleninfo.json` und
+`/quelleninfo/pruefen` heißen weiter so: Sie sind eine Schnittstelle, die
+ein Skript ruft, und die bricht man nicht wegen einer Überschrift. Dass
+Endpunkt und Kartenname auseinandergehen dürfen, stand schon vorher im
+Quelltext.
+
+**Eine vierte wurde geprüft und nicht geändert:** *Ersteinrichtung*.
+Sie sieht auf den ersten Blick falsch aus, weil der erste Absatz der Karte
+vom Zurücksetzen spricht und der Knopf *Werkseinstellung* heißt. Die Karte
+trägt aber zwei Dinge — das Zurücksetzen **und** *IP-Adresse übernehmen* —,
+und beide gehören zu dem, was man einmal am Anfang tut oder wenn der Server
+weitergegeben wird. *Ersteinrichtung* ist die Klammer darüber; *Werkseinstellung*
+wäre die Hälfte davon.
+
+---
+
 ### Was in die Fußzeile gehört
 
 Nicht alles, was unten steht. Die Fußzeile ist der Teil, der **über den
@@ -503,10 +553,41 @@ steht in *Drei Sorten Text*.
   reicht bis ans Ende der Karte — sein Fuß läge also genau dort, wo schon
   der Fuß der Karte steht. Zwei Füße an derselben Stelle, die Verschiedenes
   meinen, wären schlechter als der jetzige Zustand.
-- Die Zeile auf *Systeme* („Was die Gruppen unterscheidet …") steht
+- ~~Die Zeile auf *Systeme* („Was die Gruppen unterscheidet …") steht
   **zwischen** den Karten und gilt allen Gruppenkarten zusammen. In eine
   Karte gesteckt gälte sie plötzlich nur dieser einen. Sie trägt dafür eine
-  eigene Klasse, `.seitenzeile`.
+  eigene Klasse, `.seitenzeile`.~~ *Aufgelöst am 02.09.2026 — siehe*
+  Keine Zeile zwischen den Karten*.*
+
+### Keine Zeile zwischen den Karten
+
+Am 02.09.2026 aufgelöst. Auf *Systeme* stand ein Verweis in die Hilfe
+**zwischen** den Gruppenkarten, mit eigener Klasse `.seitenzeile`. Die
+Begründung von damals: Er gilt allen drei Karten, und in eine gesteckt
+gälte er nur dieser einen.
+
+**Markus' Einwand, und er schlägt das:** *Die drei Karten sind nicht
+gesetzt.* Im geplanten Offline-Betrieb fällt *Online-Installationen* weg,
+und *Rettung und Wartung* soll sich ausblenden lassen. Dann hängt eine
+Zeile über einer einzigen Karte und behauptet, sie gelte allen — oder über
+gar keiner.
+
+**Eine Karte trägt ihren Weg in die Hilfe selbst.** Der Verweis steht
+seither im Fuß **jeder** der drei Karten, dreimal derselbe. Das ist keine
+Doppelung, die man auflösen müsste, sondern der Aufbau: *Was zur Karte
+gehört, steht in der Karte* — auch wenn daneben eine zweite mit demselben
+Fuß steht.
+
+**Die Hälfte, die dabei entfallen ist.** Die alte Zeile trug zwei Verweise
+in einem: *„Was die Gruppen unterscheidet"* führte auf `#systeme-gruppen`
+— dorthin zeigt das Fragezeichen im Kartenkopf ohnehin —, und *„warum hier
+nur steht, was startet"* auf `#systeme-inhalt`, wohin sonst nichts führte.
+Im Kartenfuß steht deshalb nur noch die zweite Hälfte.
+
+**Die Klasse `.seitenzeile` ist entfallen**, sie hatte keinen zweiten
+Benutzer. Was zwischen den Karten bleibt, ist der NFS-Befund — und der
+gehört dorthin, weil er die betroffenen Einträge namentlich nennt und
+verschwindet, sobald NFS steht.
 
 ### Die Seitenkarte
 

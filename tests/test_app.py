@@ -1911,7 +1911,7 @@ with TestClient(pxeapp.app) as c:
 
     # Und die Karte auf Server Health
     seite = c.get("/").text
-    check("die Karte steht auf Server Health", 'id="quelleninfo"' in seite)
+    check("die Karte steht auf Server Health", 'id="quellenwaechter"' in seite)
     check("... mit der toten Adresse", "TOT_URL" in seite)
     check("... und dem, was der Anbieter sagte", "404 Not Found" in seite)
     check("... und der Leitung, die nicht hinkam", "WEG_URL" in seite)
@@ -2881,8 +2881,8 @@ with TestClient(pxeapp.app) as c:
     check("Stand steht auf der Startseite",
           "startbereit" in start and "startbereit" not in konf)
     check("History ist ein eigener Reiter",
-          "Zuletzt gestartet" in c.get("/history").text
-          and "Zuletzt gestartet" not in start)
+          "Letzte Starts" in c.get("/history").text
+          and "Letzte Starts" not in start)
 
     systeme = c.get("/systeme").text
     check("Katalog und eigene Abbilder in einer Tabelle",
@@ -2975,9 +2975,12 @@ with TestClient(pxeapp.app) as c:
     check("Version entfernen steht bei der Herkunft",
           "/quellen/version/loeschen" not in systeme
           and "/quellen/version/loeschen" in c.get("/quellen").text)
+    # Der Verweis zeigt seit dem 02.09.2026 auf #systeme-inhalt statt auf
+    # das Kapitel: Was die Gruppen unterscheidet, sagt das Fragezeichen im
+    # Kartenkopf, und zweimal derselbe Weg ist einer zu viel.
     check("erklaert nicht selbst, sondern verweist",
           "Drittanbieter-Treiber" not in systeme
-          and 'href="/hilfe#systeme"' in systeme)
+          and 'href="/hilfe#systeme-inhalt"' in systeme)
     # "systemliste" kommt dazu, weil die drei Karten sonst jede fuer
     # sich rechnen und ihre Spalten an verschiedenen Kanten enden.
     check("Tabelle kompakt gesetzt und auf gemeinsame Spaltenkanten",
@@ -3173,13 +3176,15 @@ with TestClient(pxeapp.app) as c:
     # er ein Mangel. Der Weg geht von Quellen nach Systeme, nicht zurueck.
     check("was keine Dateien hat, wird auf Systeme nicht mehr aufgezaehlt",
           'href="/quellen">Unter Quellen holen' not in systeme)
-    # Was zwischen den Karten steht, gilt allen Gruppen und nicht der
-    # ersten -- das gilt weiter fuer den Verweis in die Hilfe.
-    check("die Hinweise stehen zwischen den Karten",
-          systeme.index('class="seitenzeile"')
-          > systeme.index("<h2>Rettung und Wartung</h2>")
-          and systeme.index('class="seitenzeile"')
-          < systeme.index("<h2>PXE BootMenü - Vorschau</h2>"))
+    # Seit dem 02.09.2026 traegt jede Gruppenkarte ihren Weg in die Hilfe
+    # selbst, im eigenen Fuss -- vorher stand er einmal zwischen den Karten.
+    # Das trug nur, solange alle drei Karten da sind, und das bleibt nicht
+    # so: Im Offline-Betrieb faellt "Online-Installationen" weg.
+    check("jede Gruppenkarte traegt den Verweis in die Hilfe",
+          systeme.count('href="/hilfe#systeme-inhalt"') == 3)
+    check("und zwar jeweils im Kartenfuss",
+          len(re.findall(r'<p class="kartenfuss">\s*<a href="/hilfe#systeme-inhalt"',
+                            systeme)) == 3)
 
     print("\n-- Reihenfolge der Gruppen")
     # Je Karte ein Feld, ausgeliefert in der geltenden Folge: 1, 2, 3 --
@@ -3535,14 +3540,14 @@ with TestClient(pxeapp.app) as c:
     # Sie steht offen: was auf die Frage antwortet, mit der man auf die
     # Seite kommt, gehoert nicht hinter einen Klick.
     check("Vorschau ist eine eigene, offene Karte",
-          "<h2>PXE BootMenü - Vorschau</h2>" in systeme
+          "<h2>Vorschau</h2>" in systeme
           and "So sieht es am bootenden Rechner aus" not in systeme)
     # Sie zeigt dieselben Eintraege wie die drei Karten darueber und steht
     # deshalb bei ihnen -- als letzte Karte, seit das Hinzufuegen unter
     # Quellen steht.
     check("Vorschau steht hinter den Gruppen",
           systeme.index("<h2>Rettung und Wartung</h2>")
-          < systeme.index("<h2>PXE BootMenü - Vorschau</h2>"))
+          < systeme.index("<h2>Vorschau</h2>"))
     check("Vorschau kennt die Gruppen",
           "Offline-Installationen" in uefi and "Rettung und Wartung" in uefi)
     check("Vorschau zeigt die Systempunkte", "iPXE-Eingabeaufforderung" in uefi)

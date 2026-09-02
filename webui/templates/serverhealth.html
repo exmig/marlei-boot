@@ -103,10 +103,10 @@
    jeder Karte ihr eigenes "Pruefen", also naeher an dem, was danach zu
    tun ist. Der Endpunkt /quelleninfo/pruefen bleibt es trotzdem; ein
    Skript kann ihn rufen. #}
-<section id="quelleninfo"{% if quelleninfo.laeuft %} data-laeuft="1"{% endif %}>
+<section id="quellenwaechter"{% if quelleninfo.laeuft %} data-laeuft="1"{% endif %}>
   <div class="kartenkopf">
-    <h2>Quelleninfo</h2>
-    <a class="kartenhilfe" href="/hilfe#serverhealth-quelleninfo"
+    <h2>Quellenwächter</h2>
+    <a class="kartenhilfe" href="/hilfe#serverhealth-quellenwaechter"
        title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
   </div>
 
@@ -506,7 +506,7 @@
 // Laeuft keiner, wird auch nicht gefragt: Die Karte zeigt einen Befund,
 // der Tage alt sein darf, dafuer braucht es keinen Sekundentakt.
 (function () {
-  var karte = document.querySelector("#quelleninfo[data-laeuft]");
+  var karte = document.querySelector("#quellenwaechter[data-laeuft]");
   if (!karte) { return; }
 
   function sehen() {
