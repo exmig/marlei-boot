@@ -1325,6 +1325,16 @@ danach `marke/logo-bauen.py` laufen.
   ohne Internet und auch nicht direkt nach der Ersteinrichtung. Und selbst
   wenn sie erreichbar wäre: Dass nach dem Aufsetzen noch nichts da ist,
   weiß man ohne Hinweis.
+- **Ein blauer Seitengrund.** Am 02.09.2026 angesehen, in vier Stufen von
+  `#f2f6fb` bis `#e3edf8`, jeweils am laufenden Server. Rechnerisch spricht
+  wenig dagegen — alle Werte verhalten sich wie heute, nur der Nebentext
+  wird eine Spur schlechter (4,41 → 4,00), und der fällt ohnehin schon
+  durch. **Verworfen aus dem Grund, aus dem der Grund überhaupt getönt
+  ist:** Er kommt aus der `mig`-Hälfte des Logos, damit beide Markenhälften
+  auf der Seite vorkommen. Wird er blau, trägt das Türkis nur noch die
+  Balken und den Ring des Hilfezeichens. *Erst ab der dritten Stufe war das
+  Blau überhaupt als Ton zu erkennen — davor war es kein Entwurf, sondern
+  ein anderer Weißabgleich.*
 - **`<header>` und `<footer>` in der Karte.** Die drei Bereiche sind eine
   Verabredung über Begriffe, kein Bauplan — siehe *Die Karte und ihre drei Bereiche*. Hüllen in 29 Karten
   brächten Markup, das keine Regel braucht.
