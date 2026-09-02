@@ -100,6 +100,23 @@ eine Reservierung am Router oder eine feste Adresse auf der Maschine
 selbst. Was *nicht* genügt, ist eine gewöhnliche DHCP-Lease ohne
 Reservierung.
 
+**Eine feste Adresse braucht einen Nameserver dazu**, und das wird
+regelmäßig vergessen: Die Adresse sitzt, `ping 8.8.8.8` läuft — und
+trotzdem kommt `apt` nicht durch, weil kein Name aufgelöst wird. Bei einer
+Reservierung am Router kommt der Nameserver mit der Lease; bei einer festen
+Adresse trägt man ihn selbst ein. Die Probe ist ein Befehl:
+
+```bash
+getent hosts deb.debian.org
+```
+
+*Unter Debian mit ifupdown ist dabei ein zweiter Stolperstein eingebaut:*
+Die Zeile `dns-nameservers` in `/etc/network/interfaces` wirkt **nur, wenn
+`resolvconf` installiert ist** — sonst wird sie stillschweigend ignoriert.
+Ohne dieses Paket schreibt man den Nameserver direkt in
+`/etc/resolv.conf`, und dort bleibt er auch: Läuft weder `dhcpcd` noch
+`systemd-resolved` noch `NetworkManager`, fasst die Datei niemand an.
+
 > **Die Netzkonfiguration der Maschine gehört dir, nicht dem
 > Bootserver.** Er fasst sie nicht an — weder bei der Installation noch
 > später über die Oberfläche. Er liest sie ab, richtet sich danach und
@@ -221,6 +238,10 @@ stehen in diesem Kapitel nicht und gehören trotzdem geprüft.
 - [ ] Die Maschine hat eine **Adresse, die bleibt**: Reservierung am
       Router oder feste Adresse auf der Maschine. Eine gewöhnliche
       DHCP-Lease genügt nicht *(1.4)*
+- [ ] **Namen lassen sich auflösen** — `getent hosts deb.debian.org` gibt
+      eine Adresse zurück. Eine feste Adresse ohne Nameserver ist die
+      häufigste Ursache dafür, dass `ping 8.8.8.8` geht und `apt`
+      trotzdem nicht durchkommt *(1.4)*
 - [ ] Im Netz gibt es **genau einen** DHCP-Server — den Router. Der
       Bootserver bringt keinen mit: Er antwortet als *proxyDHCP* nur mit
       dem Hinweis auf sein Startsystem, die Adressvergabe bleibt beim
