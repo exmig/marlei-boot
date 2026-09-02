@@ -434,35 +434,9 @@
     <a class="kartenhilfe" href="/hilfe#serverhealth-dienste"
        title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
   </div>
-  <table class="schmal">
-    <tbody>
-      {% for d in dienste %}
-      <tr>
-        <td class="nowrap">
-          <span class="ampel {{ 'an' if d.laeuft else ('unklar' if d.zustand == 'unbekannt' else 'aus') }}"></span>
-          <strong>{{ d.name }}</strong>
-        </td>
-        <td>
-          {% if d.laeuft %}
-            <span class="badge ok">läuft</span>
-          {% elif d.zustand == "unbekannt" %}
-            <span class="muted small">nicht abfragbar</span>
-          {% else %}
-            <span class="badge missing">{{ d.zustand }}</span>
-          {% endif %}
-        </td>
-        <td class="muted small">{{ d.wofuer }}</td>
-        <td class="nowrap"><a href="/protokoll?einheit={{ d.name }}">Protokoll</a></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% if dienste and dienste[0].zustand == "unbekannt" %}
-  <p class="muted small">
-    <code>systemctl</code> ist von hier aus nicht erreichbar — auf dem Server
-    nachsehen mit <code>systemctl is-active nginx dnsmasq pxeweb nfs-server</code>.
-  </p>
-  {% endif %}
+  <div data-teil="dienste">
+    {% include "_dienste.html" %}
+  </div>
   {# Laeuft ein Dienst nicht, stand hier bis zum 28.08.2026 ein Satz dazu --
      und zwar derselbe fuer alle vier, obwohl sie nicht gleich viel wert
      sind. Er steht jetzt als Seitenkarte ueber jeder Seite, aufgeteilt: rot,

@@ -1,0 +1,39 @@
+{# Welcher Dienst laeuft und wofuer er da ist.
+
+   Steht in einer eigenen Datei, weil sie an zwei Orten gebraucht wird: in
+   der Karte auf Server Health und in dem Stueck, das alle fuenf Sekunden
+   nachgeholt wird. So gibt es die Darstellung genau einmal.
+
+   Seit dem 02.09.2026 zieht sie mit: Bis dahin frischte sich der BEFUND
+   ueber der Seite auf, die AMPEL darunter aber nicht -- wer nfs-server
+   startete, sah die gelbe Karte verschwinden und darunter weiter Rot.
+   Zwei Uhren fuer dieselbe Tatsache, und die Karte hatte die langsamere. #}
+<table class="schmal">
+  <tbody>
+    {% for d in dienste %}
+    <tr>
+      <td class="nowrap">
+        <span class="ampel {{ 'an' if d.laeuft else ('unklar' if d.zustand == 'unbekannt' else 'aus') }}"></span>
+        <strong>{{ d.name }}</strong>
+      </td>
+      <td>
+        {% if d.laeuft %}
+          <span class="badge ok">läuft</span>
+        {% elif d.zustand == "unbekannt" %}
+          <span class="muted small">nicht abfragbar</span>
+        {% else %}
+          <span class="badge missing">{{ d.zustand }}</span>
+        {% endif %}
+      </td>
+      <td class="muted small">{{ d.wofuer }}</td>
+      <td class="nowrap"><a href="/protokoll?einheit={{ d.name }}">Protokoll</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% if dienste and dienste[0].zustand == "unbekannt" %}
+<p class="muted small">
+  <code>systemctl</code> ist von hier aus nicht erreichbar — auf dem Server
+  nachsehen mit <code>systemctl is-active nginx dnsmasq pxeweb nfs-server</code>.
+</p>
+{% endif %}

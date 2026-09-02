@@ -699,6 +699,14 @@ bekommen — der Tausch wartet dann bis zum nächsten Takt. Geprüft wird
 zweimal: vor der Frage und noch einmal vor dem Einsetzen, denn dazwischen
 kann jemand aufklappen.
 
+**Die Ampeln der Dienste ziehen mit.** Sie sagen dieselbe Tatsache wie
+der Befund über der Seite, also brauchen sie denselben Takt — bis zum
+02.09.2026 hatten sie keinen: Wer `nfs-server` startete, sah die gelbe
+Karte verschwinden und darunter weiter Rot. *Zwei Uhren für dieselbe
+Tatsache, und die Karte hatte die langsamere.* Die Tabelle steht deshalb
+in `_dienste.html` und wird von der Karte wie vom Fünf-Sekunden-Stück
+eingebunden.
+
 *Warum welche Stufe sich wegklicken lässt, wann eine Karte wiederkommt
 und wo das Weggeklickte liegt, steht nicht hier* — das ist eine
 Entscheidung über das Projekt und keine über diese Oberfläche.

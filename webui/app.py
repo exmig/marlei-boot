@@ -1386,7 +1386,7 @@ def status_fragment(request: Request):
     return html.TemplateResponse(
         request, "_status.html",
         {"laufend": _laufend(), "auslastung": _auslastung(),
-         "vorgaenge": _vorgaenge()},
+         "vorgaenge": _vorgaenge(), "dienste": dienste.zustaende()},
     )
 
 

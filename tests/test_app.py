@@ -4389,6 +4389,15 @@ with TestClient(pxeapp.app) as c:
               "journalctl -u dnsmasq" in seite
               and 'href="/protokoll?einheit=dnsmasq"' in seite)
         check("... auf jedem Reiter", BOOT in c.get("/clients").text)
+        # Die Ampel unter der Karte sagt dieselbe Tatsache und muss
+        # deshalb denselben Takt haben. Bis zum 02.09.2026 frischte sich
+        # der Befund auf und die Ampel nicht -- wer einen Dienst startete,
+        # sah die Karte gehen und darunter weiter Rot.
+        stueck = c.get("/status.html").text
+        check("die Ampeln ziehen im Fuenf-Sekunden-Takt mit",
+              'data-teil="dienste"' in stueck and 'class="ampel' in stueck)
+        check("... und die Karte holt dieselbe Tabelle",
+              'data-teil="dienste"' in c.get("/").text)
 
         laufen(**{"nfs-server": False})
         seite = c.get("/").text
