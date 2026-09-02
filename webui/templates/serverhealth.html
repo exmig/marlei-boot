@@ -437,6 +437,19 @@
   <div data-teil="dienste">
     {% include "_dienste.html" %}
   </div>
+
+  {# Fusszeile der Karte, in der Form von Auslastung -- eine Zeile, kein
+     Punkt -- und aus demselben Grund ausserhalb von data-teil: Was dort
+     drinsteht, tauscht das Skript alle fuenf Sekunden aus.
+
+     Zwei Zahlen statt einer, weil erst beide erklaeren, was man sieht:
+     Getauscht wird alle fuenf Sekunden, die Antwort dahinter ist bis zu
+     zehn Sekunden alt. Wer einen Dienst startet und sofort hersieht,
+     findet ihn noch auf Rot -- ohne diese Zeile sieht das wie ein Fehler
+     aus. #}
+  <p class="kartenfuss">Aktualisierung alle 5 Sekunden, der Zustand ist bis
+    zu 10 Sekunden alt</p>
+
   {# Laeuft ein Dienst nicht, stand hier bis zum 28.08.2026 ein Satz dazu --
      und zwar derselbe fuer alle vier, obwohl sie nicht gleich viel wert
      sind. Er steht jetzt als Seitenkarte ueber jeder Seite, aufgeteilt: rot,

@@ -4398,6 +4398,12 @@ with TestClient(pxeapp.app) as c:
               'data-teil="dienste"' in stueck and 'class="ampel' in stueck)
         check("... und die Karte holt dieselbe Tabelle",
               'data-teil="dienste"' in c.get("/").text)
+        # Der Kartenfuss nennt beide Zahlen -- und steht ausserhalb von
+        # data-teil, sonst tauscht ihn das Skript weg.
+        seite = c.get("/").text
+        fuss = "Aktualisierung alle 5 Sekunden, der Zustand ist bis"
+        check("die Dienste-Karte sagt ihren Takt",
+              fuss in seite and fuss not in c.get("/status.html").text)
 
         laufen(**{"nfs-server": False})
         seite = c.get("/").text
