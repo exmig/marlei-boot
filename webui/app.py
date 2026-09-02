@@ -43,6 +43,7 @@ from jinja2 import Environment, FileSystemLoader
 
 import auslastung
 import befunde
+import kenntnis
 import bezeichnungen
 import dienste
 import eigene
@@ -1076,6 +1077,13 @@ def marken_version() -> int:
 # Formular kommt: Dieselbe Eintragskarte steht in allen vier Karten unter
 # Quellen, also muss sie sagen, aus welcher sie kommt. Was von aussen
 # kommt, gehoert nicht ungeprueft in eine Adresse.
+# Wohin ein Knopf zurueckfuehren darf, der auf JEDER Seite steht. Dieselbe
+# Ueberlegung wie bei den Sprungmarken: Was von aussen kommt, gehoert nicht
+# ungeprueft in eine Adresse -- sonst ist der Knopf eine Weiterleitung
+# irgendwohin. Es sind genau die Reiter aus base.html.
+SEITEN = ("/", "/clients", "/systeme", "/quellen", "/einrichtung",
+          "/history", "/hilfe")
+
 SPRUNGMARKEN = {
     "upload", "katalog", "download", "custom",          # Quellen
     "registrierte-clients", "manuelle-registrierung",   # Clients
@@ -1116,10 +1124,20 @@ def _rahmen(**ctx) -> dict:
         # einer Seite. Steht deshalb hier und nicht in den Handlern:
         # Sonst haengt ein Befund davon ab, welchen Reiter jemand gerade
         # geoeffnet hat. Siehe webui/befunde.py.
-        "befunde": befunde.sammeln(SERVER_HOST, ASSETS_DIR),
+        #
+        # Zwei Listen, nicht eine: Was jemand zur Kenntnis genommen hat,
+        # verschwindet nicht, es wird leise -- eine graue Zeile statt einer
+        # Karte. Siehe webui/kenntnis.py.
+        **_befundlisten(),
     }
     grund.update(ctx)
     return grund
+
+
+def _befundlisten() -> dict:
+    """Die geltenden Befunde, getrennt in offene und zur Kenntnis genommene."""
+    offen, bekannt = kenntnis.teilen(befunde.sammeln(SERVER_HOST, ASSETS_DIR))
+    return {"befunde": offen, "bekannte": bekannt}
 
 
 def _zustand(eintrag: dict) -> dict:
@@ -1317,6 +1335,44 @@ def status():
     """Was gerade laeuft -- die Uebersicht fragt das im Sekundentakt ab."""
     return JSONResponse({"laufend": _laufend(), "auslastung": _auslastung(),
                          "vorgaenge": _vorgaenge()})
+
+
+@app.get("/befunde.html")
+def befunde_fragment(request: Request, von: str = ""):
+    """Nur die Befunde, fertig gerendert -- jede Seite tauscht sie aus.
+
+    Eigener Endpunkt und nicht /status.html: Der beantwortet, was auf
+    Server Health tickt (Auslastung, laufende Uebertragungen), und das
+    braucht keine andere Seite. Ein Befund dagegen gilt dem Server und
+    nicht dem Reiter -- deshalb holt ihn jede Seite, und deshalb ist er
+    hier fuer sich.
+    """
+    return html.TemplateResponse(
+        request, "_befunde.html",
+        # "von" sagt, welche Seite gerade nachfragt -- geprueft wie
+        # ueberall, was von aussen kommt. Ohne die Angabe stuende im
+        # Formular "/befunde.html", und der Knopf fuehrte ins Leere.
+        dict(_befundlisten(), hier=von if von in SEITEN else "/"))
+
+
+@app.post("/befund/kenntnis")
+def befund_kenntnis(kennung: str = Form(""), zurueck: str = Form("")):
+    """Diesen Befund zur Kenntnis nehmen -- auf dem Stand, den er hat.
+
+    Geprueft wird gegen die geltenden Befunde und nicht gegen das, was das
+    Formular schickt: Sonst liesse sich mit einer erfundenen Marke ein
+    Befund stumm schalten, den es noch gar nicht gibt.
+    """
+    for b in befunde.sammeln(SERVER_HOST, ASSETS_DIR):
+        if b["kennung"] == kennung and b["stufe"] in kenntnis.WEGKLICKBAR:
+            kenntnis.nehmen(kennung, b.get("marke", 0))
+            break
+    # Zurueck, wo der Knopf stand: Ein Befund steht auf jeder Seite, also
+    # gibt es kein festes Ziel. Die Seite sagt es im Formular -- geprueft
+    # gegen SEITEN, denn ungeprueft waere der Knopf eine Weiterleitung
+    # irgendwohin.
+    return RedirectResponse(zurueck if zurueck in SEITEN else "/",
+                            status_code=303)
 
 
 @app.get("/status.html")

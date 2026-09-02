@@ -128,7 +128,14 @@ def sammeln(eingerichtete_ip: str, assets_dir=None,
         stufe      fehler | warnung | info
         kennung    heisst auch die Vorlage: templates/befunde/<kennung>.html
         titel      der Satz, der zugeklappt dasteht
+        marke      eine Zahl, die NUR steigt, wenn es schlimmer wird
         ...        was die Vorlage sonst noch braucht
+
+    Die Marke traegt das Wegklicken: Wer eine Warnung zur Kenntnis nimmt,
+    speichert sie mit, und die Karte kommt erst zurueck, wenn die Marke
+    darueber liegt. Sie muss deshalb grob sein -- eine Belegung, die bei
+    jedem Prozentpunkt eine neue Marke bekaeme, waere kein Wegklicken,
+    sondern ein Aufschub um Minuten. Siehe kenntnis.py.
 
     Der Titel nennt die **Folge**, nicht den Vorgang: Zugeklappt ist er
     das Einzige, was jemand sieht, und "Die Adresse hat sich geaendert"
@@ -153,6 +160,7 @@ def sammeln(eingerichtete_ip: str, assets_dir=None,
             "stufe": "fehler",
             "kennung": "adresse",
             "titel": "Kein Rechner findet seine Dateien",
+            "marke": 0,
             "eingerichtet": eingerichtete_ip,
             "tatsaechlich": abweichung,
         })
@@ -173,6 +181,7 @@ def sammeln(eingerichtete_ip: str, assets_dir=None,
             "stufe": "fehler",
             "kennung": "bootdienst",
             "titel": "Kein Rechner kann gerade starten",
+            "marke": 0,
             "dienste": [d for d in zustand if d["name"] in aus & set(BOOTDIENSTE)],
         })
 
@@ -181,6 +190,10 @@ def sammeln(eingerichtete_ip: str, assets_dir=None,
             "stufe": "warnung",
             "kennung": "teildienst",
             "titel": "Große Live-Systeme starten gerade nicht",
+            # Wieviele es sind. Faellt ein weiterer aus, ist es ein neuer
+            # Befund -- der eine, den man zur Kenntnis genommen hat, war
+            # ein anderer.
+            "marke": len(aus & set(TEILDIENSTE)),
             "dienste": [d for d in zustand if d["name"] in aus & set(TEILDIENSTE)],
         })
 
@@ -194,6 +207,10 @@ def sammeln(eingerichtete_ip: str, assets_dir=None,
             "stufe": "warnung",
             "kennung": "platte",
             "titel": "Die Platte ist fast voll",
+            # Die erreichte Fuenferstufe: 90, 95, 100. Wer bei 91 Prozent
+            # wegklickt, sieht die Karte bei 95 wieder -- und nicht schon
+            # bei 92, sonst waere das Wegklicken keines.
+            "marke": int(belegung.get("anteil", 0)) // 5 * 5,
             "platz": belegung,
         })
 

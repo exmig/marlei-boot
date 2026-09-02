@@ -4439,6 +4439,88 @@ with TestClient(pxeapp.app) as c:
         # Ohne lesbare Belegung kein Befund -- nichts zu wissen ist kein Alarm.
         dienste_.platz = lambda p: {}
         check("ohne lesbare Belegung bleibt es still", VOLL not in c.get("/").text)
+
+        # -- Zur Kenntnis nehmen (A-010)
+        #
+        # Weggeklickt heisst nicht weg: Die Karte schrumpft auf eine graue
+        # Zeile. Und sie kommt zurueck, wenn es schlimmer wird -- gemessen
+        # an der Fuenferstufe der Belegung, nicht am Prozentpunkt.
+        print("\n-- Befunde zur Kenntnis nehmen")
+        import kenntnis
+        kenntnis.zuruecksetzen()
+        laufen()
+
+        def platte(anteil):
+            dienste_.platz = lambda p: {"gesamt": 100 * gb, "belegt": anteil * gb,
+                                        "frei": (100 - anteil) * gb,
+                                        "anteil": anteil}
+
+        platte(91)
+        seite = c.get("/").text
+        check("die Warnkarte steht offen da",
+              'class="seitenkarte stufe-warnung"' in seite
+              and "Zur Kenntnis genommen" in seite)
+
+        c.post("/befund/kenntnis", data={"kennung": "platte", "zurueck": "/systeme"},
+               follow_redirects=False)
+        seite = c.get("/").text
+        check("nach dem Wegklicken keine Karte mehr",
+              'class="seitenkarte stufe-warnung"' not in seite)
+        check("... aber die graue Zeile ist da",
+              'class="bekanntzeile"' in seite and VOLL in seite)
+        check("... und zwar auf jedem Reiter",
+              'class="bekanntzeile"' in c.get("/systeme").text
+              and 'class="bekanntzeile"' in c.get("/clients").text)
+
+        # Ein Prozentpunkt mehr ist kein neuer Befund -- sonst waere das
+        # Wegklicken ein Aufschub um Minuten.
+        platte(94)
+        check("ein Prozentpunkt mehr holt sie nicht zurueck",
+              'class="seitenkarte stufe-warnung"' not in c.get("/").text)
+
+        # Die naechste Fuenferstufe schon.
+        platte(95)
+        check("die naechste Fuenferstufe holt sie zurueck",
+              'class="seitenkarte stufe-warnung"' in c.get("/").text)
+
+        # War der Befund weg und kommt wieder, ist er ein neuer.
+        c.post("/befund/kenntnis", data={"kennung": "platte", "zurueck": "/"},
+               follow_redirects=False)
+        check("wieder weggeklickt", 'class="bekanntzeile"' in c.get("/").text)
+        platte(50)
+        check("unter der Schwelle ist gar nichts da",
+              VOLL not in c.get("/").text)
+        platte(95)
+        check("und danach faengt er offen an",
+              'class="seitenkarte stufe-warnung"' in c.get("/").text)
+
+        # Rot laesst sich nicht wegklicken -- weder im Formular noch am
+        # Endpunkt vorbei.
+        kenntnis.zuruecksetzen()
+        platte(50)
+        laufen(dnsmasq=False)
+        seite = c.get("/").text
+        check("die rote Karte hat keinen Knopf",
+              BOOT in seite and "Zur Kenntnis genommen" not in seite)
+        c.post("/befund/kenntnis", data={"kennung": "bootdienst", "zurueck": "/"},
+               follow_redirects=False)
+        check("... und laesst sich auch am Endpunkt nicht wegklicken",
+              BOOT in c.get("/").text)
+
+        # Das Stueck fuer den Takt: dieselben Karten, ohne den Rest der
+        # Seite. "von" sagt, wohin der Knopf zurueckfuehrt.
+        laufen()
+        platte(91)
+        kenntnis.zuruecksetzen()
+        stueck = c.get("/befunde.html?von=/systeme").text
+        check("das nachgeholte Stueck traegt dieselbe Karte",
+              'class="seitenkarte stufe-warnung"' in stueck and VOLL in stueck)
+        check("... und den Weg zurueck auf die fragende Seite",
+              'name="zurueck" value="/systeme"' in stueck)
+        check("eine erfundene Seite wird nicht uebernommen",
+              'name="zurueck" value="/"'
+              in c.get("/befunde.html?von=https://fremd.example/").text)
+        kenntnis.zuruecksetzen()
     finally:
         dienste_.zustaende, dienste_.platz = echte_zustaende, echter_platz
 

@@ -60,19 +60,16 @@
        Sie stehen hier und nicht in einem Reiter, weil sie nicht davon
        abhaengen duerfen, welchen Reiter jemand geoeffnet hat.
 
-       Zugeklappt, auch der Fehler. Eine offene Fehlerkarte waere das
-       Erste, Groesste und oft Einzige auf der Seite; wer den Fehler
-       selbst gebaut hat, weiss ohnehin Bescheid, und wer nicht, soll
-       bewusst hinsehen statt vorbeizuscrollen.
+       Der Behaelter traegt einen Namen, weil das Stueck alle zehn
+       Sekunden nachgeholt wird: Eine behobene Ursache nimmt ihre Karte
+       dann ohne Neuladen mit. Das Skript steht ganz unten.
 
-       Woher sie kommen: webui/befunde.py. Warum so: docs/gestaltung.md,
-       "Die Karte und ihre drei Bereiche". #}
-    {% for befund in befunde %}
-    <details class="seitenkarte stufe-{{ befund.stufe }}">
-      <summary><h2>{{ befund.titel }}</h2></summary>
-      {% include "befunde/" ~ befund.kennung ~ ".html" %}
-    </details>
-    {% endfor %}
+       Woher sie kommen: webui/befunde.py. Was daraus leise wird:
+       webui/kenntnis.py. Warum so: docs/gestaltung.md, "Die Seitenkarte"
+       und "Eine Karte zur Kenntnis nehmen". #}
+    <div id="befunde">
+      {% include "_befunde.html" %}
+    </div>
 
     {% block content %}{% endblock %}
   </main>
@@ -96,6 +93,43 @@
     </p>
   </footer>
 <script>
+// Die Befunde nachholen.
+//
+// Eine Seitenkarte entsteht beim Aufbau der Seite. Ohne dieses Stueck
+// stuende sie noch da, wenn ihre Ursache laengst behoben ist -- bis
+// jemand von sich aus neu laedt. Auf Server Health faellt das am
+// staerksten auf: Dort ticken die Zahlen weiter, waehrend die Karte
+// darueber einen Stand von vorhin zeigt.
+//
+// Zehn Sekunden, nicht fuenf: Die Auskuenfte dahinter sind ohnehin zehn
+// Sekunden gepuffert (dienste.zustaende, befunde.NETZ_TAKT), oefter zu
+// fragen brachte dieselbe Antwort.
+//
+// EINE KARTE, DIE JEMAND AUFGEKLAPPT HAT, WIRD NIE ERSETZT. Wer den Weg
+// hinaus im Kartenfuss abliest, soll den Text nicht unter dem Blick
+// weggenommen bekommen. Der Tausch wartet dann bis zum naechsten Takt.
+(function () {
+  var kasten = document.getElementById("befunde");
+  if (!kasten) { return; }
+
+  function holen() {
+    // Im Hintergrundtab nicht nachfragen -- das waere Last fuer niemanden.
+    if (document.hidden) { setTimeout(holen, 10000); return; }
+    // Liest gerade jemand? Dann diesmal nicht anfassen.
+    if (kasten.querySelector("details[open]")) { setTimeout(holen, 10000); return; }
+    fetch("/befunde.html?von=" + encodeURIComponent(location.pathname))
+      .then(function (r) { return r.text(); })
+      .then(function (t) {
+        // Noch einmal nachsehen: Zwischen Frage und Antwort kann jemand
+        // eine Karte aufgeklappt haben.
+        if (!kasten.querySelector("details[open]")) { kasten.innerHTML = t; }
+        setTimeout(holen, 10000);
+      })
+      .catch(function () { setTimeout(holen, 30000); });
+  }
+  setTimeout(holen, 10000);
+})();
+
 // Wie hoch die Reiterleiste baut.
 //
 // Sie bleibt beim Scrollen oben stehen, und alles andere, was ebenfalls

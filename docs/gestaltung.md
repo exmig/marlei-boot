@@ -648,6 +648,63 @@ anderen Reitern gar nicht. Beide Absätze sind entfallen: Unter
 die Feststellung, die zwei Handbreit darüber schon steht.
 
 
+### Eine Karte zur Kenntnis nehmen
+
+Gebaut am 02.09.2026. **Eine Warnung lässt sich wegklicken, ein Fehler
+nicht.** Wer eine gelbe oder blaue Karte zur Kenntnis genommen hat,
+bekommt sie nicht auf jeder Seite noch einmal — die volle Platte stand
+sonst bis zum Aufräumen am Wochenende überall.
+
+**Weggeklickt heißt nicht weg.** Die Karte schrumpft auf eine graue
+Zeile, aufklappbar:
+
+```
+2 Befunde zur Kenntnis genommen
+```
+
+*Das ist der Punkt und keine Halbheit.* Wer nicht selbst geklickt hat,
+findet den Befund trotzdem; ein Kollege sieht dieselbe Seite, nur
+eingeklappt. Ohne das wäre Wegklicken ein Weg, dem Server anzusehen, dass
+alles in Ordnung ist, obwohl es das nicht ist.
+
+**Rot hat keinen Knopf**, und der Endpunkt nimmt auch keinen an: Ein
+Server, der seine Arbeit nicht tut, darf nie aussehen wie einer, der sie
+tut. Die Prüfung steht auf dem Server, nicht in der Vorlage — ein Knopf,
+den es im HTML nicht gibt, ist kein Schloss.
+
+#### Die Form der grauen Zeile
+
+Kein Rand, keine Fläche, keine Ampel — `.bekanntzeile` ist gedämpfter
+Text in `--muted`, so groß wie ein Kartenfuß. Sie soll **da sein und
+nichts verlangen**; jede Farbe daran hieße wieder *sieh her*.
+
+Aufgeklappt stehen die Befunde wie zuvor, nur ohne Fläche: `.bekannt`
+trägt links eine 3px-Kante in der Farbe ihrer Stufe, damit sichtbar
+bleibt, was es war. Dieselbe Bauart wie ein Zitatblock — eine Kante sagt
+*hier gehört etwas zusammen*, ohne eine Karte zu behaupten.
+
+#### Die Karten ziehen von selbst nach
+
+Jede Seite holt sich `/befunde.html` alle zehn Sekunden. **Nicht nur
+Server Health** — ein Befund gilt dem Server und nicht dem Reiter, und
+aus demselben Grund steht er in `base.html`.
+
+Zehn Sekunden, nicht fünf: Die Auskünfte dahinter sind ohnehin zehn
+Sekunden gepuffert (`dienste.zustaende`, `befunde.NETZ_TAKT`). Öfter zu
+fragen brächte dieselbe Antwort.
+
+**Eine aufgeklappte Karte wird nie ersetzt.** Wer den Weg hinaus im
+Kartenfuß abliest, soll den Text nicht unter dem Blick weggenommen
+bekommen — der Tausch wartet dann bis zum nächsten Takt. Geprüft wird
+zweimal: vor der Frage und noch einmal vor dem Einsetzen, denn dazwischen
+kann jemand aufklappen.
+
+*Warum welche Stufe sich wegklicken lässt, wann eine Karte wiederkommt
+und wo das Weggeklickte liegt, steht nicht hier* — das ist eine
+Entscheidung über das Projekt und keine über diese Oberfläche.
+
+---
+
 ### Was nicht in eine Seitenkarte gehört
 
 Der Durchgang durch alle `hint`-Absätze, 28.08.2026. **39 Stellen, davon

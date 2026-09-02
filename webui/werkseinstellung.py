@@ -51,6 +51,7 @@ ZUSTAND = (
     "quellen.env",           # eigene Adressen und Ausgabenlisten
     "quellenstand.yaml",     # die Ampeln der Quellen-Karten
     "quellenwacht.yaml",     # der letzte Lauf des Waechters
+    "kenntnis.yaml",         # welche Befunde jemand zur Kenntnis nahm
     "freigabe.yaml",         # was im Bootmenue angeboten wird
     "gruppen.yaml",          # Reihenfolge der Gruppen
     "namen.yaml",            # eigene Namen fuer Menueeintraege

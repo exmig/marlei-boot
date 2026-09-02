@@ -1189,6 +1189,29 @@ section > *:last-child { margin-bottom: 0; }
   border-left-color: var(--info-kante);
 }
 
+/* Was jemand zur Kenntnis genommen hat: eine graue Zeile statt einer
+   farbigen Karte. Sie verschwindet NICHT -- wer nicht selbst geklickt hat,
+   soll den Befund trotzdem finden. Deshalb kein Rand, keine Flaeche und
+   keine Ampel: Sie soll da sein und nichts verlangen.
+
+   Aufgeklappt zeigt sie die Befunde wie zuvor, nur ohne die Farbe -- die
+   Stufe steht als Kante links, damit sichtbar bleibt, was es war.
+   Warum so: docs/gestaltung.md, "Eine Karte zur Kenntnis nehmen". */
+.bekanntzeile {
+  margin: -.2rem 0 1rem;
+  font-size: .85rem;
+  color: var(--muted);
+}
+.bekanntzeile > summary { cursor: pointer; padding: .1rem 0; }
+.bekannt {
+  border-left: 3px solid var(--line);
+  padding: .1rem 0 .1rem .8rem;
+  margin: .5rem 0 .5rem .2rem;
+}
+.bekannt h3 { font-size: .95rem; margin: 0 0 .2rem; }
+.bekannt.stufe-warnung { border-left-color: var(--warn-kante); }
+.bekannt.stufe-info { border-left-color: var(--info-kante); }
+
 .seitenkarte > summary {
   cursor: pointer;
   list-style: none;
