@@ -44,9 +44,14 @@
   {# Eine Zeile statt zweier Kacheln: die Beschriftung unter der Zahl kostet
      hier mehr Platz, als sie an Klarheit bringt -- es sind nur zwei Werte,
      und sie ergeben zusammen einen Satz. #}
+  {# Ein Rechner ist kein "1 Clients". Bei den Zahlen dieser Karte faellt
+     das erst auf einem frisch aufgesetzten Server auf -- dort steht oft
+     genau eine Eins. Dieselbe Bauart wie beim Quellenwaechter unten. #}
   <p class="kennzeile">
-    <span class="zahl">{{ clients_anzahl }}</span> Clients registriert,
-    <span class="zahl">{{ laufend | length }}</span> werden installiert.
+    <span class="zahl">{{ clients_anzahl }}</span>
+    {{ "Client" if clients_anzahl == 1 else "Clients" }} registriert,
+    <span class="zahl">{{ laufend | length }}</span>
+    {{ "wird" if laufend | length == 1 else "werden" }} installiert.
   </p>
 
   <div data-teil="laufend">
@@ -61,7 +66,8 @@
        title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
   </div>
   <p class="kennzeile">
-    <span class="zahl">{{ bereit }}</span> Betriebssysteme startbereit,
+    <span class="zahl">{{ bereit }}</span>
+    {{ "Betriebssystem" if bereit == 1 else "Betriebssysteme" }} startbereit,
     <span class="zahl">{{ gesamt }}</span> erfasst.
   </p>
 

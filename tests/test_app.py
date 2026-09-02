@@ -4399,6 +4399,18 @@ with TestClient(pxeapp.app) as c:
     # Die Hilfe rendert denselben Katalog -- geprueft an der Seite selbst,
     # damit die Tabelle nicht still leer bleibt.
     hilfe = c.get("/hilfe").text
+    # Einzahl und Mehrzahl auf Server Health. Faellt nur auf einem frisch
+    # aufgesetzten Server auf -- dort steht oft genau eine Eins, und
+    # "1 Betriebssysteme startbereit" ist kein Satz. Gefunden am
+    # 02.09.2026 bei der ersten Installation auf dev-marlei.
+    vorlage = (PROJ / "webui" / "templates" / "serverhealth.html").read_text(
+        encoding="utf-8")
+    hart = [z for z in ("</span> Betriebssysteme startbereit",
+                        "</span> Clients registriert",
+                        "</span> werden installiert")
+            if z in vorlage]
+    check("keine harte Mehrzahl auf Server Health", not hart, str(hart))
+
     check("die Hilfe fuehrt jede Karte auf",
           all(e["titel"] in hilfe for e in befunde_.KATALOG)
           and all(e["wodurch"][:40] in hilfe for e in befunde_.KATALOG))
