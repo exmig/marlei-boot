@@ -38,11 +38,12 @@ wegoptimiert werden.
 
 | Datei | wofür |
 |---|---|
-| `webui/static/exmig-logo.svg` | die Wortmarke — Kopfzeile, README |
+| `webui/static/exmig-logo.svg` | die Wortmarke — README, heller wie dunkler Seitengrund |
+| `webui/static/exmig-logo-band.svg` | dieselbe Wortmarke fürs Navy-Band im Seitenkopf |
 | `webui/static/exmig-zeichen.svg` | nur „ex", weiß auf navy Kachel — Browser-Reiter |
 | `webui/static/favicon.ico` | dasselbe Zeichen als Rasterbild, 16/32/48/64 |
 
-Alle drei entstehen aus **einer** Quelle, `marke/logo-bauen.py`.
+Alle vier entstehen aus **einer** Quelle, `marke/logo-bauen.py`.
 Dort steht jede Zahl mit Namen: Grundlinie 713, x-Höhe 514, Unterlänge bis
 815, Strichstärke 44 für „ex" und 36 für „mig". Das Logo ist nicht
 vektorisiert, sondern monolinear aus Kreisen, Geraden und Bögen nachgebaut
@@ -550,7 +551,7 @@ jemand sieht, und muss deshalb die *Folge* nennen, nicht den Vorgang:
 Navigation, ein Befund ist Inhalt. Vor allem aber schöbe eine auftauchende
 Karte über den Reitern die Navigation nach unten und beim Verschwinden
 wieder hoch — Reiter werden aus dem Gedächtnis angesteuert, nicht gelesen.
-Und die Kopfzeile soll einmal ein durchgehendes Navy-Band werden; dort läge
+Und der Seitenkopf soll einmal ein durchgehendes Navy-Band werden; dort läge
 die Karte im Weg.
 
 Die Farbwerte stehen in *Die Farbtoken*, die Rechnung dazu in *Regeln, nach denen Farbe vergeben wird*. Wo die Befunde
@@ -696,7 +697,7 @@ einen erklärenden Satz überlesen.
 
 ### Das Zeichen
 
-Ein `?` in einem Ring, rechts in der Kopfzeile der Karte — an jeder Karte
+Ein `?` in einem Ring, rechts im Kartenkopf — an jeder Karte
 dasselbe, an derselben Stelle. Ein Zeichen und etwas CSS, keine geladene
 Schrift und keine Grafik.
 
@@ -796,7 +797,7 @@ Längen von selbst.
 | | |
 |---|---|
 | Schrift | `system-ui`, 15px, Zeilenhöhe 1,55 — die Schrift des Betriebssystems, keine geladene |
-| Textbreite | 60rem, mittig — Kopfzeile, Inhalt und Fußzeile teilen dieselbe Kante |
+| Textbreite | 60rem, mittig — Seitenkopf, Inhalt und Fußzeile teilen dieselbe Kante |
 | Überschriften | h1 1,4rem · h2 1,25rem · h3 1,2rem · h4 0,78rem — siehe unten |
 | Rundungen | 8px Karten · 6px Knöpfe · 999px Pillen |
 | Knöpfe | `.15rem .5rem`, 0,78rem — eine Größe, siehe *Knöpfe* |
@@ -897,6 +898,183 @@ beiden Überschrift-Felder trugen einen doppelten Selektor
 (`table.eng .namensfeld input…`), nur um die Tabellenregel zu
 überstimmen. Ohne diese Regel braucht es ihn nicht mehr.
 
+### Das Band im Seitenkopf
+
+**Der Seitenkopf beantwortet eine Frage, die man auf jeder Seite hat: *Wo
+bin ich, und mit welchem Server rede ich?*** Titel und Reiter sagen das
+Wo, die Adresse das Womit, das Logo das Wer. Damit ist auch entschieden,
+was dort **nicht** hingehört: kein Zustand, keine Zahl, kein Befund.
+
+Seit dem 02.09.2026 liegt die Kopfzeile auf einem Navy-Band. **Nur die
+Kopfzeile** — die Reiter bleiben auf dem Seitengrund. Das ist kein halber
+Schritt, sondern der Punkt: Ein Band unter den Reitern zwänge die ganze
+Navigation in eine zweite Palette, weil `--muted` auf dem Band nur auf
+2,4 : 1 käme.
+
+**Das Band trägt in beiden Themen dasselbe Navy** (`--band`, `#063b6f`).
+Alles darauf misst sich gegen das Band und nicht gegen den Seitengrund —
+ein Themenwechsel ändert dort also nichts, und alle Zahlen gelten hell wie
+dunkel:
+
+| auf dem Band | Wert | |
+|---|---|---|
+| Titel | `--band-schrift` `#ffffff` | 11,27 : 1 |
+| Adresse | `--band-neben` `#a9c0d8` | 6,02 : 1 |
+| Logo, „ex" | `#b8dcfb` | 7,87 : 1 |
+| Logo, „mig" | `--marke-mig` | 4,77 : 1 |
+
+**Deshalb steht dort `#063b6f` und nicht `--marke-ex`:** Das Token hellt
+im dunklen Thema auf `#3585d4` auf, und ein Band, das mitschaltet, würde
+alle vier Zahlen bewegen.
+
+#### Die Reiterleiste bleibt oben stehen
+
+**Der Seitenkopf sind zwei Geschwister und kein Element.** Das Band scrollt
+weg, die Reiterleiste klebt am oberen Rand: Wer unten in einer langen Liste
+steht, soll den Reiter wechseln können, ohne erst hochzufahren.
+
+**Warum getrennt und nicht ineinander:** Ein `position: sticky` klebt nur
+innerhalb seines Elternteils. Läge die Navigation im Kopf, wäre ihr
+Spielraum genau die Höhe des Kopfes minus ihrer eigenen — also null, und
+sie klebte gar nicht. *Das ist die Falle, in die man hier zuerst tritt.*
+
+Zwei Dinge sind an der Leiste Pflicht, und beide fallen erst beim Scrollen
+auf: **ein Hintergrund**, sonst scheinen die Karten durch, und **die volle
+Breite**, sonst läuft der Inhalt seitlich an ihr vorbei. Sie schiebt sich
+dafür mit `margin: 0 -1.25rem` aus der Seitenpolsterung — wie das Band.
+
+#### Was ebenfalls klebt, muss darunter halten
+
+Die Kopfzeilen der langen Tabellen (`table.eng thead th`) kleben seit dem
+27.08.2026 bei `top: 0`. Mit der Reiterleiste davor verschwänden sie
+dahinter. Sie holen ihren Abstand deshalb aus `--leiste-hoehe`.
+
+**Diese Zahl wird gemessen, nicht gepflegt.** Sie hängt daran, wieviele
+Zeilen die sieben Reiter brauchen, und das sind je nach Fensterbreite
+eine bis vier:
+
+| Fensterbreite | Zeilen | Höhe |
+|---|---|---|
+| ab 662px | 1 | 3,42rem |
+| 380 – 661px | 2 | 6,09rem |
+| 300 – 379px | 3 | 8,77rem |
+| darunter | 4 | 11,44rem |
+
+Vier Stufen im Stylesheet zu pflegen wäre eine Fehlerquelle mit Ansage.
+`base.html` misst die Leiste stattdessen und schreibt den Wert in die
+Variable. **Der Wert in `style.css` bleibt als Rückfall stehen** und stimmt
+für die einzeilige Leiste — läuft das Skript nicht, sieht die Seite richtig
+aus, und nur im schmalen Fenster gerät eine Tabellenkopfzeile hinter die
+Leiste.
+
+*Gemessen am 02.09.2026 auf dem laufenden Server.*
+
+#### Warum das Logo eine dritte Datei bekommt
+
+Auf dem Band käme das Marken-Navy des Logos auf **1,0 : 1** — es wäre
+schlicht nicht da. `exmig-logo-band.svg` trägt deshalb ein helles Blau,
+und anders als die gewöhnliche Fassung **schaltet es nicht mit dem
+Thema**: Sein Grund ist in beiden derselbe. Erzeugt wird es wie die
+anderen aus `marke/logo-bauen.py`; dort steht die Farbe als `EXB`.
+
+Damit hat das „ex" drei Werte, und jeder hat seinen Grund:
+
+| Fassung | Wert | wofür |
+|---|---|---|
+| `EX` | `#063b6f` | heller Seitengrund |
+| `EXD` | `#3585d4` | dunkler Seitengrund |
+| `EXB` | `#b8dcfb` | das Band, in beiden Themen |
+
+#### Verworfen, und warum
+
+- **Ein weißes „ex".** Es trägt mit 11,3 : 1 mühelos, aber dann ist die
+  linke Worthälfte keine Farbe mehr, sondern Abwesenheit — das Logo liest
+  sich als *ein* helles Wort mit türkisem Ende. Die Zweifarbigkeit ist die
+  Aussage der Marke; sie kostet hier zu viel.
+- **Ein Orange für das „ex".** Am 02.09.2026 durchgerechnet und angesehen:
+  Es trägt auf dem Band (3,2 bis 5,3) und macht die Fuge im Logo so
+  deutlich wie nichts sonst. Es scheitert nicht an einer Zahl, sondern
+  daran, dass es eine **dritte Markenfarbe** wäre — eine Entscheidung über
+  Exmig und nicht über diese Oberfläche.
+- **Ein hellerer Ton für das „ex" knapp über `#3585d4`.** Zwischen
+  `#4491dc` und `#8ac4f6` fällt der Abstand zum Türkis unter 1,6 : 1, bei
+  `#66acee` sogar auf 1,02 — beide Worthälften wären gleich hell und die
+  Fuge verschwände für jeden, der Farben schlecht unterscheidet.
+  `#b8dcfb` liegt mit 1,65 : 1 wieder darüber.
+- **Ein heller Seitenkopf statt eines Bandes.** Weiß wäre der einzige
+  helle Ton gewesen, der nichts verschlechtert — er hätte sogar den
+  Nebentext von 4,41 auf 4,74 gehoben. Verworfen zugunsten des Bandes:
+  Der Kopf soll als eigene Ebene lesbar sein, nicht als hellere Fläche.
+  *Der Nebentext bleibt damit unter der Norm — siehe* Der Seitengrund kommt aus der Marke.
+
+---
+
+### Was in der Fußzeile steht
+
+**Die Fußzeile beantwortet: *Welche Fassung ist das, und wo geht es
+weiter?*** Am 02.09.2026 danach ausgeräumt. Sie trägt drei Dinge:
+
+```
+MARLEI Boot  ·  Version: v1.0-3-g1b8f106  ·  AGPL-3.0  ·  Quelltext
+```
+
+| | |
+|---|---|
+| **Name** | steht auch im Band — aber das scrollt weg |
+| **Version** | `versionsstand.kurz()` — was `install.sh` aus `git describe --tags --always --dirty` gestempelt hat |
+| **Lizenz** | verlinkt auf das Kapitel *Lizenz und Förderung* in der Hilfe |
+| **Quelltext** | der Verweis, den AGPL §13 für eine über das Netz benutzte Oberfläche nahelegt |
+
+**Vier Angaben, und der Punkt allein trennt sie nicht.** Mit dem
+gewöhnlichen Wortabstand liest sich die Zeile als ein Satz durch. Die
+Trennpunkte tragen deshalb `.fusstrenner` mit `margin: 0 .5rem` — erst
+der Abstand macht aus der Zeile vier Angaben.
+
+**Das Wort *Version:* steht dabei**, statt die Nummer für sich sprechen zu
+lassen. Ohne es liest sich `MARLEI Boot debb6cf-dirty` wie ein
+zusammengesetzter Produktname.
+
+**Die Probe für diese Fläche:** *Steht der Wert auch auf einer Karte,
+gehört er nicht in die Fußzeile.*
+
+**Der Name steht doppelt, und das mit Grund.** Er steht auch im Band —
+aber das scrollt weg, seit nur noch die Reiterleiste klebt. Wer unten
+angekommen ist und einen Fehler meldet, hat Name und Version in einer
+Zeile beieinander, zum Herauskopieren.
+
+**Fehlt der Stand, steht dort nichts.** `versionsstand.py` rät nicht: Eine
+leere Angabe heißt *„diese Anwendung ist nicht über `install.sh`
+hierhergekommen"*, und das ist etwas anderes als Version 0.
+
+#### Was herausgeflogen ist
+
+- **Menü-Timeout und Standardauswahl.** Beide kommen aus
+  `/etc/pxeweb.env` und stehen unter *Einrichtung* in der Karte
+  *Einstellungen* — dort mit einer Zeile, was sie bewirken. In der
+  Fußzeile standen sie ohne Erklärung und ohne Anlass.
+- **Die Statusabfrage.** `/health` liefert JSON. Nützlich für ein Skript,
+  verwirrend für einen Menschen, der darauf klickt. Sie gehört in der
+  Hilfe beschrieben, nicht als Verweis in die Oberfläche.
+- **Ein zweiter Weg in die Hilfe.** War als Kandidat vorgemerkt und hat
+  sich am selben Tag erledigt: Seit die Reiterleiste oben klebt, ist
+  *Hilfe* auf jeder Seite in Reichweite, gleich wie weit man gescrollt
+  ist.
+- **Die MARLEI Assistance Suite.** Nicht, weil sie nicht hierher gehörte,
+  sondern weil eine Familie mit einem Mitglied keine ist. Ab dem zweiten
+  Modul kehrt sie zurück — die Arbeit dazu liegt bereit.
+
+#### Zwei Dinge, die beim nächsten Griff zu bedenken sind
+
+- **Der Quelltext-Verweis ist der erste Verweis nach außen im ganzen
+  Projekt.** Ein Server im abgeschotteten Netz erreicht ihn nicht — das
+  ist kein Fehler: Geklickt wird im Browser des Betreuers, nicht auf dem
+  Server.
+- **Wer den Server ändert und weitergibt, muss dorthin zeigen, wo *sein*
+  Quelltext liegt.** Die Adresse steht heute fest in `base.html`. Sollte
+  das je einstellbar werden, ist hier die Stelle.
+
+---
+
 ### Das Logo in der Kopfzeile
 
 Es steht rechtsbündig in derselben Zeile wie Titel und Adresse, geschoben
@@ -904,11 +1082,18 @@ von `margin-left: auto`. **Mittig ausgerichtet, nicht auf der
 Schriftlinie** — das `g` hat eine Unterlänge, die sonst unter der Zeile
 hinge. Die Höhe (1,5rem) ist der einzige Wert zum Drehen.
 
+Welche der drei Dateien dort steht, sagt *Das Band im Seitenkopf*.
+
 ### Die Kante unter der Navigation
 
-Der Balken des aktiven Reiters (2px) und die Trennlinie der Kopfzeile (1px)
-sind beide `--marke-ex`. Zusammen ergibt das eine durchgehende Kante, aus
-der der aktive Reiter herausragt.
+Der Balken des aktiven Reiters (2px) und die Trennlinie unter der
+Navigation (1px) sind beide `--marke-ex`. Zusammen ergibt das eine
+durchgehende Kante, aus der der aktive Reiter herausragt.
+
+**Sie sitzt seit dem 02.09.2026 am `nav` und nicht mehr am Seitenkopf.**
+Das Band braucht die volle Breite, die Kante die 60rem-Spalte — zwei
+verschiedene Maße, also zwei Elemente. Sichtbar ändert sich dadurch
+nichts.
 
 ---
 

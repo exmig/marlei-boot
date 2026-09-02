@@ -2932,7 +2932,12 @@ with TestClient(pxeapp.app) as c:
         return {slug: abzeichen(text, marke % slug, bis)[:1]
                 for slug in re.findall(marke.replace("%s", "([a-z0-9.-]+)"), text)}
 
-    auf_systeme = alle_abzeichen(systeme, "<code>%s</code>", "</tr>")
+    # Nur der Inhalt, nicht der Rahmen: Die Fusszeile traegt seit dem
+    # 02.09.2026 den Stand in <code>, und der sieht fuer diesen Sammler aus
+    # wie eine Kennung ("v1.2-3-gabc1234"). Gemeint sind die Eintraege, und
+    # die stehen in <main>.
+    auf_systeme = alle_abzeichen(systeme.split("</main>")[0],
+                                 "<code>%s</code>", "</tr>")
     auf_quellen = alle_abzeichen(quellenseite_, 'name="name:%s"', "</details>")
     gemeinsam = sorted(set(auf_systeme) & set(auf_quellen))
     # Systeme zeigt nur noch die startbereiten, Quellen alle -- die eine

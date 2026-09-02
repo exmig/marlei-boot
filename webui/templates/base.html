@@ -16,16 +16,28 @@
         href="/static/exmig-zeichen.svg?v={{ marken_version }}">
 </head>
 <body>
-  <header class="topbar">
+  <!-- Der Seitenkopf sind zwei Geschwister und kein Element, weil sich die
+       beiden Teile verschieden verhalten: Das Band scrollt weg, die
+       Reiterleiste bleibt oben kleben. Ein sticky Kind klebt nur innerhalb
+       seines Elternteils -- im Kopf waeren das null Pixel, und es klebte
+       gar nicht. Warum so: docs/gestaltung.md, "Das Band im Seitenkopf". -->
+  <header class="kopfband">
     <div class="kopfzeile">
       <h1>MARLEI Boot</h1>
       <span class="muted small"><code>{{ base_url }}</code></span>
       <!-- Die Marke steht am rechten Ende derselben Zeile. Breite und Hoehe
            stehen dran, damit der Platz schon vor dem Laden stimmt und die
-           Zeile nicht springt; die sichtbare Groesse macht das Stylesheet. -->
-      <img class="marke" src="/static/exmig-logo.svg?v={{ marken_version }}"
+           Zeile nicht springt; die sichtbare Groesse macht das Stylesheet.
+
+           Eigene Datei: Auf dem Band braeuchte das Navy des gewoehnlichen
+           Logos 1,0:1 -- es waere unsichtbar. exmig-logo-band.svg traegt
+           dort ein helles Blau und schaltet nicht mit dem Thema, weil das
+           Band in beiden Themen dasselbe ist. -->
+      <img class="marke" src="/static/exmig-logo-band.svg?v={{ marken_version }}"
            width="1057" height="380" alt="Exmig">
     </div>
+  </header>
+  <div class="reiterleiste">
     <nav>
       <a href="/"         class="{{ 'aktiv' if aktiv == 'serverhealth' }}">Server Health</a>
       <a href="/clients"  class="{{ 'aktiv' if aktiv == 'clients' }}">Clients</a>
@@ -35,7 +47,7 @@
       <a href="/history"  class="{{ 'aktiv' if aktiv == 'history' }}">History</a>
       <a href="/hilfe"    class="{{ 'aktiv' if aktiv == 'hilfe' }}">Hilfe</a>
     </nav>
-  </header>
+  </div>
   <main>
     {# Die einmalige Meldung steht zuerst: Sie ist die Antwort auf einen
        Klick, den jemand gerade getan hat, und wer sie sucht, sucht sie
@@ -64,13 +76,49 @@
 
     {% block content %}{% endblock %}
   </main>
+  {# Die Fusszeile beantwortet "welche Fassung ist das, und wo geht es
+     weiter" -- mehr nicht. Menue-Timeout und Standardauswahl standen hier
+     bis zum 02.09.2026; sie stehen unter Einrichtung in der Karte
+     Einstellungen, mit einer Zeile dazu, was sie bewirken. Die
+     Statusabfrage fuehrte auf JSON: nuetzlich fuer ein Skript, verwirrend
+     fuer einen Menschen, der darauf klickt.
+
+     Der Stand fehlt, wenn die Anwendung nicht ueber install.sh
+     hierhergekommen ist. Dann steht dort nichts -- lieber keine Angabe als
+     eine erfundene. Warum so: docs/gestaltung.md, "Was in der Fußzeile
+     steht". #}
   <footer class="muted">
     <p>
-      Menü-Timeout {{ menu_timeout }} s &middot; Standardauswahl <code>{{ menu_default }}</code>
-      &middot; <a href="/health">Statusabfrage</a>
+      MARLEI Boot{% if stand_kurz %}
+      <span class="fusstrenner">&middot;</span> Version: <code>{{ stand_kurz }}</code>{% endif %}
+      <span class="fusstrenner">&middot;</span> <a href="/hilfe#lizenz">AGPL-3.0</a>
+      <span class="fusstrenner">&middot;</span> <a href="https://github.com/exmig/marlei-boot">Quelltext</a>
     </p>
   </footer>
 <script>
+// Wie hoch die Reiterleiste baut.
+//
+// Sie bleibt beim Scrollen oben stehen, und alles andere, was ebenfalls
+// klebt, muss unter ihr halten statt dahinter -- heute die Kopfzeilen der
+// langen Tabellen unter Systeme. Ihre Hoehe haengt daran, wieviele Zeilen
+// die sieben Reiter brauchen: eine bis vier, je nach Fensterbreite. Statt
+// vier Zahlen im Stylesheet zu pflegen, wird gemessen.
+//
+// Der Wert in style.css bleibt als Rueckfall stehen und stimmt fuer die
+// einzeilige Leiste -- ohne dieses Stueck sieht die Seite also richtig aus,
+// nur beim schmalen Fenster geraet eine Tabellenkopfzeile hinter die Leiste.
+(function () {
+  var leiste = document.querySelector(".reiterleiste");
+  if (!leiste) { return; }
+  function melden() {
+    document.documentElement.style.setProperty(
+      "--leiste-hoehe", leiste.getBoundingClientRect().height + "px");
+  }
+  melden();
+  if (window.ResizeObserver) { new ResizeObserver(melden).observe(leiste); }
+  else { window.addEventListener("resize", melden); }
+})();
+
 // Einen Befehl in die Zwischenablage legen.
 //
 // navigator.clipboard gibt es nur im "secure context" -- also unter https

@@ -1053,12 +1053,13 @@ def stil_version() -> int:
 def marken_version() -> int:
     """Aenderungszeit der juengsten Logodatei.
 
-    Wortmarke, Zeichen und Favicon entstehen aus derselben Quelle und
-    aendern sich zusammen. Eine gemeinsame Zahl reicht deshalb -- und
-    erspart drei fast gleiche Werte in jeder Seite.
+    Die beiden Wortmarken, das Zeichen und das Favicon entstehen aus
+    derselben Quelle und aendern sich zusammen. Eine gemeinsame Zahl reicht
+    deshalb -- und erspart vier fast gleiche Werte in jeder Seite.
     """
     return max(datei_version(n) for n in
-               ("exmig-logo.svg", "exmig-zeichen.svg", "favicon.ico"))
+               ("exmig-logo.svg", "exmig-logo-band.svg", "exmig-zeichen.svg",
+                "favicon.ico"))
 
 
 # Wohin eine Seite nach einem Klick springen darf.
@@ -1096,6 +1097,10 @@ def _rahmen(**ctx) -> dict:
         "stil_version": stil_version(),
         "marken_version": marken_version(),
         "base_url": BASE_URL,
+        # Fuer die Fusszeile. Leer, wenn die Anwendung nicht ueber
+        # install.sh hierhergekommen ist -- dann steht dort nichts statt
+        # einer erfundenen Nummer, siehe versionsstand.py.
+        "stand_kurz": versionsstand.kurz(),
         "menu_default": MENU_DEFAULT,
         "menu_timeout": MENU_TIMEOUT,
         # Wieviel auf die Menuezeile passt. Die Felder tragen es als

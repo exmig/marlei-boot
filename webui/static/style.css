@@ -10,6 +10,28 @@
 :root {
   --marke-ex:  #063b6f;   /* EX  = Expertise */
   --marke-mig: #15bcb4;   /* MIG = Made in Germany */
+  /* Das Band im Seitenkopf. Es traegt in BEIDEN Themen dasselbe Navy --
+     alles darauf misst sich gegen das Band und nicht gegen den
+     Seitengrund, also aendert ein Themenwechsel dort nichts. Deshalb der
+     rohe Markenwert und nicht --marke-ex, das im dunklen Thema aufhellt.
+     Zahlen gegen das Band: Titel 11,27 -- Nebentext 6,02 -- Logo-ex
+     (#b8dcfb in exmig-logo-band.svg) 7,87 -- Logo-mig 4,77. Warum so:
+     docs/gestaltung.md, "Das Band im Seitenkopf". */
+  --band: #063b6f;
+  --band-schrift: #ffffff;
+  --band-neben: #a9c0d8;
+  /* Wie hoch die klebende Reiterleiste baut. Alles, was ebenfalls oben
+     kleben soll, muss darunter halten statt dahinter zu geraten -- heute
+     die Kopfzeilen der langen Tabellen.
+
+     Die Hoehe haengt daran, wieviele Zeilen die sieben Reiter brauchen:
+     gemessen am 02.09.2026 sind das 3,42rem bei einer Zeile, 6,09 bei
+     zwei (ab 661px abwaerts), 8,77 bei drei (ab 380px). Vier Zahlen im
+     Stylesheet zu pflegen waere eine Fehlerquelle, also misst base.html
+     die Leiste und schreibt den Wert hierher. Dieser Wert ist der
+     Rueckfall fuer den Fall, dass das nicht laeuft -- er stimmt fuer die
+     einzeilige Leiste. */
+  --leiste-hoehe: 3.45rem;
 
   /* Der Seitengrund ist die mig-Haelfte der Marke, stark aufgehellt --
      er kommt damit aus dem Logo und nicht von aussen. Gerade so viel Ton,
@@ -126,22 +148,49 @@ body {
   font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
-main, .topbar, footer { max-width: 60rem; margin: 0 auto; }
+main, footer { max-width: 60rem; margin: 0 auto; }
 
-.topbar {
-  padding: 1.5rem 0 0;
+/* Band und Reiterleiste schieben sich mit negativen Raendern aus der
+   Seitenpolsterung heraus -- genau um deren 1.25rem. Kein 100vw: Das waere
+   bei sichtbarem Rollbalken breiter als das Fenster und erzeugte einen
+   zweiten, waagerechten. */
+.kopfband {
+  background: var(--band);
+  color: var(--band-schrift);
+  margin: 0 -1.25rem;
+  padding: 1.5rem 1.25rem 1.2rem;
+}
+.kopfband h1 { color: var(--band-schrift); }
+.kopfband .muted { color: var(--band-neben); }
+
+/* Die Reiterleiste bleibt beim Scrollen oben stehen: Wer unten in einer
+   langen Liste steht, soll den Reiter wechseln koennen, ohne erst
+   hochzufahren. Der Hintergrund ist dabei Pflicht, sonst scheinen die
+   Karten durch, und die volle Breite auch -- sonst laeuft der Inhalt
+   seitlich an der Leiste vorbei. */
+.reiterleiste {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
+  margin: 0 -1.25rem 1.5rem;
+  padding: .9rem 1.25rem 0;
+}
+.reiterleiste nav {
+  max-width: 60rem;
+  margin: 0 auto;
   /* Probeweise in der Marke statt in Grau -- zusammen mit dem Balken des
      aktiven Reiters darueber ergibt das eine durchgehende Kante. */
   border-bottom: 1px solid var(--marke-ex);
-  margin-bottom: 1.5rem;
 }
 
 .kopfzeile {
+  max-width: 60rem;
+  margin: 0 auto;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: .6rem;
-  margin-bottom: .8rem;
 }
 
 /* Die Marke: ans rechte Ende derselben Zeile geschoben. margin-left:auto
@@ -326,7 +375,10 @@ th.wolspalte button { letter-spacing: .04em; }
    Hintergrund ist noetig, sonst scheinen die Zeilen darunter durch. */
 table.eng thead th {
   position: sticky;
-  top: 0;
+  /* Nicht 0: Dort steht die Reiterleiste, und die Kopfzeile verschwaende
+     dahinter. Beide holen die Hoehe aus derselben Zahl -- siehe
+     --leiste-hoehe. */
+  top: var(--leiste-hoehe);
   z-index: 1;
   background: var(--panel);
 }
@@ -1401,6 +1453,10 @@ button.ghost {
 }
 
 footer { padding-top: .5rem; font-size: .85rem; }
+/* Vier Angaben in einer Zeile. Der Punkt trennt sie, aber erst der
+   Abstand macht daraus vier Angaben statt eines Satzes -- mit dem
+   gewoehnlichen Wortabstand liest sich die Zeile durch. */
+footer .fusstrenner { margin: 0 .5rem; }
 a { color: var(--accent); }
 
 progress {

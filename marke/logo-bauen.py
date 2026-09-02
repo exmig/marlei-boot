@@ -129,6 +129,9 @@ def n(v):
     return ("%.2f" % v).rstrip('0').rstrip('.')
 
 EX, MIG, EXD = '#063b6f', '#15bcb4', '#3585d4'
+# Die Fassung fuers Navy-Band im Seitenkopf. Sie steht auf einem Grund,
+# der in beiden Themen derselbe ist -- deshalb schaltet sie nicht mit.
+EXB = '#b8dcfb'
 e0 = (X(E_CX), Y(E_CY+E_R)); e1 = Pk(E_CX, E_CY, E_R, E_RING_ENDE)
 Hb = SN*math.sqrt(2)/2
 armA = [(X(XA_TOP)-Hb, Y(XH-20)), (X(XA_TOP)+Hb, Y(XH-20)), (X(XA_BOT)+Hb, Y(B)), (X(XA_BOT)-Hb, Y(B))]
@@ -154,13 +157,9 @@ EX_FLAECHEN = '''    <polygon points="%s"/>
 EX_L, EX_R = X(E_CX-E_R-SN/2), armA[2][0]
 EX_O, EX_U = Y(XH-20), Y(B)
 
-wortmarke = '''<svg xmlns="http://www.w3.org/2000/svg" class="exmig" viewBox="0 0 1057 380"
-     role="img" aria-labelledby="exmig-name exmig-beschreibung">
-  <title id="exmig-name">Exmig</title>
-  <desc id="exmig-beschreibung">Wortmarke Exmig: „ex“ in Navy für Expertise, „mig“ in Türkis für
-    Made in Germany. Die Buchstaben jedes Wortteils verschmelzen miteinander.</desc>
-
-  <style>
+# Zwei Stilbloecke fuer dieselbe Wortmarke. Der gemeinsame Teil steht einmal,
+# unterschiedlich ist nur, wie das "ex" auf dunklem Grund gefunden wird.
+STIL_KOPF = """<style>
     /* Ein Strich, zwei Farben. Wer das Logo schwerer oder leichter will, ändert
        --strich-ex und --strich-mig -- sonst nichts.
 
@@ -168,30 +167,47 @@ wortmarke = '''<svg xmlns="http://www.w3.org/2000/svg" class="exmig" viewBox="0 
        webui/static/style.css. Sie müssen zusammen geändert werden: Diese
        Datei wird als Bild eingebunden und kann die Token der Seite nicht
        lesen. */
-    .exmig {{
-      --ex:  {EX};   /* EX  = Expertise */
-      --mig: {MIG};   /* MIG = Made in Germany */
-      --strich-ex:  {SN};
-      --strich-mig: {ST};
-    }}
+    .exmig {
+      --ex:  %(ex)s;   /* EX  = Expertise */
+      --mig: %(mig)s;   /* MIG = Made in Germany */
+      --strich-ex:  %(sn)s;
+      --strich-mig: %(st)s;
+    }"""
+
+STIL_FUSS = """
+    #exmig-ex  { fill: var(--ex); }
+    #exmig-mig { fill: var(--mig); }
+    #exmig-ex  .strich { fill: none; stroke: var(--ex);  stroke-width: var(--strich-ex); }
+    #exmig-mig .strich { fill: none; stroke: var(--mig); stroke-width: var(--strich-mig); }
+  </style>"""
+
+# Fassung 1 -- fuer den Seitengrund. Sie schaltet mit dem Thema.
+STIL_THEMA = (STIL_KOPF % dict(ex=EX, mig=MIG, sn=n(SN), st=n(ST))) + """
     /* Auf dunklem Grund hat das Navy nur 1,6:1 -- es verschwände. Deshalb dort eine
        hellere Fassung: 4,7:1 gegen den Grund und noch 1,6:1 gegen das Türkis, damit
        die beiden Wortteile unterscheidbar bleiben. */
-    @media (prefers-color-scheme: dark) {{
-      .exmig:not([data-thema="hell"]) {{ --ex: {EXD}; }}
-    }}
-    .exmig[data-thema="dunkel"] {{ --ex: {EXD}; }}
+    @media (prefers-color-scheme: dark) {
+      .exmig:not([data-thema="hell"]) { --ex: %s; }
+    }
+    .exmig[data-thema="dunkel"] { --ex: %s; }
+""" % (EXD, EXD) + STIL_FUSS
 
-    #exmig-ex  {{ fill: var(--ex); }}
-    #exmig-mig {{ fill: var(--mig); }}
-    #exmig-ex  .strich {{ fill: none; stroke: var(--ex);  stroke-width: var(--strich-ex); }}
-    #exmig-mig .strich {{ fill: none; stroke: var(--mig); stroke-width: var(--strich-mig); }}
-  </style>
+# Fassung 2 -- fuer das Navy-Band im Seitenkopf. Das Band ist in beiden Themen
+# dasselbe, also schaltet hier nichts: ein fester Wert, 7,87:1 gegen das Band
+# und 1,65:1 gegen das Tuerkis.
+STIL_BAND = (STIL_KOPF % dict(ex=EXB, mig=MIG, sn=n(SN), st=n(ST))) + STIL_FUSS
+
+WORTMARKE = '''<svg xmlns="http://www.w3.org/2000/svg" class="exmig" viewBox="0 0 1057 380"
+     role="img" aria-labelledby="exmig-name exmig-beschreibung">
+  <title id="exmig-name">Exmig</title>
+  <desc id="exmig-beschreibung">{DESC}</desc>
+
+  {STIL}
 
   <!-- Die fill/stroke-Angaben an den Elementen sind der Rückfall, falls das
        Stylesheet nicht mitkommt (etwa beim Einbetten über <img> in alten Browsern). -->
-  <g id="exmig-ex" fill="{EX}">
-    <g class="strich" fill="none" stroke="{EX}" stroke-width="{SN}">
+  <g id="exmig-ex" fill="{EXFALL}">
+    <g class="strich" fill="none" stroke="{EXFALL}" stroke-width="{SN}">
 {EX_STRICHE}
     </g>
     <!-- x: zwei Diagonalen, oben auf x-Höhe und unten auf der Grundlinie waagerecht
@@ -215,12 +231,29 @@ wortmarke = '''<svg xmlns="http://www.w3.org/2000/svg" class="exmig" viewBox="0 
     <circle cx="{pcx}" cy="{pcy}" r="{pr}"/>
   </g>
 </svg>
-'''.format(EX=EX, MIG=MIG, EXD=EXD, SN=n(SN), ST=n(ST),
+'''
+
+# Alles, was in beiden Fassungen gleich ist -- einmal ausgerechnet.
+MASSE = dict(MIG=MIG, SN=n(SN), ST=n(ST),
     EX_STRICHE=EX_STRICHE, EX_FLAECHEN=EX_FLAECHEN,
     m1=n(X(M_S1)), m2=n(X(M_S2)), m3=n(X(M_S3)), mb=n(Y(B)), mo=n(Y(M_BOGEN_Y)), mr=n(M_BOGEN_R),
     ix=n(X(I_X)), iy0=n(Y(XH)), pcx=n(X(I_PUNKT[0])), pcy=n(Y(I_PUNKT[1])), pr=n(I_PUNKT[2]),
     gcx=n(X(G_CX)), gcy=n(Y(G_CY)), gr=n(G_R), gsx=n(X(G_STAMM_X)), gly=n(Y(G_SCHLINGE_CY)),
     glx1=n(gl[0]), gly1=n(gl[1]))
+
+BESCHREIBUNG = ('Wortmarke Exmig: „ex“ in %s für Expertise, „mig“ in Türkis für\n'
+                '    Made in Germany. Die Buchstaben jedes Wortteils verschmelzen '
+                'miteinander.')
+
+wortmarke = WORTMARKE.format(STIL=STIL_THEMA, EXFALL=EX,
+                             DESC=BESCHREIBUNG % 'Navy', **MASSE)
+# Die Bandfassung nennt ihren Grund, sonst haelt sie jemand fuer die falsche
+# Datei und faerbt sie "zurueck".
+wortmarke_band = WORTMARKE.format(STIL=STIL_BAND, EXFALL=EXB,
+                                  DESC=BESCHREIBUNG % 'Hellblau'
+                                  + '\n    Diese Fassung gehört auf das Navy-Band des '
+                                    'Seitenkopfs, nicht auf den Seitengrund.',
+                                  **MASSE)
 
 # --------------------------------------------------------------- das Zeichen
 # Fuenf Buchstaben sind bei 16 Pixeln ein Fleck. Fuers Favicon deshalb nur
@@ -251,7 +284,9 @@ zeichen = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"
 
 ZIEL = STATIC if 'STATIC' in dir() else '.'
 import xml.dom.minidom
-for name, inhalt in (("exmig-logo.svg", wortmarke), ("exmig-zeichen.svg", zeichen)):
+for name, inhalt in (("exmig-logo.svg", wortmarke),
+                     ("exmig-logo-band.svg", wortmarke_band),
+                     ("exmig-zeichen.svg", zeichen)):
     pfad = ZIEL + "/" + name
     io.open(pfad, 'w', encoding='utf-8').write(inhalt)
     xml.dom.minidom.parse(pfad)
