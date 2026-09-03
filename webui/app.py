@@ -829,6 +829,17 @@ def init_db() -> None:
 
 MAC_RE = re.compile(r"^[0-9a-f]{2}(:[0-9a-f]{2}){5}$")
 
+# Wie lang ein Clientname sein darf. Dreissig Zeichen sind keine
+# technische Grenze -- der Hostname eines Windows-Rechners waere bei
+# fuenfzehn zu Ende, ein DNS-Label bei dreiundsechzig, und die Datenbank
+# nimmt beliebig viel. Es ist eine Aussage: **Das Feld ist ein Etikett zum
+# Wiedererkennen, keine Beschreibung.** Markus am 03.09.2026: Wer
+# "Empfang, 2. OG, Gebaeude C" eintragen will, betreibt Inventar, und
+# genau dort verlaeuft die Grenze dieses Moduls. Die Zahl kommt aus der
+# Breite des Feldes: So viel zeigt es, ohne dass etwas aus dem Blick
+# rutscht.
+MAX_CLIENTNAME = 30
+
 
 def normalise_mac(value: str | None) -> str | None:
     """iPXE liefert 'aa-bb-cc-dd-ee-ff', wir speichern 'aa:bb:cc:dd:ee:ff'."""
@@ -1571,6 +1582,10 @@ def clients_seite(request: Request, meldung: str = ""):
             protokolle=nach_mac,
             verwaiste=verwaiste,
             protokolle_belegt=logs.belegung(),
+            # Die Grenze kommt aus derselben Quelle wie die Pruefung: Das
+            # Feld traegt sie als maxlength, damit sie beim Tippen auffaellt
+            # und nicht erst beim Speichern.
+            max_clientname=MAX_CLIENTNAME,
         ),
     )
 
@@ -1967,7 +1982,7 @@ async def clients_speichern(request: Request):
         if not normalised:
             continue
 
-        name = feld("name", mac).strip()[:60]
+        name = feld("name", mac).strip()[:MAX_CLIENTNAME]
         entry = feld("entry", mac) or None
         pxe = 1 if formular.get("pxe_aktiv:" + mac) else 0
         war_name = feld("war_name", mac)
@@ -2065,7 +2080,7 @@ def add_client(mac: str = Form(...), name: str = Form("")):
     normalised = normalise_mac(mac)
     if not normalised:
         return _clients_meldung("Das ist keine MAC-Adresse. " + MAC_FORM)
-    name = name.strip()[:60]
+    name = name.strip()[:MAX_CLIENTNAME]
     with db() as conn:
         zeile = conn.execute("SELECT name FROM clients WHERE mac = ?",
                              (normalised,)).fetchone()

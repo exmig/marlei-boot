@@ -60,9 +60,14 @@
       <tr data-mac="{{ c['mac'] }}" data-produkt="{{ c['product'] or '' }}">
         <td>
           <div class="namensfeld">
+            {# maxlength aus derselben Quelle wie die Pruefung im Server:
+               Sonst laesst das Feld etwas zu, das beim Speichern still
+               abgeschnitten wird. Dreissig Zeichen sind Absicht -- ein
+               Etikett zum Wiedererkennen, keine Beschreibung. #}
             <input type="text" name="name:{{ c['mac'] }}" form="sichern"
-                   value="{{ c['name'] }}" size="16" placeholder="Name eintragen"
-                   title="Name des Rechners — wird mit Speichern übernommen">
+                   value="{{ c['name'] }}" size="16" maxlength="{{ max_clientname }}"
+                   placeholder="Name eintragen"
+                   title="Name des Rechners, höchstens {{ max_clientname }} Zeichen — wird mit Speichern übernommen">
           </div>
           <code>{{ c["mac"] }}</code>
           {% if c["product"] %}<div class="muted small">{{ c["product"] }}</div>{% endif %}
@@ -175,7 +180,9 @@
     <input type="text" name="mac" placeholder="aa:bb:cc:dd:ee:ff" required
            pattern="[0-9A-Fa-f]{2}([:-][0-9A-Fa-f]{2}){5}"
            title="Sechs Paare, getrennt durch Doppelpunkt oder Bindestrich — aa:bb:cc:dd:ee:ff">
-    <input type="text" name="name" placeholder="Name (optional)">
+    <input type="text" name="name" placeholder="Name (optional)"
+           maxlength="{{ max_clientname }}"
+           title="Höchstens {{ max_clientname }} Zeichen — ein Etikett zum Wiedererkennen">
     <button type="submit">Client registrieren</button>
   </form>
   {# Fusszeile der Karte: wofuer sie da ist. Was zum Wecken am Zielrechner

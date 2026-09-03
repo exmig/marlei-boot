@@ -451,9 +451,9 @@ with TestClient(pxeapp.app) as c:
                      f"war_entry:{MAC}": "gparted-live-1-8-1-3", f"entry:{MAC}": "gparted-live-1-8-1-3",
                      f"war_pxe:{MAC}": "0"},
                headers={"Accept": "application/json"})
-    check("Name wird auf 60 Zeichen gekuerzt",
+    check("Name wird auf %d Zeichen gekuerzt" % pxeapp.MAX_CLIENTNAME,
           next(z for z in r.json()["clients"]
-               if z["mac"] == MAC)["name"] == "x" * 60)
+               if z["mac"] == MAC)["name"] == "x" * pxeapp.MAX_CLIENTNAME)
     speichern(MAC, name="Lenovo L540")
 
     # Ohne JavaScript bleibt es beim gewohnten Formular: sonst waere die
@@ -617,6 +617,20 @@ with TestClient(pxeapp.app) as c:
           (stand.group(1) if stand else "keine") + " statt " + str(zeilen))
     check("... und einer Zeile fuer null Treffer",
           'id="ohnetreffer"' in seite_liste)
+
+    # Die Grenze steht im Feld, nicht nur im Server -- sonst faellt sie
+    # erst beim Speichern auf, und dann ist stillschweigend abgeschnitten.
+    check("Namensfeld traegt die Grenze als maxlength",
+          seite_liste.count('maxlength="%d"' % pxeapp.MAX_CLIENTNAME) >= 2,
+          str(seite_liste.count('maxlength=')))
+    lang = "Empfang, 2. OG, Gebaeude C, hinten links"
+    c.post("/clients/add", data={"mac": "aa:bb:cc:de:ad:01", "name": lang})
+    with pxeapp.db() as conn:
+        gespeichert = conn.execute(
+            "SELECT name FROM clients WHERE mac = ?",
+            ("aa:bb:cc:de:ad:01",)).fetchone()["name"]
+    check("... und der Server schneidet ebenso ab",
+          gespeichert == lang[:pxeapp.MAX_CLIENTNAME], gespeichert)
 
     r = c.post("/clients/wecken", data={"mac": [MAC, "aa:bb:cc:11:22:33"]},
                follow_redirects=False)
