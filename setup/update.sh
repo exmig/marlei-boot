@@ -3,6 +3,7 @@
 # Holt in der VM den neuesten Stand aus dem Repository und uebernimmt ihn.
 #
 #     ./setup/update.sh
+#     /opt/pxe-setup/update.sh      -- geht ebenfalls, siehe unten
 #
 # Bewusst OHNE sudo aufrufen: "git pull" soll mit deinem Benutzer und
 # deinem SSH-Schluessel laufen, nicht als root. Fuer install.sh fragt das
@@ -16,6 +17,24 @@ log()  { printf '\n\033[1;34m==>\033[0m %s\n' "$*"; }
 die()  { printf '\033[1;31m[X]\033[0m %s\n' "$*" >&2; exit 1; }
 
 [[ $EUID -ne 0 ]] || die "Bitte OHNE sudo aufrufen -- git soll deinem Benutzer gehoeren."
+
+# Aufruf aus der nach /opt/pxe-setup gespiegelten Kopie: Dort liegt nur
+# setup/, PROJECT_DIR waere also /opt -- und das ist kein Repository. Den
+# Weg zurueck legt install.sh bei jedem Lauf daneben ("projektpfad"), und
+# install.sh selbst geht ihn seit jeher. Hier fehlte er: Es lag eine
+# ausfuehrbare Datei, die nie funktionieren konnte, neben der Datei mit
+# der Antwort. Aufgefallen am 04.09.2026, beim ersten Update nach der
+# Veroeffentlichung.
+if ! git -C "$PROJECT_DIR" rev-parse --git-dir >/dev/null 2>&1; then
+  ZURUECK="$(dirname "${BASH_SOURCE[0]}")/projektpfad"
+  if [[ -r "$ZURUECK" ]]; then
+    PROJEKT="$(head -n1 "$ZURUECK")"
+    if [[ -d "$PROJEKT/.git" && -x "$PROJEKT/setup/update.sh" ]]; then
+      log "Uebergabe an den Projektordner: $PROJEKT"
+      exec "$PROJEKT/setup/update.sh" "$@"
+    fi
+  fi
+fi
 
 cd "$PROJECT_DIR"
 git rev-parse --git-dir >/dev/null 2>&1 \

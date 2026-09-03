@@ -30,6 +30,13 @@ Kommt eine neue Fassung des Projekts, holt ein einziger Befehl sie und
 Bewusst **ohne** `sudo` aufrufen: `git pull` soll deinem Benutzer gehören.
 Für `install.sh` fragt das Skript selbst nach dem Passwort.
 
+Wer den Pfad zum Klon nicht zur Hand hat, nimmt die Kopie, die bei jeder
+Installation entsteht — sie reicht an das Original weiter:
+
+```bash
+/opt/pxe-setup/update.sh
+```
+
 Das ist der einzige Weg. **Dateien unter `/opt/pxeweb` von Hand zu ändern
 bringt nichts** — der nächste Lauf überschreibt sie, Quelle ist immer das
 Repository.
