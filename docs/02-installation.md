@@ -118,10 +118,10 @@ dieser Stelle noch gar nicht, den richtet der nächste Abschnitt ein.
                   push               pull
 ```
 
-> **Das Repository ist noch nicht öffentlich.** Angelegt wird es bei der
-> Veröffentlichung unter `https://github.com/exmig/marlei-boot.git`; bis
-> dahin führt die Adresse ins Leere. Der Produktname steht seit dem
-> 31.08.2026 fest: **MARLEI Boot**.
+> **Seit dem 04.09.2026 ist das Repository öffentlich:**
+> `https://github.com/exmig/marlei-boot.git`, AGPL-3.0, erste Fassung
+> **v1.0**. Zum Klonen braucht es weder ein Konto noch einen Schlüssel —
+> HTTPS genügt.
 
 ### Einmalig: klonen
 
