@@ -71,7 +71,7 @@ cat <<INFO
 ===========================================================================
  Fertig. Auf dem Windows-Rechner jetzt einrichten:
 
-   cd C:\\Users\\mel\\Documents\\prj_pxe_server
+   cd <Ordner mit dem Klon>
    git remote add vm ssh://$USER@${MY_IP:-<ip-der-vm>}/~/${REPO##*/}
    git push -u vm $BRANCH
 
