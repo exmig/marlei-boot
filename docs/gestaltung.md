@@ -473,6 +473,50 @@ wäre die Hälfte davon.
 
 ---
 
+### Was außer der Überschrift in den Kartenkopf darf
+
+Am 03.09.2026 festgelegt, als die Liste *Registrierte Clients* eine Suche
+bekam. **Der Kartenkopf ist eine Zeile, keine Fläche.** Er trägt links die
+Überschrift, ganz rechts das Fragezeichen — und dazwischen darf stehen,
+was *für diese ganze Karte* gilt:
+
+```
+Registrierte Clients ─────── 80 Rechner ─ [ Suchen… ] ─ (?)
+```
+
+**Das Fragezeichen bleibt das letzte Element.** Es steht an jeder Karte an
+derselben Stelle (siehe *Das Zeichen*); alles Neue schiebt sich davor,
+nicht dahinter. Baulich ist der Platz schon da: `.kartenkopf` ist eine
+Flex-Zeile, und `h2 { margin: 0 auto 0 0 }` schiebt alles Weitere nach
+rechts.
+
+**Eine Suche steht dauerhaft dort, nicht erst ab einer Listenlänge.** Ein
+Bedienelement, das kommt und geht, lehrt eine Regel, die es nicht gibt:
+Wer die Suche einmal erlebt hat, sucht sie auf der nächsten Karte und hält
+ihr Fehlen für einen Fehler. Und eine Schwelle wäre hier ohnehin schon bei
+vier Rechnern überschritten — eine Zeile der Liste ist ein Block aus Name,
+Produkt und Zeitpunkt, keine Zeile.
+
+**Sie gehört zur Karte, nicht zur Seite.** Zwei lange Listen auf einer
+Seite suchen nach Verschiedenem; ein Feld, das beides zugleich filtert,
+tut zwei Dinge auf einmal und keines davon gut. Die Regel: *Jede Karte,
+deren Liste mit dem Betrieb wächst, bekommt ihr eigenes Feld.* Listen, die
+nur mit dem Katalog wachsen — *Systeme*, *Quellen* — bekommen keines.
+
+**Die Zahl davor gehört dazu.** Sie liest sich mit dem Feld in einem Zug:
+*„80 Rechner"*, beim Tippen *„80 Rechner, 1 gefunden"*. Sie ist eine
+Statusmeldung (`role="status"`), damit ein Vorleseprogramm den Treffer
+mitbekommt — ohne sie erführe ein blinder Benutzer nur, dass die Liste
+kürzer geworden ist.
+
+**Knöpfe gehören dagegen nicht in den Kartenkopf, sondern in die
+Tabellenkopfzeile** — dort, wo die Spalte steht, für die sie gelten:
+*Speichern* über den Boot-Optionen, *WOL* über den Weckkästchen,
+*Löschen* über den Löschkästchen. Der Kartenkopf sagt, *was* die Karte
+ist; die Tabellenkopfzeile sagt, *was man mit einer Spalte tun kann.*
+
+---
+
 ### Was in die Fußzeile gehört
 
 Nicht alles, was unten steht. Die Fußzeile ist der Teil, der **über den
