@@ -795,6 +795,22 @@ table.eng .herkunft .bezeichnung input.name { flex: 1 1 auto; max-width: 26rem; 
 }
 .kartenhilfe:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+/* Die Suche einer Karte: steht in der Kopfzeile, links vom Fragezeichen,
+   und zwar dauerhaft -- nicht erst ab einer Listenlaenge. Am 03.09.2026
+   entschieden: Eine Schwelle waere hier schon bei vier Rechnern
+   ueberschritten (eine Zeile ist ein Block, keine Zeile), und ein
+   Bedienelement, das kommt und geht, lehrt eine Regel, die es nicht gibt
+   -- wer die Suche einmal erlebt hat, sucht sie auf der naechsten Karte
+   und haelt ihr Fehlen fuer einen Fehler.
+
+   Die Zahl davor gehoert dazu und liest sich mit ihr in einem Zug:
+   "4 Rechner", beim Tippen "4 Rechner, 1 gefunden". Sie ist eine
+   Statusmeldung (role="status"), damit ein Vorleseprogramm den Treffer
+   mitbekommt -- ohne sie faende ein blinder Benutzer nur heraus, dass die
+   Liste kuerzer geworden ist. */
+.kartensuche { flex: 0 0 auto; width: 11rem; max-width: 40vw; }
+.suchstand { flex: 0 0 auto; white-space: nowrap; }
+
 /* So leise gesetzt wie die Angaben unter einem Eintrag ("pcbios, efi") --
    die Reihenfolge wird selten angefasst und soll die Ueberschrift nicht
    ueberstimmen. Deshalb keine Spaltenoptik mit Grossbuchstaben. */
@@ -1422,7 +1438,7 @@ tfoot tr.summe td { color: var(--ink); font-weight: 600; padding-top: .5rem; }
 .spaced { margin-top: 1rem; }
 .inline { display: inline-flex; align-items: center; gap: .3rem; font-size: .85rem; color: var(--muted); }
 
-input[type="text"], select {
+input[type="text"], input[type="search"], select {
   /* Eine Groesse fuer alle Felder, am 27.08.2026 festgelegt -- die der
      Zeilen unter Quellen. Vorher gab es drei: die hier (.35rem .5rem /
      15px), table.eng (.25rem .4rem / 0,9rem) und .kompakt bzw. .ausgabe

@@ -6,6 +6,18 @@
 <section id="registrierte-clients">
   <div class="kartenkopf">
     <h2>Registrierte Clients</h2>
+    {% if clients %}
+    {# Zahl und Suchfeld gehoeren zusammen und stehen links vom
+       Fragezeichen -- das bleibt an jeder Karte das letzte Element in der
+       Kopfzeile. Ohne JavaScript passiert hier nichts; deshalb ist das
+       Feld kein Formular, sondern nur ein Feld. #}
+    <span class="suchstand muted small" id="clientszahl" role="status" aria-live="polite">
+      {{ clients|length }} Rechner
+    </span>
+    <input type="search" id="clientssuche" class="kartensuche" placeholder="Suchen…"
+           autocomplete="off" aria-label="Liste durchsuchen"
+           title="Filtert die Liste nach MAC-Adresse, Name oder Produkt — ohne Neuladen">
+    {% endif %}
     <a class="kartenhilfe" href="/hilfe#clients-liste"
        title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
   </div>
@@ -45,7 +57,7 @@
     </thead>
     <tbody>
       {% for c in clients %}
-      <tr data-mac="{{ c['mac'] }}">
+      <tr data-mac="{{ c['mac'] }}" data-produkt="{{ c['product'] or '' }}">
         <td>
           <div class="namensfeld">
             <input type="text" name="name:{{ c['mac'] }}" form="sichern"
@@ -131,6 +143,12 @@
         </td>
       </tr>
       {% endfor %}
+      {# Steht da, damit die Tabelle bei null Treffern nicht als nackte
+         Kopfzeile dasteht -- das sieht aus wie ein Fehler und nicht wie
+         eine Antwort. Sichtbar macht sie das Skript, sonst niemand. #}
+      <tr id="ohnetreffer" hidden>
+        <td colspan="4" class="hint">Kein Rechner passt zu dieser Suche.</td>
+      </tr>
     </tbody>
   </table>
   {% else %}
@@ -203,6 +221,59 @@
 </section>
 
 <script>
+// Die Suche im Kartenkopf. Sie filtert die Liste, die ohnehin schon in der
+// Seite steht -- kein zweiter Endpunkt, kein Neuladen, kein LIMIT.
+// Abschneiden waere hier auch falsch: Wer einen bestimmten Rechner sucht,
+// sucht vielleicht den einundhundertsten.
+//
+// Gesucht wird ueber MAC, Name und Produkt -- also ueber das, was in der
+// Zeile links steht. Der Name wird aus dem Eingabefeld gelesen und nicht
+// aus der Datenbank: Wer gerade einen Namen getippt und noch nicht
+// gespeichert hat, soll ihn auch finden.
+//
+// Ausgeblendet wird mit "hidden", nicht ausgebaut. Die Felder einer
+// versteckten Zeile haengen weiter ueber ihr form-Attribut am
+// Speichern-Formular und werden mitgeschickt -- sonst verloere ein
+// Speichern still alles, was gerade nicht sichtbar ist.
+(function () {
+  var feld = document.getElementById("clientssuche");
+  var zahl = document.getElementById("clientszahl");
+  var tabelle = document.querySelector("table.eng");
+  if (!feld || !zahl || !tabelle) { return; }
+
+  function filtern() {
+    var suche = feld.value.trim().toLowerCase();
+    var reihen = tabelle.querySelectorAll("tr[data-mac]");
+    var treffer = 0;
+
+    reihen.forEach(function (reihe) {
+      var name = reihe.querySelector('input[name^="name:"]');
+      var text = (reihe.dataset.mac + " " + (name ? name.value : "") + " " +
+                  (reihe.dataset.produkt || "")).toLowerCase();
+      var zeigen = !suche || text.indexOf(suche) !== -1;
+      reihe.hidden = !zeigen;
+      if (zeigen) { treffer++; }
+    });
+
+    // Das Auffrischen liest die Marke: Solange gefiltert wird, laedt die
+    // Seite nicht neu -- ein Neuladen mitten im Suchen wuerfe das
+    // Suchwort weg und die Liste dem Benutzer unter den Fingern um.
+    tabelle.dataset.gefiltert = suche ? "1" : "";
+    zahl.textContent = suche
+      ? reihen.length + " Rechner, " + treffer + " gefunden"
+      : reihen.length + " Rechner";
+
+    var leer = document.getElementById("ohnetreffer");
+    if (leer) { leer.hidden = !(suche && treffer === 0); }
+  }
+
+  // Das Auffrischen schreibt Namen in die Felder; danach kann eine Zeile
+  // zum Suchwort passen, die vorher nicht passte.
+  tabelle.filtern = filtern;
+  feld.addEventListener("input", filtern);
+  filtern();
+})();
+
 // Ein Knopf fuer die ganze Tabelle. Drei Aufgaben, ein Skript, weil alle
 // dasselbe wissen muessen: welche Zeile vom gespeicherten Stand abweicht.
 //
@@ -387,11 +458,17 @@
       .then(function (d) {
         var fehlt = uebernehmen(d.clients, false);
 
+        if (tabelle.filtern) { tabelle.filtern(); }
+
         // Rechner dazugekommen oder geloescht? Dann hilft nur neu laden --
-        // aber nicht, solange jemand etwas Ungespeichertes offen hat.
+        // aber nicht, solange jemand etwas Ungespeichertes offen hat, und
+        // nicht, solange gefiltert wird.
         var anders = fehlt ||
           document.querySelectorAll("tr[data-mac]").length !== d.clients.length;
-        if (anders && !etwasOffen()) { location.reload(); return; }
+        if (anders && !etwasOffen() && !tabelle.dataset.gefiltert) {
+          location.reload();
+          return;
+        }
 
         setTimeout(auffrischen, 5000);
       })

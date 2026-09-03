@@ -604,6 +604,20 @@ with TestClient(pxeapp.app) as c:
     check("Kaestchen gehoeren ueber form-Attribut dazu",
           liste.count('form="wol"') >= 4)
 
+    # Die Suche filtert im Browser; hier laesst sich nur pruefen, dass sie
+    # ueberhaupt ausgeliefert wird -- und zwar immer, nicht erst ab einer
+    # Listenlaenge (Entscheidung vom 03.09.2026).
+    seite_liste = c.get("/clients").text
+    check("Suchfeld steht im Kartenkopf",
+          'id="clientssuche"' in seite_liste)
+    zeilen = seite_liste.count('<tr data-mac=')
+    stand = re.search(r'id="clientszahl"[^>]*>\s*(\d+) Rechner', seite_liste)
+    check("... mit der Zahl daneben, und sie stimmt",
+          bool(stand) and int(stand.group(1)) == zeilen,
+          (stand.group(1) if stand else "keine") + " statt " + str(zeilen))
+    check("... und einer Zeile fuer null Treffer",
+          'id="ohnetreffer"' in seite_liste)
+
     r = c.post("/clients/wecken", data={"mac": [MAC, "aa:bb:cc:11:22:33"]},
                follow_redirects=False)
     check("Sammelwecken leitet weiter", r.status_code == 303)
