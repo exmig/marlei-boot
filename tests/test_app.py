@@ -530,16 +530,25 @@ with TestClient(pxeapp.app) as c:
     check("Spalte heisst jetzt Boot-Optionen",
           "Boot-Optionen" in seite and "Vorauswahl für den nächsten Start" not in seite)
 
-    # Loeschen gehoert zum Rechner, nicht zum Einschalten -- also in die
-    # erste Spalte, und dort als letztes.
+    # Fuenf Spalten, und jede traegt genau eine Sache. Loeschen sitzt seit
+    # dem 03.09.2026 nicht mehr in der Zeile, sondern als Sammelknopf in
+    # der Kopfzeile -- gebaut wie WOL und Speichern.
     zeile = seite[seite.index("<tbody>"):seite.index("</tbody>")]
     spalten = zeile.split("<td")
-    check("Loeschen steht in der Rechnerspalte", "/delete" in spalten[1])
-    check("... und dort ganz unten",
-          spalten[1].index("/delete") > spalten[1].index('name="name:'))
-    check("letzte Spalte enthaelt nur noch das Kaestchen",
-          'name="mac"' in spalten[4] and "/delete" not in spalten[4]
-          and "/wake" not in spalten[4], spalten[4][:160])
+    check("kein Loeschknopf mehr in der Zeile", "/delete" not in zeile)
+    check("Client-Spalte: Name, Produkt, Zeitpunkt",
+          'name="name:' in spalten[1] and 'class="muted small gesehen' in spalten[1])
+    check("Adressen-Spalte: MAC und IP",
+          "<code" in spalten[2] and "herkunft" in spalten[2], spalten[2][:160])
+    check("... mit der Architektur als Titel an der MAC",
+          "startet über" in spalten[2], spalten[2][:200])
+    check("WOL-Spalte: Kaestchen und geweckt",
+          'form="wol"' in spalten[4] and "geweckt" in spalten[4], spalten[4][:160])
+    check("Loeschspalte: nur das Kaestchen",
+          'form="loeschen"' in spalten[5] and "button" not in spalten[5],
+          spalten[5][:160])
+    check("der Sammelknopf steht in der Kopfzeile",
+          'id="loeschknopf"' in seite[:seite.index("<tbody>")])
 
     # Das Namensfeld bekam seine Werte frueher von einer Tabellenregel
     # ueberstimmt (table.eng input[type=text]) und trug deshalb einen
@@ -599,10 +608,14 @@ with TestClient(pxeapp.app) as c:
           "None" not in ohne_arch)
     check("Knopf sitzt in der Spaltenueberschrift",
           ">WOL</button>" in liste and "Wecken</button>" not in liste)
-    check("je Zeile ein Ankreuzkaestchen",
-          liste.count('type="checkbox" name="mac"') == 3, str(liste.count('name="mac"')))
+    # Zwei Kaestchen je Zeile, seit Loeschen ein Sammelknopf ist: eines
+    # weckt, eines nimmt aus der Liste. Beide heissen "mac" und gehoeren
+    # ueber ihr form-Attribut zu verschiedenen Formularen.
+    check("je Zeile ein Kaestchen fuer WOL und eines fuers Loeschen",
+          liste.count('type="checkbox" name="mac"') == 6,
+          str(liste.count('type="checkbox" name="mac"')))
     check("Kaestchen gehoeren ueber form-Attribut dazu",
-          liste.count('form="wol"') >= 4)
+          liste.count('form="wol"') >= 4 and liste.count('form="loeschen"') >= 4)
 
     # Die Suche filtert im Browser; hier laesst sich nur pruefen, dass sie
     # ueberhaupt ausgeliefert wird -- und zwar immer, nicht erst ab einer
@@ -724,6 +737,42 @@ with TestClient(pxeapp.app) as c:
     check("leerer Name wird nachgetragen",
           nachgereicht == "Nachgereicht" and "heißt jetzt" in ziel,
           f"{nachgereicht} {ziel}")
+
+    print("\n-- Sammelloeschen")
+    WEG1, WEG2 = "aa:bb:cc:ee:00:01", "aa:bb:cc:ee:00:02"
+    anmelden(WEG1, "Weg-eins")
+    anmelden(WEG2, "Weg-zwei")
+
+    def loeschen(*macs):
+        r = c.post("/clients/loeschen", data={"mac": list(macs)},
+                   follow_redirects=False)
+        return r.status_code, unquote(r.headers.get("location", ""))
+
+    code, ziel = loeschen()
+    check("ohne Auswahl passiert nichts, und die Karte sagt es",
+          code == 303 and "Keinen Rechner angekreuzt" in ziel, ziel)
+
+    code, ziel = loeschen("aa:bb:cc:ee:ff:99")
+    check("eine unbekannte MAC ebenso",
+          "stand in der Liste" in ziel, ziel)
+
+    code, ziel = loeschen(WEG1, WEG2)
+    with pxeapp.db() as conn:
+        uebrig = conn.execute(
+            "SELECT count(*) AS n FROM clients WHERE mac IN (?,?)",
+            (WEG1, WEG2)).fetchone()["n"]
+    check("zwei Rechner auf einmal sind weg", uebrig == 0, str(uebrig))
+    check("... und die Meldung nennt beide",
+          "2 Rechner gelöscht" in ziel and "Weg-eins" in ziel
+          and "Weg-zwei" in ziel, ziel)
+
+    # Der einzelne Weg bleibt bestehen -- er hat nur keinen Knopf mehr in
+    # der Oberflaeche.
+    anmelden(WEG1, "Nochmal")
+    r = c.post(f"/clients/{WEG1}/delete", follow_redirects=False)
+    check("die Route je Rechner gibt es weiter",
+          "gelöscht" in unquote(r.headers.get("location", "")),
+          r.headers.get("location", ""))
 
     print("\n-- Fehlerfaelle")
     check("unbekannter Eintrag -> 404", c.get("/boot/gibtsnicht.ipxe").status_code == 404)

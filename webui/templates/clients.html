@@ -16,24 +16,30 @@
     </span>
     <input type="search" id="clientssuche" class="kartensuche" placeholder="Suchen…"
            autocomplete="off" aria-label="Liste durchsuchen"
-           title="Filtert die Liste nach MAC-Adresse, Name oder Produkt — ohne Neuladen">
+           title="Filtert die Liste nach MAC, Name, Produkt oder IP-Adresse — ohne Neuladen">
     {% endif %}
     <a class="kartenhilfe" href="/hilfe#clients-liste"
        title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
   </div>
   {% if clients %}
-  <!-- Beide Formulare stehen ausserhalb der Tabelle: ein <form> darf keine
-       <tr> umschliessen. Die Felder in den Zeilen haengen sich ueber ihr
-       form-Attribut an das passende an -- Name, Auswahl und Haken an
-       "sichern", die Kreuze der WOL-Spalte an "wol". -->
+  <!-- Die drei Formulare stehen ausserhalb der Tabelle: ein <form> darf
+       keine <tr> umschliessen. Die Felder in den Zeilen haengen sich ueber
+       ihr form-Attribut an das passende an -- Name, Auswahl und Haken an
+       "sichern", die Kreuze der WOL-Spalte an "wol", die der Loeschspalte
+       an "loeschen". Drei Knoepfe in der Kopfzeile, drei Formulare,
+       dasselbe Muster. -->
   <form id="sichern" method="post" action="/clients/speichern"></form>
   <form id="wol" method="post" action="/clients/wecken"></form>
+  <form id="loeschen" method="post" action="/clients/loeschen"></form>
 
   <table class="eng">
     <thead>
       <tr>
         <th>Client</th>
-        <th>Zuletzt gesehen</th>
+        {# Zwei Adressen, eine Spalte: Die Zeile ist links ohnehin drei
+           Zeilen hoch (Name, Produkt, Zeitpunkt) -- MAC und IP darunter
+           kosten deshalb keine Hoehe, wohl aber eine Spalte weniger. #}
+        <th>Adressen</th>
         <th>
           <!-- Das Nebeneinander steht in einem eigenen Element, nicht am
                <th> selbst: ein "display: flex" auf einer Kopfzelle nimmt
@@ -53,6 +59,15 @@
           <button type="submit" form="wol"
                   title="Angekreuzte Rechner per Wake-on-LAN einschalten">WOL</button>
         </th>
+        {# Loeschen gilt wie WOL fuer die ganze Tabelle und steht deshalb
+           auch dort. Ausgeliefert wird der Knopf grau und ohne Zahl; das
+           Skript macht ihn scharf, sobald etwas angekreuzt ist -- und
+           verlangt einen zweiten Klick. Ohne JavaScript bleibt er ein
+           gewoehnlicher Knopf, dann faengt der Server den leeren Fall ab. #}
+        <th class="loeschspalte">
+          <button type="submit" form="loeschen" id="loeschknopf" class="danger"
+                  title="Angekreuzte Rechner aus der Liste nehmen">Löschen</button>
+        </th>
       </tr>
     </thead>
     <tbody>
@@ -69,32 +84,29 @@
                    placeholder="Name eintragen"
                    title="Name des Rechners, höchstens {{ max_clientname }} Zeichen — wird mit Speichern übernommen">
           </div>
-          <code>{{ c["mac"] }}</code>
           {% if c["product"] %}<div class="muted small">{{ c["product"] }}</div>{% endif %}
-          <form method="post" action="/clients/{{ c['mac'] }}/delete" class="wegnehmen">
-            <button type="submit" class="danger">Löschen</button>
-          </form>
-        </td>
-        <td class="nowrap">
-          <span class="gesehen{% if not c['last_seen'] %} muted{% endif %}"
-                title="{{ c['last_seen'] or '' }}">
+          {# Der Zeitpunkt steht jetzt hier statt in einer eigenen Spalte:
+             Er gehoert zum Rechner und nicht neben seine Adressen. #}
+          <div class="muted small gesehen{% if not c['last_seen'] %} nie{% endif %}"
+               title="{{ c['last_seen'] or '' }}">
             {{ (c["last_seen"] | zeit) if c["last_seen"] else "noch nie" }}
-          </span>
-          <div class="muted small herkunft">
-            {#- Leere Angaben weglassen statt "None" zu schreiben: ein von
-                Hand eingetragener Client hat noch keine Architektur, und wer
-                nie gebootet hat, auch keine Adresse. Dieselbe Regel wie in
-                der JSON-Fassung, die das Auffrischen liefert. -#}
-            {%- if c["last_seen"] -%}
-              {{ [c["last_ip"], c["last_arch"]] | select | join(" · ") }}
-            {%- endif -%}
-          </div>
-          <div class="muted small geweckt" title="{{ c['last_wake'] or '' }}">
-            {%- if c["last_wake"] %}geweckt {{ c["last_wake"] | zeit }}{% endif -%}
           </div>
         </td>
+        <td class="adressen nowrap">
+          {# Die Architektur haengt als Titel an der MAC-Adresse. Sie ist
+             die Angabe, nach der man fragt, wenn ein Rechner nicht startet
+             (pcbios gegen efi) -- sichtbar braucht sie ihren Platz nicht. #}
+          <code{% if c["last_arch"] %} title="startet über {{ c['last_arch'] }}"{% endif %}>{{ c["mac"] }}</code>
+          <div class="muted small herkunft">
+            {%- if c["last_ip"] %}{{ c["last_ip"] }}{% else %}—{% endif -%}
+          </div>
+        </td>
+
         <td>
-          <div class="row">
+          {# Der Haken steht unter der Auswahlliste, nicht daneben: Er
+             gehoert zu ihr ("was", dann "ob"), und die Zeile ist links
+             ohnehin drei Zeilen hoch -- die zweite kostet keine Hoehe. #}
+          <div class="row bootspalte">
             <select name="entry:{{ c['mac'] }}" form="sichern">
               <option value="">— Menü anzeigen —</option>
               {# Angeboten wird, was unter Systeme fuer die Boot-Optionen
@@ -145,6 +157,14 @@
         <td class="wolspalte">
           <input type="checkbox" name="mac" value="{{ c['mac'] }}" form="wol"
                  title="Diesen Rechner mit dem WOL-Knopf oben einschalten">
+          {# Wann zuletzt geweckt wurde, steht dort, wo man danach fragt. #}
+          <div class="muted small geweckt" title="{{ c['last_wake'] or '' }}">
+            {%- if c["last_wake"] %}geweckt {{ c["last_wake"] | zeit }}{% endif -%}
+          </div>
+        </td>
+        <td class="loeschspalte">
+          <input type="checkbox" name="mac" value="{{ c['mac'] }}" form="loeschen"
+                 title="Diesen Rechner zum Löschen ankreuzen">
         </td>
       </tr>
       {% endfor %}
@@ -152,7 +172,7 @@
          Kopfzeile dasteht -- das sieht aus wie ein Fehler und nicht wie
          eine Antwort. Sichtbar macht sie das Skript, sonst niemand. #}
       <tr id="ohnetreffer" hidden>
-        <td colspan="4" class="hint">Kein Rechner passt zu dieser Suche.</td>
+        <td colspan="5" class="hint">Kein Rechner passt zu dieser Suche.</td>
       </tr>
     </tbody>
   </table>
@@ -233,10 +253,10 @@
 // Abschneiden waere hier auch falsch: Wer einen bestimmten Rechner sucht,
 // sucht vielleicht den einundhundertsten.
 //
-// Gesucht wird ueber MAC, Name und Produkt -- also ueber das, was in der
-// Zeile links steht. Der Name wird aus dem Eingabefeld gelesen und nicht
-// aus der Datenbank: Wer gerade einen Namen getippt und noch nicht
-// gespeichert hat, soll ihn auch finden.
+// Gesucht wird ueber MAC, Name, Produkt und IP-Adresse -- also ueber
+// alles, was als Text in der Zeile steht. Der Name wird aus dem
+// Eingabefeld gelesen und nicht aus der Datenbank: Wer gerade einen Namen
+// getippt und noch nicht gespeichert hat, soll ihn auch finden.
 //
 // Ausgeblendet wird mit "hidden", nicht ausgebaut. Die Felder einer
 // versteckten Zeile haengen weiter ueber ihr form-Attribut am
@@ -255,8 +275,10 @@
 
     reihen.forEach(function (reihe) {
       var name = reihe.querySelector('input[name^="name:"]');
+      var adresse = reihe.querySelector(".herkunft");
       var text = (reihe.dataset.mac + " " + (name ? name.value : "") + " " +
-                  (reihe.dataset.produkt || "")).toLowerCase();
+                  (reihe.dataset.produkt || "") + " " +
+                  (adresse ? adresse.textContent : "")).toLowerCase();
       var zeigen = !suche || text.indexOf(suche) !== -1;
       reihe.hidden = !zeigen;
       if (zeigen) { treffer++; }
@@ -279,6 +301,67 @@
   tabelle.filtern = filtern;
   feld.addEventListener("input", filtern);
   filtern();
+})();
+
+// Der Loeschknopf in der Kopfzeile. Drei Dinge, und alle drei aus einem
+// Grund: Loeschen ist die einzige Handlung auf dieser Seite, die etwas
+// wegnimmt, das nicht von selbst wiederkommt. Speichern und Wecken sind
+// harmlos, deshalb tun die das nicht.
+//
+// 1. Grau, solange nichts angekreuzt ist -- so wie der Speichern-Knopf.
+//    Sonst liest sich ein roter Knopf oben rechts wie "alles loeschen".
+// 2. Er nennt die Zahl: "2 loeschen". Wer angekreuzt hat und dann rollt,
+//    sieht oben, wie viele es sind.
+// 3. Er verlangt einen zweiten Klick. Kein Browser-Dialog -- der blockiert
+//    die Seite und sieht auf jedem System anders aus; der Knopf fragt
+//    selbst und nimmt die Frage nach vier Sekunden zurueck.
+//
+// Ohne JavaScript bleibt er ein gewoehnlicher Knopf: Dann faengt der
+// Server den leeren Fall ab, und die Rueckfrage entfaellt.
+(function () {
+  var knopf = document.getElementById("loeschknopf");
+  var formular = document.getElementById("loeschen");
+  if (!knopf || !formular) { return; }
+
+  var kaesten = [].slice.call(
+    document.querySelectorAll('input[form="loeschen"][type="checkbox"]'));
+  var beschriftung = knopf.textContent.trim();
+  var scharf = false;
+  var uhr = null;
+
+  function angekreuzt() {
+    return kaesten.filter(function (k) { return k.checked; }).length;
+  }
+
+  function entschaerfen() {
+    scharf = false;
+    if (uhr) { clearTimeout(uhr); uhr = null; }
+    knopf.classList.remove("scharf");
+  }
+
+  function pruefen() {
+    var n = angekreuzt();
+    knopf.disabled = n === 0;
+    if (n === 0) { entschaerfen(); }
+    if (scharf) { return; }
+    knopf.textContent = n ? n + " löschen" : beschriftung;
+  }
+
+  kaesten.forEach(function (k) {
+    k.addEventListener("change", function () { entschaerfen(); pruefen(); });
+  });
+
+  knopf.addEventListener("click", function (ereignis) {
+    if (!angekreuzt()) { ereignis.preventDefault(); return; }
+    if (scharf) { return; }              // zweiter Klick: durchlassen
+    ereignis.preventDefault();
+    scharf = true;
+    knopf.classList.add("scharf");
+    knopf.textContent = "Wirklich? " + angekreuzt() + " löschen";
+    uhr = setTimeout(function () { entschaerfen(); pruefen(); }, 4000);
+  });
+
+  pruefen();
 })();
 
 // Ein Knopf fuer die ganze Tabelle. Drei Aufgaben, ein Skript, weil alle
@@ -439,6 +522,10 @@
       schreibe(reihe.querySelector(".gesehen"), c.gesehen, c.gesehen_roh);
       schreibe(reihe.querySelector(".herkunft"), c.herkunft);
       schreibe(reihe.querySelector(".geweckt"), c.geweckt, c.geweckt_roh);
+      // Die Architektur ist nur ein Titel an der MAC -- kein Text, der
+      // sich vergleichen liesse, deshalb hier und nicht in schreibe().
+      var kennung = reihe.querySelector(".adressen code");
+      if (kennung && c.arch !== undefined) { kennung.title = c.arch; }
 
       var eintrag = zeilen[c.mac];
       if (!eintrag) { return; }

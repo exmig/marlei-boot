@@ -392,6 +392,26 @@ table.eng .row { gap: .35rem; }
 .wolspalte input[type="checkbox"] { width: 1.05rem; height: 1.05rem; }
 th.wolspalte { padding-top: .25rem; padding-bottom: .25rem; }
 th.wolspalte button { letter-spacing: .04em; }
+
+/* Die Loeschspalte ist gebaut wie die WOL-Spalte, und das ist der Zweck:
+   Knopf in der Kopfzeile, Kaestchen darunter, einmal fuer die ganze
+   Tabelle. Dasselbe Muster wie Speichern und WOL -- beim dritten Mal muss
+   niemand mehr raten, wozu ein Kaestchen gehoert. */
+.loeschspalte { width: 1%; text-align: center; white-space: nowrap; }
+.loeschspalte input[type="checkbox"] { width: 1.05rem; height: 1.05rem; }
+th.loeschspalte { padding-top: .25rem; padding-bottom: .25rem; }
+
+/* Zwei Adressen in einer Spalte: die MAC oben (sie ist die Kennung), die
+   IP darunter als Nebenangabe -- sie wechselt, die MAC nicht. */
+.adressen code { font-size: .85rem; }
+.adressen .herkunft { line-height: 1.35; }
+
+/* Steht in der Client-Spalte unter dem Produkt. Beim Auffrischen wird der
+   Text getauscht, deshalb kann die Klasse nicht am Zustand haengen. */
+table.eng .gesehen { line-height: 1.35; }
+
+/* Der Haken unter der Auswahlliste statt daneben. */
+.bootspalte { flex-direction: column; align-items: flex-start; gap: .3rem; }
 /* Sieht aus wie eine Ueberschrift, ist aber ein Feld. Deshalb eigene
    Masse und nicht die der gewoehnlichen Felder. */
 .namensfeld input[type="text"] {
@@ -1511,6 +1531,12 @@ button.danger {
   color: var(--danger);
   border-color: var(--line);
 }
+/* Der scharfgestellte Warnknopf: Er hat gefragt und wartet auf den zweiten
+   Klick. Geaendert wird nur der Rahmen -- die Schrift behaelt ihre
+   gerechnete Farbe (6,5:1 hell, 6,7:1 dunkel), und die Randfarbe traegt
+   als Bedienelement dieselben Werte. Kein neues Farbpaar, das man
+   nachrechnen muesste. */
+button.danger.scharf { border-color: var(--danger); font-weight: 600; }
 /* Variante 2 -- der umrandete Knopf. Am 27.08.2026 festgelegt: Flaeche
    weiss, Schrift in der Marke, Rahmen weiter grau. Die Masse sind die von
    Variante 1, hier aendern sich nur die Farben. */

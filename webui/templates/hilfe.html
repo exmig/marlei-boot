@@ -1881,7 +1881,19 @@
       </tr>
       <tr>
         <td class="nowrap"><strong>Zuletzt gesehen</strong></td>
-        <td class="muted">Wann sich der Rechner zuletzt gemeldet hat.</td>
+        <td class="muted">Wann sich der Rechner zuletzt gemeldet hat — die
+          dritte Zeile in der Spalte <em>Client</em>. Bei einem von Hand
+          eingetragenen Rechner steht dort <em>noch nie</em>.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Adressen</strong></td>
+        <td class="muted">Oben die <strong>MAC-Adresse</strong> — sie ist die
+          Kennung und ändert sich nie —, darunter die <strong>IP-Adresse</strong>
+          des letzten Starts. Wer noch nie gebootet hat, hat keine: dann steht
+          dort <strong>—</strong>. Mit der Maus über der MAC-Adresse steht,
+          <strong>womit</strong> der Rechner gestartet ist
+          (<code>pcbios</code> oder <code>efi</code>) — die Angabe, nach der man
+          fragt, wenn eine Maschine nicht startet.</td>
       </tr>
       <tr>
         <td class="nowrap"><strong>PXE Boot aktiv</strong></td>
@@ -1895,7 +1907,13 @@
       <tr>
         <td class="nowrap"><strong>WOL</strong></td>
         <td class="muted">Das Kästchen zum Einschalten, mit dem Knopf in der
-          Spaltenüberschrift.</td>
+          Spaltenüberschrift. Darunter steht, wann dieser Rechner zuletzt
+          geweckt wurde.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Löschen</strong></td>
+        <td class="muted">Das Kästchen zum Aus-der-Liste-Nehmen, mit dem Knopf
+          in der Spaltenüberschrift.</td>
       </tr>
       <tr>
         <td class="nowrap"><strong>Protokolle</strong></td>
@@ -1928,7 +1946,7 @@
   <p class="muted">
     <strong>3. Einen bestimmten Rechner finden.</strong> Oben rechts in der
     Kartenüberschrift steht ein Suchfeld. Es filtert die Liste beim Tippen —
-    über <strong>MAC-Adresse, Name und Produktkennung</strong>, ohne die
+    über <strong>MAC-Adresse, Name, Produktkennung und IP</strong>, ohne die
     Seite neu zu laden. Daneben steht, wie viele Zeilen es gerade zeigt:
     <em>„70 Rechner, 3 gefunden“</em>. Das Feld sucht nur in dieser Karte;
     jede Karte mit einer Liste bekommt ihr eigenes.
@@ -1939,8 +1957,18 @@
     schickt auch das mit, was gerade nicht zu sehen ist.
   </p>
   <p class="muted">
-    <strong>Löschen</strong> nimmt einen Rechner aus der Liste. Er kommt
-    wieder hinein, sobald er das nächste Mal über das Netz startet.
+    <strong>4. Rechner aus der Liste nehmen.</strong> Rechts ankreuzen und
+    oben auf <strong>Löschen</strong> — genauso wie beim Wecken, nur die
+    andere Spalte. Der Knopf ist grau, solange nichts angekreuzt ist, und
+    nennt dann die Zahl: <em>„2 löschen“</em>. <strong>Er fragt einmal
+    nach:</strong> Der erste Klick macht daraus <em>„Wirklich? 2 löschen“</em>,
+    erst der zweite löscht. Nach vier Sekunden ohne Klick nimmt er die Frage
+    zurück.
+  </p>
+  <p class="muted small">
+    Gelöscht wird nur die <strong>Zeile</strong>, nicht der Rechner: Er kommt
+    wieder herein, sobald er das nächste Mal über das Netz startet — mit
+    seinem Namen ist es dann allerdings vorbei.
   </p>
 
   <h4>Was passiert dabei — und was nicht?</h4>

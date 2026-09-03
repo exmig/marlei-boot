@@ -1550,7 +1550,10 @@ def _rechner_liste() -> list[dict]:
         "pxe_aktiv": bool(c["pxe_aktiv"]),
         "gesehen": lesbare_zeit(c["last_seen"]) if c["last_seen"] else "noch nie",
         "gesehen_roh": c["last_seen"] or "",
-        "herkunft": " · ".join(x for x in (c["last_ip"], c["last_arch"]) if x),
+        # Getrennt, seit die Adressen eine eigene Spalte haben: Die IP
+        # steht sichtbar unter der MAC, die Architektur als deren Titel.
+        "herkunft": c["last_ip"] or "—",
+        "arch": ("startet über " + c["last_arch"]) if c["last_arch"] else "",
         "geweckt": ("geweckt " + lesbare_zeit(c["last_wake"])) if c["last_wake"] else "",
         "geweckt_roh": c["last_wake"] or "",
     } for c in zeilen]
@@ -2045,6 +2048,40 @@ def _clients_meldung(text: str, anker: str = "manuelle-registrierung"):
 # Browser abweist oder der Server.
 MAC_FORM = ("Sechs Paare, getrennt durch Doppelpunkt oder Bindestrich "
             "— aa:bb:cc:dd:ee:ff.")
+
+
+@app.post("/clients/loeschen")
+def clients_loeschen(mac: list[str] = Form(default=[])):
+    """Mehrere Rechner auf einmal aus der Liste nehmen.
+
+    Gebaut wie das Wecken: Knopf in der Spaltenueberschrift, angekreuzt
+    wird in den Zeilen. Vorher hatte jede Zeile ihren eigenen Loeschknopf
+    -- der hielt die Zeile hoch und stand bei siebzig Rechnern siebzigmal
+    da, obwohl man ihn selten braucht.
+
+    **Weg ist hier nur die Zeile, nicht der Rechner.** Er kommt wieder
+    herein, sobald er das naechste Mal ueber das Netz startet -- mit
+    seinem Namen ist es dann allerdings vorbei.
+    """
+    gewaehlt = [m for m in (normalise_mac(x) for x in mac) if m]
+    if not gewaehlt:
+        return _clients_meldung("Keinen Rechner angekreuzt.",
+                                "registrierte-clients")
+
+    with db() as conn:
+        namen = {r["mac"]: r["name"] for r in
+                 conn.execute("SELECT mac, name FROM clients")}
+        weg = [m for m in gewaehlt if m in namen]
+        for adresse in weg:
+            conn.execute("DELETE FROM clients WHERE mac = ?", (adresse,))
+
+    if not weg:
+        return _clients_meldung("Kein angekreuzter Rechner stand in der Liste.",
+                                "registrierte-clients")
+    bezeichnet = [namen.get(m) or m for m in weg]
+    text = ("Gelöscht: " + bezeichnet[0] if len(weg) == 1
+            else f"{len(weg)} Rechner gelöscht: " + ", ".join(bezeichnet))
+    return _clients_meldung(text + ".", "registrierte-clients")
 
 
 @app.post("/clients/{mac}/delete")
