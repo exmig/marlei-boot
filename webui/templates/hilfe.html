@@ -1017,7 +1017,7 @@
       <thead>
         <tr>
           <th>Client</th>
-          <th>Zuletzt gesehen</th>
+          <th>Adressen</th>
           <th>
             <div class="sichernspalte">
               <span>Boot-Optionen</span>
@@ -1027,6 +1027,9 @@
           <th class="wolspalte">
             <button type="button" tabindex="-1">WOL</button>
           </th>
+          <th class="loeschspalte">
+            <button type="button" class="danger" tabindex="-1" disabled>Löschen</button>
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -1035,15 +1038,15 @@
             <div class="namensfeld">
               <input type="text" size="16" value="Werkstatt-PC" readonly tabindex="-1">
             </div>
-            <code>a4:bb:6d:11:22:33</code>
             <div class="muted small">OptiPlex 7040</div>
+            <div class="muted small gesehen">vor 4 Minuten</div>
           </td>
-          <td class="nowrap">
-            <span class="gesehen">vor 4 Minuten</span>
-            <div class="muted small herkunft">192.168.178.42 · efi</div>
+          <td class="adressen nowrap">
+            <code title="startet über efi/x86_64">a4:bb:6d:11:22:33</code>
+            <div class="muted small herkunft">192.168.178.42</div>
           </td>
           <td>
-            <div class="row">
+            <div class="row bootspalte">
               <select tabindex="-1">
                 <option>Debian</option>
               </select>
@@ -1053,6 +1056,10 @@
             </div>
           </td>
           <td class="wolspalte">
+            <input type="checkbox" tabindex="-1">
+            <div class="muted small geweckt">geweckt gestern 20:21</div>
+          </td>
+          <td class="loeschspalte">
             <input type="checkbox" tabindex="-1">
           </td>
         </tr>
@@ -1083,11 +1090,14 @@
     </tbody>
   </table>
   <p class="muted">
-    <em>Speichern</em> übernimmt alle Änderungen der Liste auf einmal.
-    <em>WOL</em> schaltet die angekreuzten Rechner per Wake-on-LAN ein
-    &mdash; nützlich genau hier: Haken setzen, Vorgabe wählen, speichern,
-    einschalten. Der Rechner beginnt zu installieren, ohne dass jemand im
-    Raum ist.
+    <strong>Die drei Knöpfe oben gelten für die ganze Liste</strong>, nicht
+    für eine Zeile &mdash; angekreuzt wird in den Zeilen darunter.
+    <em>Speichern</em> übernimmt alle Änderungen auf einmal. <em>WOL</em>
+    schaltet die angekreuzten Rechner per Wake-on-LAN ein &mdash; nützlich
+    genau hier: Haken setzen, Vorgabe wählen, speichern, einschalten. Der
+    Rechner beginnt zu installieren, ohne dass jemand im Raum ist.
+    <em>Löschen</em> nimmt die angekreuzten aus der Liste; es ist grau,
+    solange nichts angekreuzt ist, und fragt einmal nach.
   </p>
 
   <h4 id="rundgang-7-neu">Und wenn die Liste leer ist?</h4>
@@ -1167,8 +1177,10 @@
       </tr>
       <tr>
         <td class="nowrap"><strong>Die Zeile füllt sich</strong></td>
-        <td class="muted"><em>Zuletzt gesehen</em>, Adresse und Architektur
-          stehen danach in der Liste. Wer wissen will, ob ein Rechner
+        <td class="muted">Der Zeitpunkt steht danach unter dem Namen, die
+          IP-Adresse in der Spalte daneben (womit der Rechner gestartet
+          ist, sagt die MAC-Adresse darüber, wenn man mit der Maus
+          daraufzeigt). Wer wissen will, ob ein Rechner
           überhaupt beim Server angekommen ist, sieht hier nach &mdash; und
           im <a href="/history">Verlauf</a>.</td>
       </tr>
