@@ -2011,30 +2011,81 @@ async def clients_speichern(request: Request):
         status_code=303)
 
 
+def _clients_meldung(text: str, anker: str = "manuelle-registrierung"):
+    """Die eine Antwort dieser Seite: zurueck auf /clients, mit einer Karte.
+
+    Jedes Formular der Oberflaeche antwortet ueber "?meldung=", und die
+    Routen hier taten es bis zum 03.09.2026 als einzige nicht -- sie warfen
+    eine HTTPException, und der Benutzer landete auf einer nackten
+    JSON-Zeile ohne Kopf, ohne Reiter und ohne Weg zurueck. Wer eine
+    weitere Antwort braucht, nimmt diese Funktion und baut sich keinen
+    zweiten Weg.
+    """
+    return RedirectResponse("/clients?meldung=" + quote(text) + "#" + anker,
+                            status_code=303)
+
+
+# Was der Benutzer eintippen soll, wenn er es falsch eingetippt hat --
+# dieselbe Auskunft wie im title-Attribut des Eingabefeldes, egal ob der
+# Browser abweist oder der Server.
+MAC_FORM = ("Sechs Paare, getrennt durch Doppelpunkt oder Bindestrich "
+            "— aa:bb:cc:dd:ee:ff.")
+
+
 @app.post("/clients/{mac}/delete")
 def delete_client(mac: str):
     normalised = normalise_mac(mac)
     if not normalised:
-        raise HTTPException(status_code=400, detail="Ungueltige MAC-Adresse")
+        return _clients_meldung("Das ist keine MAC-Adresse. " + MAC_FORM,
+                                "registrierte-clients")
     with db() as conn:
-        conn.execute("DELETE FROM clients WHERE mac = ?", (normalised,))
-    return RedirectResponse("/clients#registrierte-clients", status_code=303)
+        weg = conn.execute("DELETE FROM clients WHERE mac = ?",
+                           (normalised,)).rowcount
+    if not weg:
+        return _clients_meldung(f"{normalised} war nicht registriert.",
+                                "registrierte-clients")
+    return _clients_meldung(f"{normalised} gelöscht.", "registrierte-clients")
 
 
 @app.post("/clients/add")
 def add_client(mac: str = Form(...), name: str = Form("")):
-    """Rechner von Hand eintragen -- fuer Maschinen, die noch nie gebootet haben."""
+    """Rechner von Hand eintragen -- fuer Maschinen, die noch nie gebootet haben.
+
+    Drei Ausgaenge, und jeder sagt, was geschehen ist. Bis zum 03.09.2026
+    schwiegen zwei davon: Eine krumme Eingabe endete auf einer nackten
+    Fehlerseite, und eine bereits bekannte MAC lud die Seite neu, ohne dass
+    irgendetwas passierte -- "INSERT OR IGNORE" laesst die vorhandene Zeile
+    in Ruhe und sagt es niemandem.
+
+    Der Name eines bekannten Rechners wird dabei nicht ueberschrieben, ein
+    leerer aber gefuellt. Dieselbe Regel gilt beim Booten fuer das Produkt
+    (siehe touch_client): Was einmal dasteht, nimmt der Server niemandem
+    weg -- umbenannt wird in der Liste, wo man sieht, was vorher dastand.
+    """
     normalised = normalise_mac(mac)
     if not normalised:
-        raise HTTPException(
-            status_code=400,
-            detail="MAC-Adresse bitte als aa:bb:cc:dd:ee:ff angeben",
-        )
+        return _clients_meldung("Das ist keine MAC-Adresse. " + MAC_FORM)
+    name = name.strip()[:60]
     with db() as conn:
-        conn.execute(
-            "INSERT OR IGNORE INTO clients (mac, name) VALUES (?, ?)", (normalised, name)
-        )
-    return RedirectResponse("/clients#manuelle-registrierung", status_code=303)
+        zeile = conn.execute("SELECT name FROM clients WHERE mac = ?",
+                             (normalised,)).fetchone()
+        if zeile is None:
+            conn.execute("INSERT INTO clients (mac, name) VALUES (?, ?)",
+                         (normalised, name))
+            return _clients_meldung(f"{normalised} registriert.")
+
+        bisher = zeile["name"] or ""
+        if name and not bisher:
+            conn.execute("UPDATE clients SET name = ? WHERE mac = ?",
+                         (name, normalised))
+            return _clients_meldung(
+                f"{normalised} war schon registriert und heißt jetzt „{name}“.")
+
+    if name and name != bisher:
+        return _clients_meldung(
+            f"{normalised} ist bereits registriert, als „{bisher}“. "
+            "Der Name bleibt — umbenannt wird in der Liste.")
+    return _clients_meldung(f"{normalised} ist bereits registriert.")
 
 
 # --------------------------------------------------------------------------

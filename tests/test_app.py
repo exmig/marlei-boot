@@ -651,10 +651,66 @@ with TestClient(pxeapp.app) as c:
     check("kein Weckknopf mehr im Boot-Formular",
           "&amp; wecken" not in c.get("/clients").text)
 
+    print("\n-- Manuelle Registrierung antwortet")
+    from urllib.parse import unquote
+
+    def anmelden(mac, name=""):
+        """Registrieren, ohne der Weiterleitung zu folgen -- die Meldung zaehlt."""
+        r = c.post("/clients/add", data={"mac": mac, "name": name},
+                   follow_redirects=False)
+        return r.status_code, unquote(r.headers.get("location", ""))
+
+    NEU = "aa:bb:cc:77:88:99"
+    code, ziel = anmelden(NEU, "Lager-PC")
+    check("neue MAC wird registriert und gemeldet",
+          code == 303 and ziel.startswith("/clients?meldung=")
+          and "registriert" in ziel, f"{code} {ziel}")
+
+    code, ziel = anmelden(NEU, "Lager-PC")
+    check("bekannte MAC sagt, dass sie bekannt ist",
+          "bereits registriert" in ziel, ziel)
+
+    code, ziel = anmelden(NEU, "Ganz anderer Name")
+    with pxeapp.db() as conn:
+        geblieben = conn.execute("SELECT name FROM clients WHERE mac = ?",
+                                 (NEU,)).fetchone()["name"]
+    check("zweiter Name ueberschreibt den ersten nicht",
+          geblieben == "Lager-PC", geblieben)
+    check("... und die Meldung sagt genau das",
+          "Lager-PC" in ziel and "bleibt" in ziel, ziel)
+
+    # Die Weiterleitung allein ist nicht die Antwort -- der Benutzer soll die
+    # Karte sehen. Deshalb einmal der ganze Weg, mit Folgen der Umleitung.
+    seite = c.post("/clients/add", data={"mac": NEU, "name": "Noch einer"}).text
+    check("die Meldung steht danach als Karte auf der Seite",
+          "bereits registriert" in seite and "Lager-PC" in seite)
+
+    # Ein leeres Feld ist kein Name, den jemand vergeben hat -- das darf der
+    # zweite Anlauf fuellen, ohne dass etwas verlorengeht.
+    OHNE = "aa:bb:cc:aa:bb:cc"
+    anmelden(OHNE)
+    code, ziel = anmelden(OHNE, "Nachgereicht")
+    with pxeapp.db() as conn:
+        nachgereicht = conn.execute("SELECT name FROM clients WHERE mac = ?",
+                                    (OHNE,)).fetchone()["name"]
+    check("leerer Name wird nachgetragen",
+          nachgereicht == "Nachgereicht" and "heißt jetzt" in ziel,
+          f"{nachgereicht} {ziel}")
+
     print("\n-- Fehlerfaelle")
     check("unbekannter Eintrag -> 404", c.get("/boot/gibtsnicht.ipxe").status_code == 404)
-    check("kaputte MAC -> 400",
-          c.post("/clients/add", data={"mac": "keine-mac"}).status_code == 400)
+    # Bis zum 03.09.2026 eine nackte JSON-Zeile mit 400: kein Kopf, keine
+    # Reiter, kein Weg zurueck. Auch ein Aufruf von aussen soll auf einer
+    # Seite landen, die man verlassen kann.
+    code, ziel = anmelden("keine-mac")
+    check("kaputte MAC -> Meldung auf /clients statt nackter Fehlerseite",
+          code == 303 and ziel.startswith("/clients?meldung=")
+          and "keine MAC-Adresse" in ziel, f"{code} {ziel}")
+    r = c.post("/clients/keine-mac/delete", follow_redirects=False)
+    check("dasselbe beim Loeschen",
+          r.status_code == 303
+          and "keine MAC-Adresse" in unquote(r.headers.get("location", "")),
+          f"{r.status_code} {r.headers.get('location')}")
     check("Zuweisung auf unbekannten Eintrag -> 400",
           speichern(MAC, entry="quatsch").status_code == 400)
     check("Boot ohne MAC funktioniert trotzdem",
