@@ -97,7 +97,7 @@ Online-Katalog.
 | **Debian** 12 / 13 | getestet |
 | **Ubuntu** 22.04 / 24.04 | unterstützt, noch nicht durchgespielt |
 | **Ubuntu** 26.04 | getestet — eine Einschränkung beim *Testen*, siehe unten |
-| **Raspberry Pi OS** 12 (32 und 64 Bit) | unterstützt — ungeprüft, weil kein Gerät da ist |
+| **Raspberry Pi OS** 12 (32 und 64 Bit) | unterstützt — der Durchlauf steht aus |
 
 *Unterstützt* heißt: Die Installation ist dafür gebaut und `install.sh`
 erkennt das System. *Getestet* heißt: Es ist dort von vorn bis hinten
@@ -105,9 +105,9 @@ durchgelaufen — installiert, ein Abbild geholt, ein Rechner davon
 gestartet. Beides auseinanderzuhalten ist Absicht: Eine Zusage, die
 niemand durchgespielt hat, fällt beim ersten fremden Nutzer auf.
 
-Beim **Raspberry Pi** ist die Lücke nicht Nachlässigkeit, sondern schlicht
-ein fehlendes Gerät. Wer einen hat und es versucht: Rückmeldung ist
-willkommen — dann wird daraus ein *getestet*.
+Beim **Raspberry Pi** fehlt allein der Durchlauf von vorn bis hinten; das
+Gerät dafür steht bereit. Wer nicht warten will und es selbst versucht:
+Rückmeldung ist willkommen — dann wird daraus ein *getestet*.
 
 > **Die Einschränkung betrifft nur das Testen, nicht den Betrieb:** Läuft
 > auf dem Server dnsmasq 2.92, bootet eine **VirtualBox-VM als Testclient**
@@ -199,8 +199,8 @@ Haus, nicht an den Administrator, der ihn aufgesetzt hat:
 > **Melden Sie sich.** Schon ein Satz darüber, wo dieser Server läuft und
 > was er bei Ihnen ersetzt hat, ist etwas wert — er sagt mir, wofür ich das
 > hier eigentlich baue, und niemand sonst kann mir das sagen. Und wenn Ihr
-> Haus die Arbeit darüber hinaus anerkennen möchte — finanziell oder mit
-> Hardware, an der sich testen lässt —, dann ist das der Weg dorthin.
+> Haus die Arbeit darüber hinaus finanziell anerkennen möchte, dann ist das
+> der Weg dorthin.
 
 Ein Betrieb, der ein freies Werkzeug jahrelang produktiv nutzt und dem, der
 es gebaut hat, nie ein Wort schreibt, tut nichts Unrechtes. Er tut nur
