@@ -422,7 +422,11 @@ nachtragen_aus_vorlage() {
   done < "$vorlage"
 
   if [[ $nachgetragen -gt 0 ]]; then
-    ok "$nachgetragen Wert(e) aus der Vorlage nachgetragen"
+    # Kein "ok" hier: Das Skript kennt nur log, warn und die -- und mit
+    # "set -e" bricht ein unbekannter Befehl den ganzen Lauf ab. Genau das
+    # ist am 04.09.2026 auf der produktiven Maschine passiert, mitten in
+    # "Konfiguration schreiben".
+    echo "    $nachgetragen Wert(e) aus der Vorlage nachgetragen"
   fi
 }
 
