@@ -4915,6 +4915,16 @@ with TestClient(pxeapp.app) as c:
 
     seite = c.get("/einrichtung").text
     check("ohne Notbremse steht die Auswahl da", 'name="tage"' in seite)
+    # Derselbe Knopf wie unter Systeme: heisst Speichern, wird ausgeliefert
+    # als aktiver Knopf (ohne JavaScript muss es gehen) und erst vom Skript
+    # grau gemacht, solange nichts geaendert ist.
+    check("... und ein Knopf, der Speichern heisst",
+          ">Speichern</button>" in seite and "Übernehmen" not in seite)
+    check("... ausgeliefert aktiv, damit es ohne JavaScript geht",
+          'id="stand-speichern"' in seite
+          and "disabled" not in seite.split('id="stand-speichern"')[1][:200])
+    check("... und das Feld traegt seinen Ausgangswert",
+          'data-war="7"' in seite)
     check("... mit woechentlich als Vorgabe",
           uw.intervall_tage() == 7
           and '<option value="7" selected>' in seite.replace(" >", ">"))

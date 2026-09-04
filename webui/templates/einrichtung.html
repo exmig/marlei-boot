@@ -80,12 +80,19 @@
       <strong>Nach neuen Versionen suchen</strong>
       <span class="muted small">— bei GitHub, nicht bei uns</span>
     </span>
-    <select name="tage" aria-label="Wie oft nach neuen Versionen gesucht wird">
+    {# "war" traegt den Wert beim Aufbau der Seite -- daran erkennt das
+       Skript unten, ob sich etwas geaendert hat. Dieselbe Mechanik wie
+       unter Systeme, damit ein Speichern-Knopf ueberall dasselbe tut. #}
+    <select name="tage" data-war="{{ updatestand.intervall }}"
+            aria-label="Wie oft nach neuen Versionen gesucht wird">
       {% for tage, wort in updateauswahl %}
       <option value="{{ tage }}" {{ "selected" if tage == updatestand.intervall }}>{{ wort }}</option>
       {% endfor %}
     </select>
-    <button type="submit">Übernehmen</button>
+    {# Ausgeliefert wird er aktiv: Ohne JavaScript muss sich speichern
+       lassen. Grau macht ihn erst das Skript. #}
+    <button type="submit" class="folgeknopf" id="stand-speichern"
+            title="Wie oft nach neuen Versionen gesucht wird">Speichern</button>
   </form>
   {# Fuenf Lagen, und jede sagt etwas anderes. Bis zum 04.09.2026 waren es
      vier: "keine Antwort" und "eine Antwort, die keine Auskunft war"
@@ -343,5 +350,28 @@
   </form>
   {% endif %}
 </section>
+
+<script>
+// Der Speichern-Knopf wird erst dunkel, wenn etwas anders dasteht als
+// beim Aufbau der Seite -- dieselbe Regel und derselbe Wortlaut wie unter
+// Systeme. Ein Knopf, der immer dunkel ist, sagt bei jedem Blick
+// "hier ist etwas zu tun", und das stimmt fast nie.
+(function () {
+  var feld = document.querySelector('form[action="/einrichtung/updatepruefung"] select');
+  var knopf = document.getElementById("stand-speichern");
+  if (!feld || !knopf) { return; }
+
+  function pruefen() {
+    var offen = feld.value !== feld.dataset.war;
+    knopf.disabled = !offen;
+    knopf.title = offen
+      ? "Wie oft nach neuen Versionen gesucht wird"
+      : "Nichts geändert — es gibt nichts zu speichern";
+  }
+
+  feld.addEventListener("change", pruefen);
+  pruefen();
+})();
+</script>
 
 {% endblock %}
