@@ -64,6 +64,13 @@ os.environ["PXE_QUELLENWACHT_STAND"] = str(tmp / "quellenwacht.yaml")
 # ins Repository ergeben hat -- beides ins Wegwerf-Verzeichnis. Die
 # Adresse zeigt ins Nichts: Gefragt wird im Test mit einem eigenen Holer,
 # nie ueber das Netz.
+# Wohin install.sh die Skripte spiegelt -- und darin die Datei
+# "projektpfad", aus der die Anwendung den Befehl baut. Ein Linux-Pfad,
+# auch wenn der Test unter Windows laeuft: Er wird nur angezeigt.
+(tmp / "setup").mkdir(parents=True, exist_ok=True)
+(tmp / "setup" / "projektpfad").write_text("/home/srvbusr/marlei-boot\n",
+                                           encoding="utf-8")
+os.environ["PXE_SETUP_DIR"] = str(tmp / "setup")
 os.environ["PXE_EINSTELLUNGEN"] = str(tmp / "einstellungen.yaml")
 os.environ["PXE_UPDATEWACHT_STAND"] = str(tmp / "updatewacht.yaml")
 os.environ["PXE_UPDATE_ADRESSE"] = "http://127.0.0.1:9/nichts"
@@ -4954,7 +4961,9 @@ with TestClient(pxeapp.app) as c:
           and 'class="seitenkarte stufe-info"' in seite)
     check("... mit beiden Versionen darin", "v1.2" in seite and "v1.3" in seite)
     check("... und dem Befehl, der beides tut",
-          "/opt/pxe-setup/update.sh" in seite)
+          "/home/srvbusr/marlei-boot/setup/update.sh" in seite)
+    check("... also dem Klon und nicht der gespiegelten Kopie",
+          "/opt/pxe-setup/update.sh" not in seite)
     # Kopieren statt abtippen -- und ausdruecklich nur kopieren: Ein Knopf,
     # der das Update ausfuehrt, waere Code als root aus einer Oberflaeche
     # ohne Anmeldung. Siehe B-062.
@@ -4972,9 +4981,31 @@ with TestClient(pxeapp.app) as c:
     check("ohne Netz kommt der Blick nicht zustande", not uw.blick(hole=kaputt))
     lage = uw.stand()
     check("... und es ist vermerkt", lage["ohne_netz"] and not lage["neuer"])
+    check("... als 'gar nicht erreicht'", not lage["erreicht"])
+    seite = c.get("/einrichtung").text
+    check("... und die Karte sagt genau das",
+          "GitHub nicht erreichbar" in seite)
     seite = c.get("/").text
     check("... aber nichts sieht nach einem Fehler aus",
           NEUE not in seite and "stufe-fehler" not in seite)
+
+    # Eine Antwort, die keine Auskunft war -- 404, weil es keine Release
+    # gibt. Das ist NICHT "nicht erreichbar", und bis zum 04.09.2026 stand
+    # genau das da, auf einem Server mit tadelloser Leitung.
+    def vierhundertvier():
+        raise _ue.HTTPError(uw.ADRESSE, 404, "Not Found", {}, None)
+
+    check("eine Antwort ohne Auskunft ist kein Netzausfall",
+          not uw.blick(hole=vierhundertvier) and uw.stand()["erreicht"])
+    check("... und die Karte sagt es anders",
+          "geantwortet, aber keine" in " ".join(
+              c.get("/einrichtung").text.split()))
+
+    # Kein einziger Tag im Repository: nachgesehen, nichts gefunden.
+    check("ohne Tag wird nichts behauptet",
+          uw.blick(hole=lambda: "") and not uw.stand()["neuer"])
+    check("... und die Karte sagt auch das",
+          "keine Version hinterlegt" in c.get("/einrichtung").text)
 
     # "nie" wirft den Befund weg -- sonst bliebe die Karte stehen, bis ein
     # Waechter sie wegnimmt, den es nicht mehr gibt.
@@ -5000,7 +5031,8 @@ with TestClient(pxeapp.app) as c:
     check("... als gelbe Karte mit dem Namen darin",
           ALT in seite and "PXE_SMB_ROOT" in seite
           and 'class="seitenkarte stufe-warnung"' in seite)
-    check("... und demselben Befehl", "/opt/pxe-setup/update.sh" in seite)
+    check("... und demselben Befehl",
+          "/home/srvbusr/marlei-boot/setup/update.sh" in seite)
 
     echt.write_text("PXE_BASE_URL=http://x\nPXE_SMB_ROOT=/srv/smb\n",
                     encoding="utf-8")

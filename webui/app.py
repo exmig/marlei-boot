@@ -1129,7 +1129,34 @@ SEITEN = ("/", "/clients", "/systeme", "/quellen", "/einrichtung",
 # Server, und der laeuft Linux. Auf einem Windows-Arbeitsplatz machte
 # pathlib daraus "\opt\pxe-setup" -- ein Befehl, den niemand tippen kann.
 SETUP_DIR = os.environ.get("PXE_SETUP_DIR", "/opt/pxe-setup").rstrip("/")
-UPDATE_BEFEHL = f"{SETUP_DIR}/update.sh"
+
+
+def _update_befehl() -> str:
+    """Der Befehl, mit dem dieser Server aktualisiert wird.
+
+    **Genannt wird der Klon, nicht die Kopie.** Beide Wege gehen -- das
+    gespiegelte /opt/pxe-setup/update.sh reicht an den Klon weiter --, aber
+    im Klon liegt das Repository, dort gehoert "git pull" hin, und von dort
+    ruft man es auch von Hand auf.
+
+    Geraten wird der Pfad nicht: install.sh legt ihn bei jedem Lauf in
+    "projektpfad" ab, genau dafuer. Fehlt die Datei, nennen wir den
+    gespiegelten Weg -- der findet sich notfalls selbst. Lieber ein Befehl,
+    der einen Umweg geht, als einer mit einem erfundenen Pfad.
+
+    Einmal beim Start gelesen: Die Datei entsteht in install.sh, und das
+    startet den Dienst hinterher ohnehin neu.
+    """
+    try:
+        zeilen = (Path(SETUP_DIR) / "projektpfad").read_text(
+            encoding="utf-8").splitlines()
+        klon = zeilen[0].strip().rstrip("/")
+    except (OSError, IndexError):
+        klon = ""
+    return f"{klon}/setup/update.sh" if klon else f"{SETUP_DIR}/update.sh"
+
+
+UPDATE_BEFEHL = _update_befehl()
 
 SPRUNGMARKEN = {
     "upload", "katalog", "download", "custom",          # Quellen

@@ -87,17 +87,27 @@
     </select>
     <button type="submit">Übernehmen</button>
   </form>
+  {# Fuenf Lagen, und jede sagt etwas anderes. Bis zum 04.09.2026 waren es
+     vier: "keine Antwort" und "eine Antwort, die keine Auskunft war"
+     standen beide unter "nicht erreichbar" -- und behaupteten damit auf
+     einem Server mit tadelloser Leitung etwas Falsches. #}
   <p class="muted small">
     {% if not updatestand.intervall %}
-    Es wird nicht nachgesehen.
+    Es wird nicht gesucht.
     {% elif updatestand.dort %}
-    Zuletzt gesehen: <code>{{ updatestand.dort }}</code>
+    Zuletzt gefunden: <code>{{ updatestand.dort }}</code>
     {%- if updatestand.neuer %} — neuer als das, was hier läuft{% endif %}.
+    {% elif updatestand.ohne_netz and updatestand.erreicht %}
+    Beim letzten Versuch hat GitHub geantwortet, aber keine Auskunft
+    gegeben. Das ist keine Störung dieses Servers; beim nächsten Mal wird
+    es wieder versucht.
     {% elif updatestand.ohne_netz %}
-    Beim letzten Versuch war das Repository nicht erreichbar. Das ist keine
+    Beim letzten Versuch war GitHub nicht erreichbar. Das ist keine
     Störung dieses Servers; beim nächsten Mal wird es wieder versucht.
+    {% elif updatestand.gesucht %}
+    Zuletzt gesucht, aber dort ist keine Version hinterlegt.
     {% else %}
-    Noch nicht nachgesehen.
+    Noch nicht gesucht.
     {% endif %}
   </p>
   {% endif %}

@@ -52,9 +52,17 @@ STAND_DATEI = Path(os.environ.get("PXE_UPDATEWACHT_STAND", "")
 
 # Wo gefragt wird. Ueber die Umgebung zu setzen, damit ein Fork nicht
 # unsere Versionen meldet -- und damit der Test nicht ins Netz muss.
+#
+# **Die Tags und nicht die Releases.** Der erste Entwurf fragte
+# "releases/latest"; das Repository hat aber nur einen Tag und keine
+# Release, und GitHub antwortet darauf mit 404. Aufgefallen am 04.09.2026
+# auf dem Entwicklungsserver, wo die Karte daraufhin "nicht erreichbar"
+# behauptete. Ein Tag ist hier ohnehin die Wahrheit: install.sh stempelt
+# "git describe", und das nennt den Tag. Eine Release ist Beiwerk, das es
+# geben kann und nicht geben muss.
 REPO = os.environ.get("PXE_REPO", "exmig/marlei-boot").strip("/ ")
 ADRESSE = os.environ.get("PXE_UPDATE_ADRESSE", "") or (
-    f"https://api.github.com/repos/{REPO}/releases/latest")
+    f"https://api.github.com/repos/{REPO}/tags")
 
 # Die Notbremse. Dieselbe Variable wie beim Quellenwaechter, und das ist
 # Absicht: Sie bedeutet nicht "keine Quellenpruefung", sondern "dieser
@@ -202,7 +210,12 @@ def faellig() -> bool:
 
 
 def _frag_github(hole=None) -> str:
-    """Die neueste veroeffentlichte Version -- oder "" ohne Antwort."""
+    """Die hoechste Version, die dort getaggt ist -- oder "" ohne eine.
+
+    Gewaehlt wird nach unserer eigenen Rechnung und nicht nach der
+    Reihenfolge der Liste: GitHub sortiert Tags nicht nach Versionen, und
+    "v1.10" stuende sonst hinter "v1.9".
+    """
     if hole is not None:
         return hole()
     anfrage = urllib.request.Request(
@@ -210,7 +223,11 @@ def _frag_github(hole=None) -> str:
                           "Accept": "application/vnd.github+json"})
     with urllib.request.urlopen(anfrage, timeout=ZEITLIMIT) as antwort:
         daten = json.loads(antwort.read().decode("utf-8", "replace"))
-    return str(daten.get("tag_name") or "")
+    if not isinstance(daten, list):
+        return ""
+    namen = [str(e.get("name") or "") for e in daten if isinstance(e, dict)]
+    namen = [n for n in namen if zahlen(n)]
+    return max(namen, key=zahlen, default="")
 
 
 def blick(hole=None) -> bool:
@@ -225,7 +242,14 @@ def blick(hole=None) -> bool:
             daten["dort"] = _frag_github(hole)
         except (urllib.error.URLError, OSError, ValueError, TimeoutError) as fehler:
             # Vermerkt, nicht gemeldet: Ohne Leitung ist nichts kaputt.
+            #
+            # "erreicht" trennt zwei Faelle, die man sonst verwechselt und
+            # dann falsch benennt: gar keine Antwort (Leitung, DNS,
+            # Zeitlimit) und eine Antwort, die keine Auskunft war (404,
+            # kaputtes JSON). Der zweite hiess bis zum 04.09.2026
+            # faelschlich "nicht erreichbar".
             daten["ohne_netz"] = True
+            daten["erreicht"] = isinstance(fehler, urllib.error.HTTPError)
             daten["grund"] = str(fehler)[:200]
             _schreiben(daten)
             return False
@@ -244,6 +268,9 @@ def stand() -> dict:
         "dort": daten.get("dort", ""),
         "neuer": bool(daten.get("neuer")),
         "ohne_netz": bool(daten.get("ohne_netz")),
+        "erreicht": bool(daten.get("erreicht")),
+        # Nachgesehen worden ist ueberhaupt schon einmal?
+        "gesucht": bool(daten.get("zeit")),
         "gesperrt": gesperrt(),
         "intervall": intervall_tage(),
         "laeuft": laeuft(),
