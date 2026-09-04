@@ -173,8 +173,13 @@ eigene Ampel: türkis, ein fest verdrahtetes `#d99400` ab drei Vierteln,
 
 Beide Warnstufen tragen jetzt `--warn-kante`. **Rot hat den Balken
 verlassen:** Die dritte Stufe ist keine Farbe mehr, sondern die Karte
-selbst, die ab neun Zehnteln erscheint — und die steht ohnehin weiter oben
-und auf jeder Seite.
+selbst — und die steht ohnehin weiter oben und auf jeder Seite.
+
+*Nachtrag 04.09.2026 (A-021):* Die Karte erscheint nicht mehr ab neun
+Zehnteln, sondern wenn der freie Platz nicht mehr für ein weiteres Abbild
+reicht. Der Balken behält seine Prozentstufen — **die Farbe sagt, wie voll
+es ist, die Karte, ob es noch reicht.** Auf einer großen Platte liegen die
+beiden dadurch weit auseinander, und das ist der Zweck.
 
 Dass `knapp` und `voll` damit gleich aussehen, ist der Preis und keine
 Nachlässigkeit: **Zwei Gelbstufen, die beide 3:1 schaffen, gibt es auf
@@ -794,6 +799,22 @@ grundsätzlich keine Seitenkarten:**
 | Gruppe | Anzahl | warum sie bleibt |
 |---|---|---|
 | **Meldungsplätze** — `meldung`, `hinweis`, die Rückfragen beim Holen und Hochladen | 8 | Antworten auf einen Klick, den jemand gerade getan hat. Ein Ereignis, kein Zustand |
+
+*Nachtrag 04.09.2026 (A-021): Die Meldung über der Seite hat zwei
+Ausprägungen bekommen.* Ohne Zusatz ist sie die Zusage und bleibt
+gedämpft; `art=schlecht` macht sie zur Zurückweisung, in `--danger` —
+**dieselbe Warnfarbe wie `button.danger` und `.quittung.schlecht`**,
+gerechnet 6,08 : 1 auf dem hellen und 7,38 : 1 auf dem dunklen
+Seitengrund. Nur Schrift und Kante, keine Fläche: Eine gefüllte Fläche
+wäre eine Karte, und die gilt dem Server.
+
+**Und sie überlebt kein Neuladen mehr.** Sie hing an der Adresse; F5
+holte sie zurück. Bei einer roten Zurückweisung wäre das schlimmer als
+das alte Verhalten — sie stünde da, ohne dass jemand etwas
+zurückgewiesen hätte. Ein Skript in `base.html` nimmt `meldung` und `art`
+nach dem Anzeigen aus der Adresse. Ohne JavaScript bleibt es beim alten
+Verhalten, und das ist der richtige Rückfall: **zu lange stehen ist
+besser als fehlen.**
 | **Leerzustände** — „Noch kein Client bekannt", „Noch nichts gestartet" | 4 | Der Zustand *einer Karte*, und zwar der normale am Anfang. Sie stehen richtig dort, wo sonst die Liste stünde |
 | **Erklärungen** — „Die Netzkonfiguration ändert dieser Server nicht" | 3 | Sagen, was etwas *ist*, nicht was gerade nicht stimmt |
 | **„Kann ich nicht sagen"** — Belegung nicht abfragbar, Netzkonfiguration nicht lesbar | 2 | Eine Karte, die ihre eigene Auskunft nicht bekommt. Das ist ihr Zustand, nicht der des Servers |

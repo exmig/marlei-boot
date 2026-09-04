@@ -390,8 +390,9 @@
         <td class="nowrap"><strong>Gelb</strong></td>
         <td class="muted">Etwas ist eingeschränkt, oder es läuft darauf zu —
           <em>bald</em>. Zum Beispiel, wenn NFS nicht läuft: Dann starten
-          die großen Live-Systeme nicht, alles andere schon. Oder wenn die
-          Platte fast voll ist. Zeit genug, es in Ruhe zu erledigen.</td>
+          die großen Live-Systeme nicht, alles andere schon. Oder wenn der Platz
+          für ein weiteres Abbild nicht mehr reicht. Zeit genug, es in Ruhe
+          zu erledigen.</td>
       </tr>
       <tr>
         <td class="nowrap"><strong>Blau</strong></td>
@@ -439,6 +440,43 @@
     findet sie also trotzdem. Eine rote Karte lässt sich nicht wegklicken:
     Ein Server, der seine Arbeit nicht tut, soll nie aussehen wie einer,
     der sie tut.
+  </p>
+
+  {# Die Meldung ist die zweite Art Zeile ueber der Seite und wird
+     regelmaessig mit der Karte verwechselt. Der Unterschied ist keine
+     Feinheit: Die Karte gilt dem Server und allen, die Meldung gilt einem
+     Klick und einem Menschen. Siehe docs/gestaltung.md,
+     "Meldungsplaetze". #}
+  <div class="abschnittskopf">
+    <h3 id="erste-schritte-meldung">Die Zeile nach einem Klick</h3>
+  </div>
+  <p class="muted">
+    Über der Seite steht manchmal noch eine zweite Zeile, und sie ist von
+    anderer Art als die farbigen Karten: <strong>Sie ist die Antwort auf
+    einen Klick, den du gerade getan hast.</strong> „Gespeichert.“ etwa,
+    oder „Wird geholt: debian“. Eine Karte gilt dem Server und allen, die
+    diese Seite öffnen — diese Zeile gilt dir und diesem einen Klick.
+  </p>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>Gedämpft</strong></td>
+        <td class="muted">Es ist passiert, was du wolltest.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>In der Warnfarbe</strong></td>
+        <td class="muted">Es ist <em>nicht</em> passiert — eine
+          Zurückweisung. „Nicht gespeichert“, „Keinen Rechner
+          angekreuzt“, „Für diesen Eintrag gibt es das nicht“. Die Zeile
+          sagt dann auch, woran es lag.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted">
+    <strong>Sie überlebt kein Neuladen.</strong> Wer die Seite mit F5 neu
+    holt, sieht sie nicht wieder — sie beantwortet einen Klick, und der
+    ist beim zweiten Aufruf nicht noch einmal getan worden. Ein Befund
+    dagegen bleibt stehen, solange seine Ursache besteht.
   </p>
 
   <div class="abschnittskopf">
@@ -1617,9 +1655,11 @@
         <td class="nowrap"><strong>Der Balken</strong></td>
         <td class="muted">Dieselbe Zahl als Bild — 700 von 900 GB rechnet
           niemand im Kopf in „wird knapp“ um. Er färbt sich ab drei
-          Vierteln; ab neun Zehnteln erscheint zusätzlich eine
-          <a href="#erste-schritte-befunde">gelbe Karte</a> über der
-          Seite.</td>
+          Vierteln. Die <a href="#erste-schritte-befunde">gelbe Karte</a>
+          über der Seite hängt dagegen nicht am Prozentsatz, sondern
+          daran, ob der freie Platz noch für ein weiteres Abbild reicht —
+          auf einer großen Platte kann das lange nach dem gelben Balken
+          sein, auf einer kleinen schon davor.</td>
       </tr>
       <tr>
         <td class="nowrap"><strong>Detailansicht</strong></td>

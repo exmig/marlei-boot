@@ -61,7 +61,8 @@
        Klick, den jemand gerade getan hat, und wer sie sucht, sucht sie
        hier. Die Befunde darunter sind von anderer Art -- sie gelten,
        solange sie gelten, und niemand hat nach ihnen gefragt. #}
-    {% if meldung %}<p class="hint meldung">{{ meldung }}</p>{% endif %}
+    {% if meldung %}<p class="hint meldung {{ meldungsart }}"
+       role="status">{{ meldung }}</p>{% endif %}
 
     {# Befunde, die dem Server gelten und nicht einer einzelnen Karte:
        Fehler, Warnung, Info -- in dieser Reihenfolge, dringend zuerst.
@@ -220,6 +221,30 @@
       setTimeout(function () { knopf.textContent = vorher; }, 2000);
     });
   });
+})();
+
+// Die Meldung ueberlebt das Neuladen nicht.
+//
+// Sie ist die Antwort auf einen Klick -- ein Ereignis, kein Zustand. Bis
+// A-021 hing sie an der Adresse: F5 holte sie zurueck, und auf Clients
+// ueberstand sie sogar das Selbst-Neuladen der Seite. Mit einer
+// Auspraegung waere das schlimmer geworden, nicht besser: eine rote
+// Zurueckweisung, die nach jedem Neuladen wieder dasteht, obwohl niemand
+// mehr etwas zurueckgewiesen hat.
+//
+// Deshalb wird sie nach dem Anzeigen aus der Adresse genommen -- die Seite
+// bleibt stehen, nur die Zeile kommt nicht wieder. Die Sprungmarke bleibt
+// erhalten, sonst springt der naechste Aufruf an den Seitenanfang.
+//
+// Ohne JavaScript bleibt es beim alten Verhalten. Das ist der richtige
+// Rueckfall: Die Meldung steht dann zu lange da, statt zu fehlen.
+(function () {
+  if (!window.history || !history.replaceState) { return; }
+  var adresse = new URL(window.location.href);
+  if (!adresse.searchParams.has("meldung")) { return; }
+  adresse.searchParams.delete("meldung");
+  adresse.searchParams.delete("art");
+  history.replaceState(null, "", adresse.toString());
 })();
 </script>
 </body>

@@ -238,10 +238,15 @@
 
   {# Ein Balken sagt beim Speicherplatz mehr als die Zahlen: 700 von 900 GB
      rechnet niemand im Kopf in "wird knapp" um. Ab drei Vierteln faerbt er
-     sich, ab neun Zehnteln warnt er -- ein volles Abbild braucht mehrere
-     Gigabyte, da ist der Rest schnell weg. #}
-  <div class="balken {{ 'voll' if platz.anteil >= platte_voll else ('knapp' if platz.anteil >= platte_knapp) }}"
-       title="{{ platz.anteil }} % belegt">
+     sich gelb.
+
+     Rot wird er nicht bei einem Prozentsatz, sondern wenn der Platz fuer
+     das naechste Abbild nicht mehr reicht -- dieselbe Regel, an der die
+     gelbe Seitenkarte haengt (dienste.platz_knapp). Auf einer grossen
+     Platte kann das erst weit hinter dem gelben Bereich sein, auf einer
+     kleinen schon davor. #}
+  <div class="balken {{ 'voll' if platte_warnt else ('knapp' if platz.anteil >= platte_knapp) }}"
+       title="{{ platz.anteil }} % belegt, frei {{ '%.0f'|format(platz.frei / 1073741824) }} GB">
     <span style="width: {{ platz.anteil }}%"></span>
   </div>
   {% else %}

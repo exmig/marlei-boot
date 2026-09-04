@@ -1125,6 +1125,30 @@ def sprung(ziel: str, marke: str) -> str:
     return f"{ziel}#{marke}" if marke in SPRUNGMARKEN else ziel
 
 
+def antwort(seite: str, text: str, *, schlecht: bool = False,
+            marke: str = "") -> str:
+    """Die Adresse, auf die ein Formular zurueckfuehrt -- mit seiner Antwort.
+
+    **Ein Weg, zwei Auspraegungen.** Jedes Formular der Oberflaeche
+    antwortet ueber "?meldung=" (siehe _clients_meldung). Seit A-021 sagt
+    ein zweiter Parameter dazu, *wie* es ausgegangen ist: ohne ihn ist es
+    eine Zusage, mit "art=schlecht" eine Zurueckweisung -- und die steht
+    dann in der Warnfarbe.
+
+    Keine zweite Bauart: Es bleibt dieselbe Adresse, dieselbe Vorlage,
+    dasselbe Feld. Wer eine Antwort braucht, nimmt diese Funktion.
+
+    Die Meldung ueberlebt das Neuladen nicht -- dafuer sorgt das Skript in
+    base.html, das die beiden Parameter nach dem Anzeigen aus der Adresse
+    nimmt. Gerade eine rote Meldung, die nach F5 wiederkommt, waere
+    schlechter als gar keine Auspraegung.
+    """
+    ziel = seite + "?meldung=" + quote(text)
+    if schlecht:
+        ziel += "&art=schlecht"
+    return sprung(ziel, marke) if marke else ziel
+
+
 def _rahmen(**ctx) -> dict:
     """Werte, die jede Seite braucht -- Kopfzeile, Navigation, Fusszeile."""
     grund = {
@@ -1155,6 +1179,11 @@ def _rahmen(**ctx) -> dict:
         "max_info": bezeichnungen.MAX_INFO,
         "menue_breite": bezeichnungen.MENUE_BREITE,
         "meldung": "",
+        # Wie die Meldung ausgegangen ist: "" ist die Zusage, "schlecht"
+        # die Zurueckweisung. Gesetzt wird sie von antwort(); hier steht
+        # nur die Vorgabe, damit eine Seite ohne Meldung nichts erklaeren
+        # muss.
+        "meldungsart": "",
         # Was dem Server als Ganzem fehlt -- nicht einer Karte und nicht
         # einer Seite. Steht deshalb hier und nicht in den Handlern:
         # Sonst haengt ein Befund davon ab, welchen Reiter jemand gerade
@@ -1426,7 +1455,7 @@ def status_fragment(request: Request):
 
 
 @app.get("/")
-def serverhealth(request: Request, meldung: str = ""):
+def serverhealth(request: Request, meldung: str = "", art: str = ""):
     """Laeuft alles, und was tut der Server gerade?"""
     zustand = dienste.zustaende()
     # Die Zahlen des Stands standen frueher auf der Uebersicht. Dort waren
@@ -1443,6 +1472,9 @@ def serverhealth(request: Request, meldung: str = ""):
     # und ohne sie ginge die Rechnung nicht auf.
     funde = verwaiste(systeme)
     aufteilung = platzaufteilung(systeme, funde)
+    # Erst nach platzaufteilung(): Dort wird gemessen, woraus sich die
+    # Reserve bemisst.
+    belegung = dienste.platz(ASSETS_DIR)
 
     return html.TemplateResponse(
         request,
@@ -1450,6 +1482,7 @@ def serverhealth(request: Request, meldung: str = ""):
         _rahmen(
             aktiv="serverhealth",
             meldung=meldung,
+            meldungsart=art,
             # Der Adressbefund stand hier bis zum 28.08.2026. Er kommt
             # jetzt aus _rahmen() und steht auf jeder Seite -- siehe
             # webui/befunde.py.
@@ -1470,18 +1503,21 @@ def serverhealth(request: Request, meldung: str = ""):
             # Download-Adressen herausgefunden hat.
             quelleninfo=_quelleninfo_beschriftet(quellenwacht.stand()),
             assets_dir=str(ASSETS_DIR),
-            platz=dienste.platz(ASSETS_DIR),
-            # Die Schwellen des Balkens kommen aus derselben Quelle wie die
-            # gelbe Seitenkarte -- sonst faerbt sich der Balken irgendwann
-            # bei einer anderen Zahl, als die Karte nennt.
+            platz=belegung,
+            # Der Balken haengt an derselben Regel wie die gelbe
+            # Seitenkarte -- sonst faerbt er sich irgendwann bei einer
+            # anderen Zahl, als die Karte nennt. Rot heisst deshalb nicht
+            # mehr "90 Prozent", sondern "es reicht nicht mehr fuer ein
+            # Abbild"; die Prozentstufe traegt nur noch das Gelb.
             platte_knapp=dienste.KNAPP,
-            platte_voll=dienste.VOLL,
+            platte_warnt=dienste.platz_knapp(belegung),
+            platte_reserve=dienste.reserve(),
         ),
     )
 
 
 @app.get("/history")
-def history_seite(request: Request, meldung: str = ""):
+def history_seite(request: Request, meldung: str = "", art: str = ""):
     """Was wann von welchem Rechner gestartet wurde."""
     with db() as conn:
         recent = conn.execute(
@@ -1493,6 +1529,7 @@ def history_seite(request: Request, meldung: str = ""):
         _rahmen(
             aktiv="history",
             meldung=meldung,
+            meldungsart=art,
             recent=recent,
             namen={c["mac"]: c["name"] for c in clients if c["name"]},
         ),
@@ -1560,7 +1597,7 @@ def _rechner_liste() -> list[dict]:
 
 
 @app.get("/clients")
-def clients_seite(request: Request, meldung: str = ""):
+def clients_seite(request: Request, meldung: str = "", art: str = ""):
     """Bekannte Rechner: Vorauswahl, Wecken, ihre Installationsprotokolle."""
     with db() as conn:
         clients = conn.execute("SELECT * FROM clients ORDER BY last_seen DESC").fetchall()
@@ -1580,6 +1617,7 @@ def clients_seite(request: Request, meldung: str = ""):
         _rahmen(
             aktiv="clients",
             meldung=meldung,
+            meldungsart=art,
             clients=clients,
             entries=_systeme(),
             protokolle=nach_mac,
@@ -1640,7 +1678,8 @@ SYSTEMPUNKTE = [
 
 
 @app.get("/systeme")
-def systeme_seite(request: Request, meldung: str = "", ansicht: str = "efi"):
+def systeme_seite(request: Request, meldung: str = "", art: str = "",
+                  ansicht: str = "efi"):
     """Was gebootet werden kann -- Katalog und eigene Abbilder zusammen."""
     if ansicht not in ("efi", "pcbios"):
         ansicht = "efi"
@@ -1671,6 +1710,7 @@ def systeme_seite(request: Request, meldung: str = "", ansicht: str = "efi"):
         _rahmen(
             aktiv="systeme",
             meldung=meldung,
+            meldungsart=art,
             gruppen=karten,
             # Angezeigt wird immer 1, 2, 3 in der geltenden Folge -- nicht
             # das, was roh in der Datei steht.
@@ -1841,7 +1881,8 @@ async def systeme_speichern(request: Request):
 
     if fehler:
         return RedirectResponse(
-            "/systeme?meldung=" + quote("Nicht gespeichert. " + " ".join(fehler)),
+            antwort("/systeme", "Nicht gespeichert. " + " ".join(fehler),
+                    schlecht=True),
             status_code=303)
 
     if folge_werte:
@@ -1872,19 +1913,24 @@ async def systeme_speichern(request: Request):
     freigaben.pop("*", None)
     freigabe.setze(freigaben)
     return RedirectResponse(
-        "/systeme?meldung=" + quote("Gespeichert."), status_code=303)
+        antwort("/systeme", "Gespeichert."), status_code=303)
 
 
-def wecken(mac: str) -> str:
-    """Schickt das Weckpaket und liefert einen Satz fuer die Oberflaeche.
+def wecken(mac: str) -> tuple[str, bool]:
+    """Schickt das Weckpaket. Liefert den Satz fuer die Oberflaeche und ob es ging.
 
     Fehler werden gemeldet, nicht geworfen: ein misslungener Weckversuch ist
     kein Grund, die Seite mit einem Fehlercode abzuwerfen.
+
+    Das zweite Stueck der Antwort ist seit A-021 noetig: Die Meldung traegt
+    jetzt eine Auspraegung, und die aus dem Satz zurueckzulesen -- "steht da
+    'konnte nicht'?" -- waere ein Zusammenhang, den der naechste Umbau am
+    Wortlaut nicht bemerkt.
     """
     try:
         ziele = wol.wecken(mac)
     except OSError as fehler:
-        return f"Weckpaket fuer {mac} konnte nicht gesendet werden: {fehler}"
+        return f"Weckpaket fuer {mac} konnte nicht gesendet werden: {fehler}", False
 
     with db() as conn:
         conn.execute("UPDATE clients SET last_wake = ? WHERE mac = ?", (now(), mac))
@@ -1892,7 +1938,7 @@ def wecken(mac: str) -> str:
     return (
         f"Weckpaket an {mac} gesendet ({', '.join(ziele)}). "
         "Ob der Rechner angeht, sieht man erst, wenn er sich meldet."
-    )
+    ), True
 
 
 @app.post("/clients/wecken")
@@ -1906,7 +1952,8 @@ def clients_wecken(mac: list[str] = Form(default=[])):
     gewaehlt = [m for m in (normalise_mac(x) for x in mac) if m]
     if not gewaehlt:
         return RedirectResponse(
-            "/clients?meldung=" + quote("Keinen Rechner angekreuzt.") + "#registrierte-clients",
+            antwort("/clients", "Keinen Rechner angekreuzt.", schlecht=True,
+                    marke="registrierte-clients"),
             status_code=303)
 
     with db() as conn:
@@ -1932,7 +1979,11 @@ def clients_wecken(mac: list[str] = Form(default=[])):
                      + ", ".join(geweckt))
     if misslungen:
         teile.append("Fehlgeschlagen: " + ", ".join(misslungen))
-    return RedirectResponse("/clients?meldung=" + quote(". ".join(teile)) + "#registrierte-clients",
+    # Misslungene Weckpakete stehen im selben Satz wie die gelungenen --
+    # deshalb ist die Auspraegung schlecht, sobald eines dabei war.
+    return RedirectResponse(antwort("/clients", ". ".join(teile),
+                                    schlecht=bool(misslungen),
+                                    marke="registrierte-clients"),
                             status_code=303)
 
 
@@ -1942,7 +1993,9 @@ def wake_client(mac: str):
     normalised = normalise_mac(mac)
     if not normalised:
         raise HTTPException(status_code=400, detail="Ungueltige MAC-Adresse")
-    return RedirectResponse("/clients?meldung=" + quote(wecken(normalised)) + "#registrierte-clients",
+    satz, ging = wecken(normalised)
+    return RedirectResponse(antwort("/clients", satz, schlecht=not ging,
+                                    marke="registrierte-clients"),
                             status_code=303)
 
 
@@ -2019,17 +2072,22 @@ async def clients_speichern(request: Request):
         return JSONResponse({"gespeichert": len(aenderungen),
                              "clients": _rechner_liste()})
     if not aenderungen:
+        # Keine Zurueckweisung: Es war nichts zu tun, und das ist kein
+        # Fehler. Die Auspraegung bleibt deshalb die neutrale.
         return RedirectResponse(
-            "/clients?meldung=" + quote("Nichts zu speichern.") + "#registrierte-clients",
+            antwort("/clients", "Nichts zu speichern.",
+                    marke="registrierte-clients"),
             status_code=303)
     return RedirectResponse(
-        "/clients?meldung=" + quote(
-            ("Ein Rechner gespeichert." if len(aenderungen) == 1
-             else f"{len(aenderungen)} Rechner gespeichert.")) + "#registrierte-clients",
+        antwort("/clients",
+                ("Ein Rechner gespeichert." if len(aenderungen) == 1
+                 else f"{len(aenderungen)} Rechner gespeichert."),
+                marke="registrierte-clients"),
         status_code=303)
 
 
-def _clients_meldung(text: str, anker: str = "manuelle-registrierung"):
+def _clients_meldung(text: str, anker: str = "manuelle-registrierung", *,
+                     schlecht: bool = True):
     """Die eine Antwort dieser Seite: zurueck auf /clients, mit einer Karte.
 
     Jedes Formular der Oberflaeche antwortet ueber "?meldung=", und die
@@ -2039,7 +2097,8 @@ def _clients_meldung(text: str, anker: str = "manuelle-registrierung"):
     weitere Antwort braucht, nimmt diese Funktion und baut sich keinen
     zweiten Weg.
     """
-    return RedirectResponse("/clients?meldung=" + quote(text) + "#" + anker,
+    return RedirectResponse(antwort("/clients", text, schlecht=schlecht,
+                                    marke=anker),
                             status_code=303)
 
 
@@ -2344,12 +2403,15 @@ def eintrag_anlegen(
                            kernel_url=kernel_url, initrd_url=initrd_url,
                            cmdline=cmdline, beschreibung=beschreibung)
     except ValueError as fehler:
-        return RedirectResponse("/quellen?meldung=" + quote(str(fehler)) + "#custom", status_code=303)
+        return RedirectResponse(
+            antwort("/quellen", str(fehler), schlecht=True, marke="custom"),
+            status_code=303)
     if gewaehlt:
         wieviel = f"{name} in {len(gewaehlt)} Ausgaben wird geholt."
     else:
         wieviel = name + " wird geholt."
-    return RedirectResponse("/quellen?meldung=" + quote(wieviel) + "#custom", status_code=303)
+    return RedirectResponse(antwort("/quellen", wieviel, marke="custom"),
+                            status_code=303)
 
 
 @app.post("/eintraege/{kennung}/ausgabe")
@@ -2364,10 +2426,11 @@ def eintrag_ausgabe_dazu(kennung: str, version: str = Form(...)):
     try:
         neu_slug = eigene.ausgabe_dazu(kennung, version)
     except ValueError as fehler:
-        return RedirectResponse("/quellen?meldung=" + quote(str(fehler)) + "#custom",
-                                status_code=303)
+        return RedirectResponse(
+            antwort("/quellen", str(fehler), schlecht=True, marke="custom"),
+            status_code=303)
     return RedirectResponse(
-        "/quellen?meldung=" + quote(f"Ausgabe {version} wird geholt.") + "#custom"
+        antwort("/quellen", f"Ausgabe {version} wird geholt.", marke="custom")
         + "#eintrag-" + neu_slug, status_code=303)
 
 
@@ -2577,6 +2640,10 @@ def platzaufteilung(systeme: list[dict], funde: list[dict]) -> dict:
 
     belegend = sorted((z for z in zeilen if z["bytes"] > 0),
                       key=lambda z: (-z["bytes"], z["name"].lower()))
+    # Hier ist die Zahl ohnehin gemessen: die groesste Ablage eines
+    # Eintrags. Die Plattenwarnung braucht sie, darf sie aber nicht selbst
+    # suchen -- sie entsteht auf jeder Seite. Siehe dienste.reserve().
+    dienste.merke_groesstes_abbild(belegend[0]["bytes"] if belegend else 0)
     eintraege_bytes = sum(z["bytes"] for z in belegend)
     verwaist_bytes = sum(f["bytes"] for f in funde)
     gesamt = konfiguration.groesse(ASSETS_DIR)["bytes"]
@@ -2680,15 +2747,15 @@ def verwaist_loeschen(pfad: str = Form(...)):
     fund = funde.get(pfad)
     if fund is None:
         return RedirectResponse(
-            "/?meldung=" + quote("Der Ordner gehört inzwischen zu einem Eintrag "
-                                 "oder ist schon weg."),
+            antwort("/", "Der Ordner gehört inzwischen zu einem Eintrag "
+                         "oder ist schon weg.", schlecht=True),
             status_code=303)
 
     shutil.rmtree(Path(fund["pfad"]), ignore_errors=True)
     konfiguration.vergiss()
     return RedirectResponse(
-        "/?meldung=" + quote(f"{fund['name']} gelöscht, "
-                             f"{lesbare_groesse(fund['bytes'])} frei."),
+        antwort("/", f"{fund['name']} gelöscht, "
+                     f"{lesbare_groesse(fund['bytes'])} frei."),
         status_code=303)
 
 
@@ -2713,19 +2780,22 @@ def dateien_loeschen(slug: str = Form(...), zurueck: str = Form("")):
         # dort verschwindet der ganze Eintrag, denn ohne seine Dateien
         # gaebe es ihn nicht mehr.
         return RedirectResponse(
-            sprung("/quellen?meldung=" + quote("Für diesen Eintrag gibt es das nicht."), zurueck),
+            antwort("/quellen", "Für diesen Eintrag gibt es das nicht.",
+                    schlecht=True, marke=zurueck),
             status_code=303)
 
     ordner, pfade = _raeumgut(eintrag)
     if not any(p.exists() for p in pfade):
         return RedirectResponse(
-            sprung("/quellen?meldung=" + quote(f"Bei {eintrag['name']} liegt nichts."), zurueck),
+            antwort("/quellen", f"Bei {eintrag['name']} liegt nichts.",
+                    schlecht=True, marke=zurueck),
             status_code=303)
 
     weg, frei = _raeume_ab(eintrag)
     meldung = (f"{eintrag['name']}: {weg} gelöscht, "
                f"{lesbare_groesse(frei)} frei — der Abgleich holt es wieder.")
-    return RedirectResponse(sprung("/quellen?meldung=" + quote(meldung), zurueck), status_code=303)
+    return RedirectResponse(antwort("/quellen", meldung, marke=zurueck),
+                            status_code=303)
 
 
 def _eintraege_der_ausgabe(liste: str, version: str) -> list[dict]:
@@ -2764,7 +2834,9 @@ def version_loeschen(slug: str = Form(""), adresse: str = Form(""),
     # stuende auf einer weissen Seite mit einem englischen Satz, und die
     # Karte, von der der Knopf kam, waere weg.
     def absage(satz: str):
-        return RedirectResponse("/quellen?meldung=" + quote(satz) + "#katalog", status_code=303)
+        return RedirectResponse(
+            antwort("/quellen", satz, schlecht=True, marke="katalog"),
+            status_code=303)
 
     if adresse:
         liste = quellen.VERSIONSLISTE.get(adresse, "")
@@ -2820,7 +2892,8 @@ def version_loeschen(slug: str = Form(""), adresse: str = Form(""),
         # Aussage als "entfernt" und gehoert deshalb dazu.
         meldung += " — dieses System ist damit nicht mehr in Betrieb"
     # Zurueck dorthin, wo der Knopf steht: zur Herkunft unter Quellen.
-    return RedirectResponse("/quellen?meldung=" + quote(meldung) + "#katalog", status_code=303)
+    return RedirectResponse(antwort("/quellen", meldung, marke="katalog"),
+                            status_code=303)
 
 
 @app.get("/sync.txt")
@@ -2983,7 +3056,8 @@ def einrichtung_alt():
 
 
 @app.get("/einrichtung")
-def einrichtung_seite(request: Request, meldung: str = "", schritt: str = ""):
+def einrichtung_seite(request: Request, meldung: str = "", art: str = "",
+                      schritt: str = ""):
     """Wie dieser Server eingerichtet ist: Ablageorte und Einstellungen.
 
     Hier standen einmal auch die Belegung je Verzeichnis und die Dateien
@@ -3062,6 +3136,7 @@ def einrichtung_seite(request: Request, meldung: str = "", schritt: str = ""):
         _rahmen(
             aktiv="einrichtung",
             meldung=meldung,
+            meldungsart=art,
             assets_dir=str(ASSETS_DIR),
             # Welcher Stand hier laeuft. Steht auf dieser Seite, weil
             # es dieselbe Frage ist wie bei den Ablageorten: woran bin
@@ -3117,8 +3192,8 @@ def werkseinstellung_ausfuehren(wort: str = Form("")):
     """
     if not werkseinstellung.gepruefte_losung(wort):
         return RedirectResponse(
-            "/einrichtung?meldung="
-            + quote("Zurücksetzen abgebrochen — das Wort fehlte."),
+            antwort("/einrichtung", "Zurücksetzen abgebrochen — das Wort fehlte.",
+                    schlecht=True),
             status_code=303)
 
     befund = werkseinstellung.zuruecksetzen(ASSETS_DIR, DB_PATH.parent, DB_PATH)
@@ -3144,7 +3219,11 @@ def werkseinstellung_ausfuehren(wort: str = Form("")):
         # es sagt.
         meldung += (". Nicht wegzubekommen war: "
                     + ", ".join(befund["geblieben"][:5]))
-    return RedirectResponse("/einrichtung?meldung=" + quote(meldung) + "#ersteinrichtung",
+    # Schlecht, wenn etwas liegen blieb: Der Reset ist dann nicht das,
+    # was draufsteht, und das soll man sehen und nicht lesen muessen.
+    return RedirectResponse(antwort("/einrichtung", meldung,
+                                    schlecht=bool(befund["geblieben"]),
+                                    marke="ersteinrichtung"),
                             status_code=303)
 
 
@@ -3196,7 +3275,7 @@ def hilfe_seite(request: Request):
 
 
 @app.get("/quellen")
-def quellen_seite(request: Request, meldung: str = ""):
+def quellen_seite(request: Request, meldung: str = "", art: str = ""):
     """Woher die Systeme kommen: Adressen pflegen und Neues hereinholen.
 
     Die Karte "Hinzufuegen und nachladen" stand bis zum Umzug unter
@@ -3212,6 +3291,7 @@ def quellen_seite(request: Request, meldung: str = ""):
         _rahmen(
             aktiv="quellen",
             meldung=meldung,
+            meldungsart=art,
             quellen=quellen.alle(),
             # Der letzte Prüfstand je Quelle und die früher benutzten
             # Adressen -- damit die Ampel schon beim Öffnen leuchtet und
@@ -3460,10 +3540,12 @@ def quelle_holen(name: str, version: str = Form("")):
     try:
         sync.starte([auftrag], {"PXE_ASSETS": str(ASSETS_DIR)})
     except ValueError as fehler:
-        return RedirectResponse("/quellen?meldung=" + quote(str(fehler)) + "#katalog",
-                                status_code=303)
+        return RedirectResponse(
+            antwort("/quellen", str(fehler), schlecht=True, marke="katalog"),
+            status_code=303)
     return RedirectResponse(
-        "/quellen?meldung=" + quote("Wird geholt: " + auftrag) + "#katalog", status_code=303)
+        antwort("/quellen", "Wird geholt: " + auftrag, marke="katalog"),
+        status_code=303)
 
 
 @app.post("/quellen/{name}/durchleuchten")
@@ -3517,7 +3599,8 @@ async def quellen_speichern(request: Request):
 
     if fehler:
         return RedirectResponse(
-            "/quellen?meldung=" + quote("Nicht gespeichert. " + " ".join(fehler)),
+            antwort("/quellen", "Nicht gespeichert. " + " ".join(fehler),
+                    schlecht=True),
             status_code=303)
 
     if werte:
@@ -3534,7 +3617,7 @@ async def quellen_speichern(request: Request):
 
     bezeichnungen.setze(eigene_namen)
     return RedirectResponse(
-        "/quellen?meldung=" + quote("Gespeichert."), status_code=303)
+        antwort("/quellen", "Gespeichert."), status_code=303)
 
 
 @app.post("/quellen/ausgabe")
@@ -3557,7 +3640,8 @@ def quelle_ausgabe(adresse: str = Form(...), version: str = Form(...),
     version = version.strip()
     if not quellen.VERSION_RE.match(version):
         return RedirectResponse(
-            "/quellen?meldung=" + quote(f"„{version}“ ist keine Ausgabe.") + "#katalog",
+            antwort("/quellen", f"„{version}“ ist keine Ausgabe.",
+                    schlecht=True, marke="katalog"),
             status_code=303)
 
     ausgaben = quellen.liste(listenname)
@@ -3576,11 +3660,12 @@ def quelle_ausgabe(adresse: str = Form(...), version: str = Form(...),
         else:
             quellen.loesche_ausgabe(adresse, version)
     except ValueError as fehler:
-        return RedirectResponse("/quellen?meldung=" + quote(str(fehler)) + "#katalog",
-                                status_code=303)
+        return RedirectResponse(
+            antwort("/quellen", str(fehler), schlecht=True, marke="katalog"),
+            status_code=303)
 
     return RedirectResponse(
-        "/quellen?meldung=" + quote(f"Ausgabe {version} gespeichert.") + "#katalog",
+        antwort("/quellen", f"Ausgabe {version} gespeichert.", marke="katalog"),
         status_code=303)
 
 
@@ -3609,17 +3694,19 @@ def quelle_setzen(name: str, url: str = Form(...)):
     try:
         quellen.setze(name, url)
     except ValueError as fehler:
-        return RedirectResponse("/quellen?meldung=" + quote(str(fehler)) + "#katalog", status_code=303)
+        return RedirectResponse(
+            antwort("/quellen", str(fehler), schlecht=True, marke="katalog"),
+            status_code=303)
     return RedirectResponse(
-        "/quellen?meldung=" + quote(f"{name} gespeichert.") + "#katalog", status_code=303
-    )
+        antwort("/quellen", f"{name} gespeichert.", marke="katalog"),
+        status_code=303)
 
 
 @app.post("/quellen/{name}/zuruecksetzen")
 def quelle_zuruecksetzen(name: str):
     quellen.zuruecksetzen(name)
     return RedirectResponse(
-        "/quellen?meldung=" + quote(f"{name} steht wieder auf der Vorgabe."),
+        antwort("/quellen", f"{name} steht wieder auf der Vorgabe."),
         status_code=303,
     )
 

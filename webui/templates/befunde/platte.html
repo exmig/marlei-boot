@@ -1,20 +1,24 @@
-{# Die Platte ist voll genug, dass der naechste Abgleich abbrechen kann.
-   Dieselbe Schwelle, ab der der Balken auf Server Health "voll" heisst --
-   sie steht in dienste.VOLL, damit Balken und Karte nicht auseinanderlaufen.
+{# Der Platz reicht nicht mehr fuer ein weiteres Abbild. Die Regel steht
+   in dienste.platz_knapp(); der Balken auf Server Health wird nach
+   derselben Regel rot.
 
-   Die Ueberschrift nennt hier den Zustand und nicht die Folge: Ob der
-   Platz noch reicht, haengt daran, wie gross das naechste Abbild ist, und
-   das wissen wir nicht. Behaupten waere schlimmer als beschreiben. #}
+   Die Ueberschrift darf jetzt die Folge nennen und nicht nur den Zustand:
+   Solange die Schwelle ein Prozentsatz war, wussten wir nicht, ob der Platz
+   noch reicht -- die Reserve bemisst sich am groessten Abbild, das hier
+   liegt, also wissen wir es. #}
 <p>
-  Der Datenträger unter den Abbildern ist zu {{ befund.platz.anteil }} %
-  belegt — frei sind noch
-  <strong>{{ "%.0f"|format(befund.platz.frei / 1073741824) }} GB</strong>
-  von {{ "%.0f"|format(befund.platz.gesamt / 1073741824) }} GB.
+  Frei sind noch
+  <strong>{{ "%.1f"|format(befund.platz.frei / 1073741824) }} GB</strong>
+  von {{ "%.0f"|format(befund.platz.gesamt / 1073741824) }} GB
+  ({{ befund.platz.anteil }} % belegt). Zurückgehalten werden sollten
+  {{ "%.0f"|format(befund.reserve / 1073741824) }} GB —
+  {% if befund.groesstes > befund.sockel %}so viel, wie das größte Abbild
+  hier belegt.{% else %}die Vorgabe für einen Server, auf dem noch kein
+  großes Abbild liegt.{% endif %}
 </p>
 <p>
-  Ein vollständiges Abbild braucht je nach System mehrere Gigabyte. Geht der
-  Platz mitten im Holen aus, bleibt ein halber Eintrag liegen: Im Bootmenü
-  steht er, startbereit ist er nicht.
+  Geht der Platz mitten im Holen aus, bleibt ein halber Eintrag liegen: Im
+  Bootmenü steht er, startbereit ist er nicht.
 </p>
 <p class="kartenfuss">
   Was wie viel belegt, steht auf Server Health unter <em>Speicherplatz</em>

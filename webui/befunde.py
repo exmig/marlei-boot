@@ -129,11 +129,11 @@ KATALOG = (
                 "liegen auf einer Freigabe dieses Servers.",
      "wieder": "wenn der Dienst zwischendurch wieder lief"},
     {"kennung": "platte", "stufe": "warnung",
-     "titel": "Die Platte ist fast voll",
-     "wodurch": "Die Belegung erreicht %d %%. Ab dort bleibt beim "
-                "nächsten Abbild leicht ein halber Eintrag liegen."
-                % dienste.VOLL,
-     "wieder": "bei der nächsten Fünferstufe — 95, dann 100"},
+     "titel": "Der Platz reicht nicht mehr für ein Abbild",
+     "wodurch": "Frei ist weniger, als das größte Abbild hier belegt — "
+                "mindestens werden %d GB zurückgehalten."
+                % (dienste.SOCKEL // 1024 ** 3),
+     "wieder": "wenn wieder ein Gigabyte weniger frei ist"},
 )
 
 
@@ -195,6 +195,22 @@ def sortiert(befunde: list[dict]) -> list[dict]:
     dieser Stelle ist einer von uns und soll laut sein.
     """
     return sorted(befunde, key=lambda b: STUFEN.index(b["stufe"]))
+
+
+def _plattenmarke(belegung: dict) -> int:
+    """Eine Zahl, die nur steigt, wenn es schlimmer wird -- siehe kenntnis.py.
+
+    Die fehlenden Gigabyte bis zur Reserve. Sie muss grob sein: Ein
+    Wegklicken, das jedes freigewordene Byte aufhebt, waere keines. Ein
+    Gigabyte ist grob genug und trotzdem eine Nachricht -- so gross ist die
+    Luft, die beim Entpacken gebraucht wird.
+
+    Frueher stand hier die Fuenferstufe der Belegung. Sie ist mit der
+    Prozentschwelle gegangen: Auf einer grossen Platte sind fuenf Prozent
+    Hunderte von Gigabyte, das ist keine Stufe, sondern ein halbes Jahr.
+    """
+    fehlend = dienste.reserve() - belegung.get("frei", 0)
+    return max(0, fehlend // 1024 ** 3)
 
 
 def sammeln(eingerichtete_ip: str, assets_dir=None,
@@ -270,17 +286,22 @@ def sammeln(eingerichtete_ip: str, assets_dir=None,
             dienste=[d for d in zustand if d["name"] == name]))
 
     # -- Der Platz. Ein Abbild braucht mehrere Gigabyte; geht der Platz
-    # mittendrin aus, bleibt ein halber Eintrag liegen. Die Schwelle ist
-    # dieselbe, ab der der Balken auf Server Health "voll" heisst.
+    # mittendrin aus, bleibt ein halber Eintrag liegen. Die Regel steht in
+    # dienste.platz_knapp() -- dieselbe, an der sich der Balken auf Server
+    # Health faerbt.
     belegung = platz if platz is not None else (
         dienste.platz(assets_dir) if assets_dir else {})
-    if belegung and belegung.get("anteil", 0) >= dienste.VOLL:
+    if dienste.platz_knapp(belegung):
         befunde.append(dict(
             aus_katalog("platte"),
-            # Die erreichte Fuenferstufe: 90, 95, 100. Wer bei 91 Prozent
-            # wegklickt, sieht die Karte bei 95 wieder -- und nicht schon
-            # bei 92, sonst waere das Wegklicken keines.
-            marke=int(belegung.get("anteil", 0)) // 5 * 5,
+            marke=_plattenmarke(belegung),
+            reserve=dienste.reserve(),
+            # Woher die Reserve kommt. Die Karte sagt es unterschiedlich:
+            # Steht hier 0 oder etwas Kleines, ist es der Sockel, und der
+            # Satz "so viel, wie das groesste Abbild belegt" waere schlicht
+            # falsch -- aufgefallen in der Vorschau am 04.09.2026.
+            groesstes=dienste.groesstes_abbild(),
+            sockel=dienste.SOCKEL,
             platz=belegung))
 
     return sortiert(befunde)

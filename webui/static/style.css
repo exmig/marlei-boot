@@ -862,6 +862,23 @@ table.schmal td { border-bottom: none; padding: .25rem .8rem .25rem 0; }
 
 .meldung { margin-bottom: 1.25rem; }
 
+/* Die Meldung hat zwei Auspraegungen (A-021). Ohne Zusatz ist sie die
+   Zusage und bleibt gedaempft: Wer gerade geklickt hat, weiss, dass er
+   geklickt hat -- sie bestaetigt nur.
+
+   "schlecht" ist die Zurueckweisung. Sie traegt dieselbe Farbe wie
+   button.danger und .quittung.schlecht, damit es im Haus eine Warnfarbe
+   gibt und nicht drei: --danger, gerechnet 6,08:1 auf dem hellen und
+   7,38:1 auf dem dunklen Seitengrund.
+
+   Nur Schrift und Kante, keine Flaeche: Eine gefuellte Flaeche waere eine
+   Karte, und Karten gelten dem Server -- diese Zeile gilt einem Klick.
+   Die Grenze steht in docs/gestaltung.md unter "Meldungsplaetze". */
+.meldung.schlecht {
+  border-left-color: var(--danger);
+  color: var(--danger);
+}
+
 /* Aufklappbare Abschnitte. Gedacht fuer Formulare, die man selten braucht:
    die Seite beginnt dann mit der Antwort statt mit Eingabefeldern. */
 .klappe {

@@ -4594,7 +4594,7 @@ with TestClient(pxeapp.app) as c:
     BOOT = "Kein Rechner kann gerade starten"
     NFS = "Live-Systeme starten gerade nicht"
     SMB = "Windows lässt sich gerade nicht installieren"
-    VOLL = "Die Platte ist fast voll"
+    VOLL = "Der Platz reicht nicht mehr für ein Abbild"
     echte_zustaende, echter_platz = dienste_.zustaende, dienste_.platz
 
     def laufen(**aus):
@@ -4672,30 +4672,56 @@ with TestClient(pxeapp.app) as c:
         check("nicht abfragbare Dienste sind kein Befund",
               BOOT not in seite and NFS not in seite)
 
-        # -- Der Platz. Die Schwelle ist dieselbe, ab der der Balken
-        # "voll" heisst -- geprueft wird genau das, sonst laufen sie
-        # irgendwann auseinander.
+        # -- Der Platz (A-021). Gewarnt wird nicht mehr bei einem
+        # Prozentsatz, sondern wenn der Platz fuer ein weiteres Abbild
+        # nicht mehr reicht. Der Balken faerbt sich nach derselben Regel
+        # rot -- geprueft wird genau das, sonst laufen sie auseinander.
         laufen()
         gb = 1073741824
-        dienste_.platz = lambda p: {"gesamt": 100 * gb, "belegt": 94 * gb,
-                                    "frei": 6 * gb, "anteil": 94}
-        seite = c.get("/").text
-        check("eine volle Platte wird zur Warnkarte",
-              VOLL in seite and 'class="seitenkarte stufe-warnung"' in seite)
-        check("... mit der Zahl darin", "94 %" in seite and "6 GB" in seite)
 
-        dienste_.platz = lambda p: {"gesamt": 100 * gb, "belegt": dienste_.VOLL * gb,
-                                    "frei": (100 - dienste_.VOLL) * gb,
-                                    "anteil": dienste_.VOLL}
+        def platte_frei(frei_gb, gesamt_gb=100):
+            """Belegung festlegen ueber das, was frei ist."""
+            belegt = gesamt_gb - frei_gb
+            dienste_.platz = lambda p: {
+                "gesamt": gesamt_gb * gb, "belegt": belegt * gb,
+                "frei": frei_gb * gb,
+                "anteil": round(belegt / gesamt_gb * 100)}
+
+        # Die Reserve steht erst fest, wenn die Seite einmal gemessen hat.
+        c.get("/")
+        reserve_gb = dienste_.reserve() // gb
+        check("die Reserve ist mindestens der Sockel",
+              reserve_gb >= dienste_.SOCKEL // gb)
+
+        platte_frei(reserve_gb - 1)
         seite = c.get("/").text
-        check("genau auf der Schwelle gilt sie schon", VOLL in seite)
-        check("... und der Balken heisst dort auch schon voll",
+        check("zu wenig Platz fuer ein Abbild wird zur Warnkarte",
+              VOLL in seite and 'class="seitenkarte stufe-warnung"' in seite)
+        check("... mit den Zahlen darin",
+              f"{reserve_gb - 1}" in seite and f"{reserve_gb} GB" in seite)
+        check("... und der Balken heisst dort voll",
               'class="balken voll"' in seite)
 
-        dienste_.platz = lambda p: {"gesamt": 100 * gb, "belegt": (dienste_.VOLL - 1) * gb,
-                                    "frei": (101 - dienste_.VOLL) * gb,
-                                    "anteil": dienste_.VOLL - 1}
-        check("einen Prozentpunkt darunter nicht", VOLL not in c.get("/").text)
+        platte_frei(reserve_gb)
+        seite = c.get("/").text
+        check("genau auf der Reserve gilt sie noch nicht", VOLL not in seite)
+        check("... und der Balken ist dort nicht voll",
+              'class="balken voll"' not in seite)
+
+        # Der Kern der Aufgabe: Eine grosse Platte darf hoch belegt sein,
+        # solange das naechste Abbild noch draufpasst. Frueher warnte hier
+        # der Prozentsatz -- auf 5 TB bei 500 GB frei, Platz fuer Dutzende.
+        platte_frei(500, gesamt_gb=5000)
+        seite = c.get("/").text
+        check("eine grosse Platte warnt nicht bei 90 Prozent", VOLL not in seite)
+        check("... obwohl der Prozentsatz die alte Schwelle erreicht",
+              "90 %" in seite)
+
+        # Und die kleine Platte bleibt versorgt: Dort ist die Reserve die
+        # strengere der beiden Regeln, nicht die schwaechere.
+        platte_frei(2, gesamt_gb=20)
+        check("eine kleine Platte warnt weiterhin rechtzeitig",
+              VOLL in c.get("/").text)
 
         # Ohne lesbare Belegung kein Befund -- nichts zu wissen ist kein Alarm.
         dienste_.platz = lambda p: {}
@@ -4705,18 +4731,16 @@ with TestClient(pxeapp.app) as c:
         #
         # Weggeklickt heisst nicht weg: Die Karte schrumpft auf eine graue
         # Zeile. Und sie kommt zurueck, wenn es schlimmer wird -- gemessen
-        # an der Fuenferstufe der Belegung, nicht am Prozentpunkt.
+        # an den Gigabyte, die an der Reserve fehlen.
         print("\n-- Befunde zur Kenntnis nehmen")
         import kenntnis
         kenntnis.zuruecksetzen()
         laufen()
 
-        def platte(anteil):
-            dienste_.platz = lambda p: {"gesamt": 100 * gb, "belegt": anteil * gb,
-                                        "frei": (100 - anteil) * gb,
-                                        "anteil": anteil}
+        def platte(frei_gb):
+            platte_frei(frei_gb)
 
-        platte(91)
+        platte(reserve_gb - 1)
         seite = c.get("/").text
         check("die Warnkarte steht offen da",
               'class="seitenkarte stufe-warnung"' in seite
@@ -4733,32 +4757,33 @@ with TestClient(pxeapp.app) as c:
               'class="bekanntzeile"' in c.get("/systeme").text
               and 'class="bekanntzeile"' in c.get("/clients").text)
 
-        # Ein Prozentpunkt mehr ist kein neuer Befund -- sonst waere das
-        # Wegklicken ein Aufschub um Minuten.
-        platte(94)
-        check("ein Prozentpunkt mehr holt sie nicht zurueck",
+        # Dieselbe Lage ist kein neuer Befund -- sonst waere das
+        # Wegklicken ein Aufschub um Minuten. Die Marke zaehlt ganze
+        # Gigabyte, innerhalb desselben bleibt es still.
+        platte(reserve_gb - 1)
+        check("dieselbe Lage holt sie nicht zurueck",
               'class="seitenkarte stufe-warnung"' not in c.get("/").text)
 
-        # Die naechste Fuenferstufe schon.
-        platte(95)
-        check("die naechste Fuenferstufe holt sie zurueck",
+        # Ein Gigabyte weniger schon.
+        platte(reserve_gb - 2)
+        check("ein Gigabyte weniger holt sie zurueck",
               'class="seitenkarte stufe-warnung"' in c.get("/").text)
 
         # War der Befund weg und kommt wieder, ist er ein neuer.
         c.post("/befund/kenntnis", data={"kennung": "platte", "zurueck": "/"},
                follow_redirects=False)
         check("wieder weggeklickt", 'class="bekanntzeile"' in c.get("/").text)
-        platte(50)
-        check("unter der Schwelle ist gar nichts da",
+        platte(reserve_gb + 40)
+        check("ueber der Reserve ist gar nichts da",
               VOLL not in c.get("/").text)
-        platte(95)
+        platte(reserve_gb - 2)
         check("und danach faengt er offen an",
               'class="seitenkarte stufe-warnung"' in c.get("/").text)
 
         # Zwei Karten, eine weggeklickt: Die andere bleibt stehen. Beide
         # sind gelb, aber es sind zwei Befunde und nicht einer.
         kenntnis.zuruecksetzen()
-        platte(50)
+        platte(reserve_gb + 40)
         laufen(smbd=False, **{"nfs-server": False})
         c.post("/befund/kenntnis", data={"kennung": "teildienst", "zurueck": "/"},
                follow_redirects=False)
@@ -4770,7 +4795,7 @@ with TestClient(pxeapp.app) as c:
         # Rot laesst sich nicht wegklicken -- weder im Formular noch am
         # Endpunkt vorbei.
         kenntnis.zuruecksetzen()
-        platte(50)
+        platte(reserve_gb + 40)
         laufen(dnsmasq=False)
         seite = c.get("/").text
         check("die rote Karte hat keinen Knopf",
@@ -4783,7 +4808,7 @@ with TestClient(pxeapp.app) as c:
         # Das Stueck fuer den Takt: dieselben Karten, ohne den Rest der
         # Seite. "von" sagt, wohin der Knopf zurueckfuehrt.
         laufen()
-        platte(91)
+        platte(reserve_gb - 1)
         kenntnis.zuruecksetzen()
         stueck = c.get("/befunde.html?von=/systeme").text
         check("das nachgeholte Stueck traegt dieselbe Karte",
@@ -4848,6 +4873,49 @@ with TestClient(pxeapp.app) as c:
     check("... sondern gesagt, warum nichts dasteht",
           "install.sh" in seite and "Version 0" in seite)
     check("... und kurz() bleibt leer", versionsstand.kurz() == "")
+
+    # -- Die Meldung und ihre Auspraegung (A-021)
+    #
+    # Drei Dinge: Eine Zurueckweisung sieht anders aus als eine Zusage,
+    # sie ueberlebt kein Neuladen, und es bleibt bei EINEM Meldungsweg.
+    print("\n-- Meldung: Auspraegung und Lebensdauer")
+
+    # Eine Zurueckweisung: Wecken ohne angekreuzten Rechner.
+    r = c.post("/clients/wecken", data={}, follow_redirects=False)
+    ziel = r.headers["location"]
+    check("eine Zurueckweisung traegt die Auspraegung in der Adresse",
+          "art=schlecht" in ziel, ziel)
+    seite = c.get(ziel).text
+    check("... und die Zeile traegt sie als Klasse",
+          'class="hint meldung schlecht"' in seite, seite[:0])
+    check("... mit dem Satz darin", "Keinen Rechner angekreuzt" in seite)
+
+    # Eine Zusage: dieselbe Bauart, ohne Auspraegung.
+    r = c.post("/quellen/speichern", data={}, follow_redirects=False)
+    ziel = r.headers["location"]
+    check("eine Zusage traegt keine Auspraegung", "art=" not in ziel, ziel)
+    seite = c.get(ziel).text
+    check("... und die Zeile bleibt die gedaempfte",
+          'class="hint meldung "' in seite
+          and 'class="hint meldung schlecht"' not in seite)
+
+    # Lebensdauer: Die Seite nimmt die beiden Parameter nach dem Anzeigen
+    # aus der Adresse. Geprueft wird, dass das Stueck da ist und beide
+    # nennt -- die Wirkung selbst liegt im Browser.
+    check("die Seite raeumt die Meldung aus der Adresse",
+          'searchParams.delete("meldung")' in seite
+          and 'searchParams.delete("art")' in seite
+          and "replaceState" in seite)
+
+    # Und der eine Weg: Keine Route baut sich ihre Adresse noch selbst.
+    quelltext = Path(pxeapp.__file__).read_text(encoding="utf-8")
+    # Gesucht wird das Bauen, nicht das Erwaehnen: Zwei Docstrings nennen
+    # "?meldung=", ohne eine Adresse zusammenzusetzen.
+    selbstgebaut = [z for z in quelltext.splitlines()
+                    if '?meldung=" +' in z]
+    check("es gibt genau einen Meldungsweg",
+          len(selbstgebaut) == 1 and "ziel = seite" in selbstgebaut[0],
+          str(selbstgebaut))
 
     # -- Werkseinstellung: alles weg, aber erst nach drei Schritten
     #
