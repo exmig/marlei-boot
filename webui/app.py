@@ -1229,6 +1229,35 @@ def _zustand(eintrag: dict) -> dict:
     return {"text": "fehlt", "gut": False, "meldung": ""}
 
 
+def _angefangen(eintrag: dict) -> bool:
+    """Liegt von diesem Eintrag schon etwas auf der Platte?
+
+    **Der Unterschied zwischen "noch nie geholt" und "war da und ist
+    weg" -- ohne Buchfuehrung.** B-003 schlug dafuer einen Zustand je
+    Eintrag vor, mitgefuehrt bei jedem Abgleich, Upload und Loeschen. Der
+    ist nicht noetig: Die Ablage sagt es selbst.
+
+    `sync-images.sh` legt das Verzeichnis an, *bevor* es laedt, und laesst
+    bei einem Abbruch die `.part`-Datei darin liegen (siehe `get()` dort).
+    Ein Eintrag, dem Dateien fehlen und von dem trotzdem etwas dasteht,
+    ist also angefangen und nicht neu.
+
+    Der Gegenfall traegt sich selbst: "Dateien loeschen" nimmt den Ordner
+    samt leer gewordener Eltern mit (_raeume_ab), da bleibt nichts liegen
+    -- und dort sagt die Meldung im Moment des Klicks, was weg ist.
+
+    Nur auf /systeme gerechnet, nicht bei jedem Seitenaufbau: ein
+    scandir je Eintrag, dem etwas fehlt.
+    """
+    ordner = eintragsordner(eintrag.get("slug", ""))
+    if ordner is None or not ordner.is_dir():
+        return False
+    try:
+        return any(ordner.iterdir())
+    except OSError:
+        return False
+
+
 def _systeme() -> list[dict]:
     """Katalog und eigene Abbilder als eine Liste.
 
@@ -1696,6 +1725,19 @@ def systeme_seite(request: Request, meldung: str = "", art: str = "",
     # abgebrochenen Abgleich erfaehrt.
     karten = _gruppiert([e for e in systeme if e["ready"]])
 
+    # Was angefangen und nicht fertig ist. Bis zum 27.08.2026 nannte hier
+    # eine Zeile ALLE Eintraege ohne Dateien -- auf einem frischen Server
+    # war das der ganze Katalog, als waere er ein Mangel. Deshalb kam sie
+    # weg, und damit auch die Auskunft ueber den abgebrochenen Abgleich.
+    #
+    # Jetzt steht sie wieder da, aber gefiltert: nur Eintraege, von denen
+    # etwas auf der Platte liegt. Auf einem frischen Server ist das keiner.
+    # Uploads und selbst Angelegtes bleiben draussen -- die tragen ihren
+    # Zustand ohnehin sichtbar mit (siehe _systeme).
+    unvollstaendig = [e for e in systeme
+                      if not e["ready"] and not e.get("upload")
+                      and not e.get("eigen") and _angefangen(e)]
+
     # Fuer die Vorschau eine echte MAC nehmen, wenn eine bekannt ist --
     # so sieht man auch gleich, wie lang die Zeile am Client wird.
     with db() as conn:
@@ -1723,6 +1765,7 @@ def systeme_seite(request: Request, meldung: str = "", art: str = "",
             # der Eintrag kann ohne NFS gar nicht starten. Zwei Gruende,
             # zwei Zeilen; "seine Dateien fehlen noch" waere hier falsch.
             ohne_nfs=[e for e in systeme if e.get("braucht_nfs")],
+            unvollstaendig=unvollstaendig,
             # Bereit, aber niemandem angeboten. Seit die Freigabe leer
             # anfaengt, ist das der Zustand von allem frisch Geholten --
             # und der Grund, warum man auf diese Seite kommt.

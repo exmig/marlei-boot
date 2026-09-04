@@ -159,6 +159,29 @@
    beheben laesst. Warum manche Bauarten NFS brauchen, steht in der Hilfe
    unter "Wenn ein Eintrag NFS braucht" -- bis zum 27.08.2026 standen die
    vier Saetze hier im roten Kasten. #}
+{# Angefangen und nicht fertig. Diese Zeile beantwortet die Frage, mit
+   der jemand auf diese Seite kommt: "mein Ubuntu ist nicht mehr da".
+   Sie nennt die Eintraege namentlich -- wer etwas vermisst, will wissen,
+   ob es gerade das ist.
+
+   Sie erscheint NUR, wenn von einem Eintrag etwas auf der Platte liegt
+   (app._angefangen). Auf einem frischen Server steht hier nichts: Dass
+   die mitgelieferten Systeme noch nicht geholt sind, ist der
+   Auslieferungszustand und kein Mangel -- genau daran ist die alte
+   Fassung dieser Zeile am 27.08.2026 gescheitert. #}
+{% if unvollstaendig %}
+{% set u = unvollstaendig | length %}
+<p class="hint">
+  {{ u }} {{ "Eintrag ist" if u == 1 else "Einträge sind" }} angefangen und
+  nicht fertig geworden:
+  {% for e in unvollstaendig %}<strong>{{ e.name }}{% if e.version %} {{ e.version }}{% endif %}</strong>{{ ", " if not loop.last }}{% endfor %}.
+  Auf der Platte liegt etwas, aber nicht alles — meist ein abgebrochener
+  Abgleich oder eine volle Platte.
+  {{ "Er wird" if u == 1 else "Sie werden" }} deshalb nicht angeboten;
+  unter <a href="/quellen">Quellen</a> lässt sich das Holen wiederholen.
+</p>
+{% endif %}
+
 {% if ohne_nfs %}
 {% set n = ohne_nfs | length %}
 <p class="hint">

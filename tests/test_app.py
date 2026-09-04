@@ -4874,6 +4874,57 @@ with TestClient(pxeapp.app) as c:
           "install.sh" in seite and "Version 0" in seite)
     check("... und kurz() bleibt leer", versionsstand.kurz() == "")
 
+    # -- Angefangen und nicht fertig (A-021, aus B-003)
+    #
+    # Der Server konnte "noch nie geholt" und "war da und ist weg" nicht
+    # auseinanderhalten. Jetzt haelt er es an der Ablage auseinander --
+    # ohne Buchfuehrung.
+    print("\n-- Angefangen und nicht fertig")
+
+    # Kurz gehalten: In der Vorlage steht der Satz ueber zwei Zeilen, ein
+    # laengeres Stueck traefe den Umbruch.
+    ANGEFANGEN = "angefangen und"
+
+    # Geprueft wird am einzelnen Eintrag, nicht an der Zeile: Auf diesem
+    # Testserver haben fruehere Abschnitte schon Reste hinterlassen, und
+    # dann steht die Zeile zu Recht da.
+    eintrag = next((e for e in pxeapp._systeme()
+                    if not e["ready"] and not e.get("upload")
+                    and not e.get("eigen") and not pxeapp._angefangen(e)), None)
+    check("es gibt einen Eintrag, der nie geholt wurde", eintrag is not None,
+          str([e["slug"] for e in pxeapp._systeme() if not e["ready"]][:5]))
+    if eintrag is not None:
+        check("... und er wird nirgends genannt",
+              eintrag["name"] not in c.get("/systeme").text.split(
+                  "Vorschau")[0])
+    # Ein abgebrochener Abgleich, wie ihn sync-images.sh hinterlaesst: das
+    # Verzeichnis liegt da, darin eine .part-Datei, die Pflichtdatei fehlt.
+    if eintrag is not None:
+        halb = assets / eintrag["slug"]
+        halb.mkdir(parents=True, exist_ok=True)
+        (halb / "vmlinuz.part").write_bytes(b"halb")
+        seite = c.get("/systeme").text
+        check("... mit Resten steht sie da", ANGEFANGEN in seite)
+        check("... und nennt den Eintrag beim Namen",
+              eintrag["name"] in seite.split(ANGEFANGEN)[1][:300])
+        check("... und bleibt trotzdem aus dem Bootmenue heraus",
+              eintrag["slug"] not in menue())
+
+        # Der Kern: Der ganze Katalog darf nicht wieder als Mangel
+        # dastehen. Genannt wird nur, wovon etwas daliegt.
+        andere = [e for e in pxeapp._systeme()
+                  if not e["ready"] and e["slug"] != eintrag["slug"]
+                  and not pxeapp._angefangen(e)]
+        check("... aber nicht die Eintraege, die nur noch nie geholt wurden",
+              all(e["name"] not in seite.split(ANGEFANGEN)[1][:300]
+                  for e in andere),
+              str([e["name"] for e in andere][:5]))
+
+        shutil.rmtree(halb, ignore_errors=True)
+        check("ohne die Reste wird er wieder nicht genannt",
+              eintrag["name"] not in c.get("/systeme").text.split(
+                  "Vorschau")[0])
+
     # -- Die Meldung und ihre Auspraegung (A-021)
     #
     # Drei Dinge: Eine Zurueckweisung sieht anders aus als eine Zusage,
