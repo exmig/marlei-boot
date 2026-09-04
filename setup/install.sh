@@ -373,6 +373,61 @@ env_setzen() {
   fi
 }
 
+# Was die Vorlage kennt und die Datei nicht, wird nachgetragen -- mit dem
+# Wert und den Kommentarzeilen aus der Vorlage.
+#
+# **Der dritte Fall.** Oben stehen zwei: Datei fehlt (aus der Vorlage
+# erzeugen) und Datei ist da (nur die Basis-URL anfassen, eigene
+# Aenderungen bleiben). Dazwischen fehlte einer: Ein Name, den die Vorlage
+# kennt und die Datei nicht, ist keine eigene Aenderung, sondern eine
+# Luecke. Ueberschrieben wird dabei nichts -- angehaengt wird nur, was
+# fehlt.
+#
+# Aufgefallen am 04.09.2026 auf der produktiven Maschine: Dort fehlten
+# PXE_WOL_PORTS und PXE_QUELLENWACHT, weil die Datei aelter ist als die
+# beiden Werte. Die neue Karte "Die Einrichtung ist aelter als der Code"
+# hat es gemeldet und auf install.sh verwiesen -- und install.sh haette es
+# nicht behoben. Ein Befund, der einen Weg nennt, der ihn nicht behebt,
+# ist eine Sackgasse.
+nachtragen_aus_vorlage() {
+  local vorlage="$SRC_DIR/setup/files/pxeweb.env.example"
+  local schluessel zeile nachgetragen=0 kommentar=""
+
+  [[ -r "$vorlage" ]] || return 0
+
+  while IFS= read -r zeile; do
+    # Kommentarbloecke sammeln: Sie gehoeren zu dem Wert, der ihnen folgt.
+    if [[ "$zeile" =~ ^# ]]; then
+      kommentar+="${zeile}"$'
+'
+      continue
+    fi
+    if [[ -z "$zeile" ]]; then
+      kommentar=""
+      continue
+    fi
+    if [[ "$zeile" =~ ^([A-Z][A-Z0-9_]*)= ]]; then
+      schluessel="${BASH_REMATCH[1]}"
+      if ! grep -q "^$schluessel=" /etc/pxeweb.env; then
+        {
+          echo ""
+          [[ -n "$kommentar" ]] && printf '%s' "$kommentar"
+          echo "$zeile"
+        } >> /etc/pxeweb.env
+        echo "    nachgetragen: $schluessel"
+        nachgetragen=$((nachgetragen + 1))
+      fi
+    fi
+    kommentar=""
+  done < "$vorlage"
+
+  if [[ $nachgetragen -gt 0 ]]; then
+    ok "$nachgetragen Wert(e) aus der Vorlage nachgetragen"
+  fi
+}
+
+nachtragen_aus_vorlage
+
 install -m 0644 "$SRC_DIR/setup/files/pxeweb.service" /etc/systemd/system/pxeweb.service
 
 # --------------------------------------------------------------------------
