@@ -1,17 +1,17 @@
-{# Die Umgebung ist aelter als der Code. Gelb und nicht rot: Der Server
-   tut seine Arbeit, aber was an den fehlenden Werten haengt, tut sie
-   nicht -- und man saehe es sonst nirgends. Siehe webui/umgebung.py. #}
+{# Die Einrichtung ist hinter dem Code zurueck. Gelb und nicht rot: Der
+   Server tut seine Arbeit, aber was an den fehlenden Werten haengt, tut
+   sie nicht -- und man saehe es sonst nirgends. Siehe webui/umgebung.py.
+
+   **Welche Werte fehlen, steht hier bewusst nicht.** Markus am
+   04.09.2026: "Kein user will wissen was fehlt. Das sind Details, die
+   90 % der user nicht interessieren. Der user will nur eins wissen: Was
+   soll ich tun?" Die Namen bleiben im Befund (befund.fehlend) -- fuer
+   den Fall, dass sie doch einmal jemand sehen soll. #}
 <p>
-  In <code>/etc/pxeweb.env</code>
-  {{ "fehlt ein Wert" if befund.fehlend | length == 1 else "fehlen Werte" }},
-  {{ "den" if befund.fehlend | length == 1 else "die" }} der laufende Code
-  erwartet:
-  {% for name in befund.fehlend %}<code>{{ name }}</code>{{ ", " if not loop.last }}{% endfor %}.
-</p>
-<p>
-  Das passiert, wenn eine neue Version mehr mitbringt als Code — ein Dienst,
-  ein Konto, eine neue Zeile. <code>git pull</code> richtet so etwas nicht
-  ein, <code>install.sh</code> schon. Derselbe Befehl tut beides:
+  Die neue Version dieses Servers erfordert ein erneutes Ausführen des
+  Installationsskripts <code>install.sh</code>. Bitte führen Sie den
+  folgenden Befehl in einem Terminal auf dem Server aus — <strong>ohne
+  <code>sudo</code></strong>, das Skript fragt selbst danach:
 </p>
 <div class="befehlszeile">
   <pre class="ipxe" id="befehl-einrichtung">{{ update_befehl }}</pre>
@@ -19,6 +19,6 @@
           title="Befehl kopieren" aria-label="Befehl kopieren">kopieren</button>
 </div>
 <p class="kartenfuss">
-  Ohne <code>sudo</code> aufrufen — das Skript fragt selbst danach.
+  Das Skript holt den neuen Stand und richtet ihn ein.
   &middot; <a href="/einrichtung#einstellungen">Was eingerichtet ist &rarr;</a>
 </p>

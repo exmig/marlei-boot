@@ -137,10 +137,10 @@ KATALOG = (
                 % (dienste.SOCKEL // 1024 ** 3),
      "wieder": "wenn wieder ein Gigabyte weniger frei ist"},
     {"kennung": "einrichtung", "stufe": "warnung",
-     "titel": "Die Einrichtung ist älter als der Code",
+     "titel": "Dieser Server hat eine veraltete Version",
      "wodurch": "In /etc/pxeweb.env fehlen Werte, die der laufende Code "
-                "erwartet. Der Server läuft, aber was daran hängt, ist "
-                "nicht eingerichtet.",
+                "kennt — die Einrichtung ist hinter dem Code zurück. "
+                "Zu beheben mit einem erneuten install.sh.",
      "wieder": "wenn wieder ein Wert mehr fehlt"},
     {"kennung": "neuefassung", "stufe": "info",
      "titel": "Es liegen Änderungen bereit",

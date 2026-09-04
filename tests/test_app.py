@@ -5068,7 +5068,7 @@ with TestClient(pxeapp.app) as c:
           uw.intervall_tage() == 0 and NEUE not in c.get("/").text)
 
     # -- Die Umgebung ist aelter als der Code
-    ALT = "Die Einrichtung ist älter als der Code"
+    ALT = "Dieser Server hat eine veraltete Version"
     check("ohne /etc/pxeweb.env keine Meldung",
           not umg.fehlend() and ALT not in c.get("/").text)
 
@@ -5079,9 +5079,14 @@ with TestClient(pxeapp.app) as c:
     echt.write_text("PXE_BASE_URL=http://x\n", encoding="utf-8")
     check("fehlt ein Wert, sagt der Server es", umg.fehlend() == ["PXE_SMB_ROOT"])
     seite = c.get("/").text
-    check("... als gelbe Karte mit dem Namen darin",
-          ALT in seite and "PXE_SMB_ROOT" in seite
+    # Die Karte sagt, was zu tun ist -- und ausdruecklich NICHT, welcher
+    # Wert fehlt: Das interessiert den Betreiber nicht, und die Namen
+    # stehen weiter im Befund, falls sie doch einmal jemand braucht.
+    check("... als gelbe Karte", ALT in seite
           and 'class="seitenkarte stufe-warnung"' in seite)
+    check("... die sagt, was zu tun ist",
+          "install.sh" in seite and "in einem Terminal" in seite)
+    check("... und nicht, welcher Wert fehlt", "PXE_SMB_ROOT" not in seite)
     check("... und demselben Befehl",
           "/home/srvbusr/marlei-boot/setup/update.sh" in seite)
 
