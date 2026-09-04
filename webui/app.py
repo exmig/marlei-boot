@@ -3304,6 +3304,11 @@ def updatepruefung_setzen(tage: str = Form("")):
     # Waechter, den es nicht mehr gibt, sie wegnimmt.
     if not wert:
         updatewacht.vergiss()
+    else:
+        # Und wer sie einschaltet, soll nicht bis zum naechsten
+        # Stundenschlag warten. Im Hintergrund: Die Antwort auf den Klick
+        # haengt nicht am Netz.
+        updatewacht.starte_blick()
     return RedirectResponse(
         antwort("/einrichtung",
                 f"Nachgesehen wird jetzt {erlaubt[wert]}.", marke="stand"),

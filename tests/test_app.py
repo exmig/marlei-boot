@@ -4942,6 +4942,32 @@ with TestClient(pxeapp.app) as c:
               encoding="utf-8") if Path(os.environ["PXE_ENV_DATEI"]).is_file()
           else True)
 
+    # Einschalten stoesst sofort einen Blick an -- die Wache schlaeft
+    # sonst bis zum naechsten Stundenschlag, und das ist richtig fuers
+    # Warten und falsch fuers Klicken.
+    uw.vergiss()
+    c.post("/einrichtung/updatepruefung", data={"tage": "0"},
+           follow_redirects=False)
+    check("abgeschaltet wird nichts angestossen",
+          not uw.stand()["zeit"])
+    c.post("/einrichtung/updatepruefung", data={"tage": "7"},
+           follow_redirects=False)
+    for _ in range(50):
+        if uw.stand()["zeit"] or uw.laeuft():
+            break
+        time.sleep(0.05)
+    check("einschalten sucht sofort, ohne auf die Stunde zu warten",
+          bool(uw.stand()["zeit"]) or uw.laeuft())
+    c.post("/einrichtung/updatepruefung", data={"tage": "30"},
+           follow_redirects=False)
+    # Abwarten, bis der angestossene Blick durch ist: Er haelt das Schloss,
+    # und die Pruefungen darunter setzen eigene Blicke ab.
+    for _ in range(100):
+        if not uw.laeuft():
+            break
+        time.sleep(0.05)
+    uw.vergiss()
+
     r = c.post("/einrichtung/updatepruefung", data={"tage": "3"},
                follow_redirects=False)
     check("ein Zeitraum, den es nicht gibt, wird abgewiesen",

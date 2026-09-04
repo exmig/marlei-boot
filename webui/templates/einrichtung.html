@@ -98,7 +98,9 @@
      standen beide unter "nicht erreichbar" -- und behaupteten damit auf
      einem Server mit tadelloser Leitung etwas Falsches. #}
   <p class="muted small">
-    {% if not updatestand.intervall %}
+    {% if updatestand.laeuft %}
+    Wird gerade gesucht …
+    {% elif not updatestand.intervall %}
     Es wird nicht gesucht.
     {% elif updatestand.dort %}
     Zuletzt gefunden: <code>{{ updatestand.dort }}</code>{#

@@ -284,6 +284,24 @@ def blick(hole=None) -> bool:
         return True
 
 
+def starte_blick(hole=None) -> bool:
+    """Einen Blick im Hintergrund anstossen. False, wenn schon einer laeuft.
+
+    **Fuer den Moment, in dem jemand gerade geklickt hat.** Die Wache
+    schlaeft in Stunden-Schritten -- das ist richtig fuers Warten und
+    falsch fuers Klicken: Wer die Suche gerade eingeschaltet hat, will
+    nicht bis zum naechsten Stundenschlag warten, um zu sehen, ob sie
+    etwas taugt.
+
+    Im Hintergrund, damit die Seite nicht auf das Netz wartet. Dasselbe
+    Muster wie quellenwacht.starte_lauf() beim Knopf "Pruefen".
+    """
+    if laeuft() or not intervall_tage():
+        return False
+    threading.Thread(target=blick, args=(hole,), daemon=True).start()
+    return True
+
+
 def stand() -> dict:
     """Was der letzte Blick ergeben hat -- fuer Karte und Befund."""
     daten = _lesen()
