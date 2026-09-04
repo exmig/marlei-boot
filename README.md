@@ -159,6 +159,22 @@ Entscheidung dokumentiert ist, ist damit nicht für immer ausgeschlossen —
 es ist begründet abgelehnt, und Gründe kann man widerlegen.
 Rückmeldungen sind willkommen.
 
+## Was die Versionsnummer sagt
+
+Kein SemVer — dieses Projekt hat keine Programmierschnittstelle, die
+brechen könnte. Die drei Stellen zählen Arbeit, nicht Verträglichkeit:
+
+- **1.**x.x — gravierende Änderungen: neue Fähigkeiten, schwere Fehler
+  behoben.
+- x.**1**.x — ein Meilenstein ist abgenommen.
+- x.x.**1** — eine Aufgabe ist abgenommen.
+
+**Die dritte Stelle heißt also nicht „nur Fehlerbehebungen".** Hinter ihr
+kann eine neue Karte, eine neue Einstellung oder ein neuer Dienst stecken.
+Was drin ist, sagt der Name der Ausgabe; ob sich das Holen lohnt, sagt der
+Server selbst — er sieht auf Wunsch nach, ob im Repository etwas
+dazugekommen ist, und nennt die Zahl.
+
 ## Lizenz
 
 Der Quelltext steht unter der **GNU Affero General Public License,
