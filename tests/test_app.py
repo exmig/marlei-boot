@@ -4955,7 +4955,9 @@ with TestClient(pxeapp.app) as c:
     check("ohne Stempel wird keine neuere Version behauptet",
           uw.blick(hole=lambda: "v9.9") and not uw.stand()["neuer"])
     check("... und keine Karte", NEUE not in c.get("/").text)
-    stempel.write_text("stand=v1.2-3-gabc1234\ncommit=abc1234\n"
+    # Genau auf einem Tag: Nur so wird ueberhaupt verglichen. Der Stand
+    # dazwischen ist eine Zeile weiter unten eigens geprueft.
+    stempel.write_text("stand=v1.2\ncommit=abc1234\n"
                        "zweig=main\ninstalliert=2026-08-26 18:00\n",
                        encoding="utf-8")
     check("vorher steht keine blaue Karte da", NEUE not in c.get("/").text)
@@ -4963,6 +4965,18 @@ with TestClient(pxeapp.app) as c:
     check("ein Blick auf dieselbe Version meldet nichts",
           uw.blick(hole=lambda: "v1.2") and not uw.stand()["neuer"])
     check("... und keine Karte", NEUE not in c.get("/").text)
+
+    # Die Commit-Zahl von "git describe" ist keine Versionsziffer. Bis zum
+    # 04.09.2026 las sie sich als eine -- und seit eine abgenommene Aufgabe
+    # die dritte Stelle hebt, waere der Vergleich falsch gewesen.
+    check("die Commit-Zahl ist keine dritte Stelle",
+          uw.zahlen("v1.0-6-g27be685") == (1, 0)
+          and uw.zahlen("v1.0.1") == (1, 0, 1))
+    check("... und ein Stand zwischen zwei Tags vergleicht gar nicht",
+          uw.entwicklungsstand("v1.0-6-g27be685")
+          and not uw.entwicklungsstand("v1.0.1")
+          and not uw.ist_neuer("v1.0.1", "v1.0-6-g27be685")
+          and uw.ist_neuer("v1.0.1", "v1.0"))
 
     check("ein Blick auf eine hoehere Version meldet sie",
           uw.blick(hole=lambda: "v1.3") and uw.stand()["neuer"])
@@ -4981,6 +4995,21 @@ with TestClient(pxeapp.app) as c:
           'data-quelle="befehl-update"' in seite)
     check("... und ohne einen Knopf, der es selbst einspielt",
           "Update installieren" not in seite)
+
+    # Ein Stand zwischen zwei Tags: Er ist neuer als sein eigener Tag, und
+    # was davon in einem spaeteren steckt, sagt die Angabe nicht.
+    stempel.write_text("stand=v1.2-6-gabc1234\ncommit=abc1234\n"
+                       "zweig=main\ninstalliert=2026-08-26 18:00\n",
+                       encoding="utf-8")
+    check("ein Stand zwischen zwei Tags vergleicht nicht",
+          uw.blick(hole=lambda: "v1.3") and not uw.stand()["neuer"])
+    check("... und die Karte sagt warum",
+          "Stand zwischen zwei" in " ".join(c.get("/einrichtung").text.split()))
+    check("... und es steht keine Karte da", NEUE not in c.get("/").text)
+    stempel.write_text("stand=v1.2\ncommit=abc1234\n"
+                       "zweig=main\ninstalliert=2026-08-26 18:00\n",
+                       encoding="utf-8")
+    uw.blick(hole=lambda: "v1.3")
 
     # Ohne Netz: vermerkt, nicht gemeldet.
     import urllib.error as _ue

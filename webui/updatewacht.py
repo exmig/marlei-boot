@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import threading
 import time
 import urllib.error
@@ -128,15 +129,36 @@ def vergiss() -> None:
 # Versionen vergleichen
 # --------------------------------------------------------------------------
 
-def zahlen(version: str) -> tuple:
-    """Aus "v1.2-3-gabc1234" wird (1, 2, 3) -- zum Vergleichen.
+# Was "git describe" hinten anhaengt, wenn der Stand NICHT genau auf einem
+# Tag sitzt: "-6-g27be685", dazu wahlweise "-dirty".
+_DAZWISCHEN = re.compile(r"-(\d+)-g[0-9a-f]+(-dirty)?$")
 
-    Gelesen wird nur, was vorne steht und aus Ziffern besteht. Alles
-    dahinter (der Commit, ein "-dirty") sagt nichts ueber neuer oder
-    aelter und faellt weg.
+
+def entwicklungsstand(version: str) -> bool:
+    """Sitzt dieser Stand zwischen zwei Tags?
+
+    Dann ist er neuer als der Tag, auf dem er aufsetzt, und wie viel davon
+    schon in einem spaeteren Tag steckt, sagt die Angabe nicht. Verglichen
+    wird deshalb nicht -- **lieber nichts sagen als raten.**
     """
+    return bool(_DAZWISCHEN.search(version.strip()))
+
+
+def zahlen(version: str) -> tuple:
+    """Aus "v1.0.1" wird (1, 0, 1) -- zum Vergleichen.
+
+    **Der Bindestrich trennt nicht.** Er tat es bis zum 04.09.2026, und
+    damit las sich "v1.0-6-g27be685" -- sechs Commits nach v1.0 -- als
+    (1, 0, 6) und also als Version 1.0.6. Solange es keine dritten Stellen
+    gab, fiel das nicht auf; seit eine abgenommene Aufgabe die dritte
+    Stelle hebt, waere der Vergleich schlicht falsch gewesen.
+
+    Der Anhang von "git describe" faellt deshalb weg, und getrennt wird
+    nur am Punkt.
+    """
+    roh = _DAZWISCHEN.sub("", version.strip()).removesuffix("-dirty")
     teile: list[int] = []
-    for stueck in version.strip().lstrip("vV").replace("-", ".").split("."):
+    for stueck in roh.lstrip("vV").split("."):
         if not stueck.isdigit():
             break
         teile.append(int(stueck))
@@ -167,6 +189,10 @@ def ist_neuer(dort: str, hier: str) -> bool:
     **Lieber nichts sagen als raten** -- eine Karte, die eine Aktualisierung
     meldet, die es nicht gibt, kostet mehr Vertrauen als eine, die fehlt.
     """
+    if entwicklungsstand(hier):
+        # Ein Stand zwischen zwei Tags ist neuer als sein Tag -- und ob das
+        # Neuere schon in einem spaeteren Tag steckt, weiss er nicht.
+        return False
     a, b = zahlen(dort), zahlen(hier)
     if not a or not b:
         return False
@@ -271,6 +297,10 @@ def stand() -> dict:
         "erreicht": bool(daten.get("erreicht")),
         # Nachgesehen worden ist ueberhaupt schon einmal?
         "gesucht": bool(daten.get("zeit")),
+        # Sitzt der laufende Stand zwischen zwei Tags? Dann wird nicht
+        # verglichen, und die Karte sagt warum.
+        "entwicklungsstand": entwicklungsstand(
+            daten.get("hier", "") or versionsstand.kurz()),
         "gesperrt": gesperrt(),
         "intervall": intervall_tage(),
         "laeuft": laeuft(),

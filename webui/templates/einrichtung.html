@@ -102,8 +102,12 @@
     {% if not updatestand.intervall %}
     Es wird nicht gesucht.
     {% elif updatestand.dort %}
-    Zuletzt gefunden: <code>{{ updatestand.dort }}</code>
-    {%- if updatestand.neuer %} — neuer als das, was hier läuft{% endif %}.
+    Zuletzt gefunden: <code>{{ updatestand.dort }}</code>{#
+    #}{% if updatestand.neuer %} — neuer als das, was hier läuft{% endif %}.
+    {% if not updatestand.neuer and updatestand.entwicklungsstand %}
+    Verglichen wird dabei nicht: Hier läuft ein Stand zwischen zwei
+    Versionen, und der ist neuer als seine eigene.
+    {% endif %}
     {% elif updatestand.ohne_netz and updatestand.erreicht %}
     Beim letzten Versuch hat GitHub geantwortet, aber keine Auskunft
     gegeben. Das ist keine Störung dieses Servers; beim nächsten Mal wird
