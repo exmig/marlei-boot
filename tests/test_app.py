@@ -4908,6 +4908,45 @@ with TestClient(pxeapp.app) as c:
           "install.sh" in seite and "Version 0" in seite)
     check("... und kurz() bleibt leer", versionsstand.kurz() == "")
 
+    # -- Der Fehlerbericht (A-014)
+    print("\n-- Fehlerbericht")
+    BERICHT = "MARLEI Boot -- Fehlerbericht"
+
+    seite = c.get("/einrichtung").text
+    check("die Karte steht auf der Seite", 'id="fehlerbericht"' in seite)
+    check("... und nennt die Adresse", "kontakt@exmig.de" in seite)
+    # Die Karte behandelt nur Fehler. Ein Kartenfuss gilt der ganzen
+    # Karte -- ein Hinweis auf Fragen und Vorschlaege waere dort ein
+    # zweites Thema. Siehe docs/gestaltung.md.
+    check("... und behandelt nur Fehler",
+          "Frage oder ein Vorschlag" not in seite)
+    # Erzeugt wird erst auf Klick: Der Bericht kostet ein halbes Dutzend
+    # Aufrufe nach draussen, und die haben auf einer Seite nichts zu
+    # suchen, die man oeffnet, um einen Pfad nachzusehen.
+    check("... aber ohne Klick steht kein Bericht da", BERICHT not in seite)
+
+    seite = c.get("/einrichtung?fehlerbericht=1").text
+    check("nach dem Klick steht er da", BERICHT in seite)
+    check("... mit dem Block Technik", "Technik" in seite)
+    check("... und dem Block Umgebung", "Umgebung" in seite)
+    check("... samt Kopierknopf", 'data-quelle="berichttext"' in seite)
+
+    ohne = c.get("/einrichtung?fehlerbericht=1&umgebung_mit=0").text
+    # Als Merkmal etwas, das es NUR im Bericht gibt: "Ablage der Abbilder"
+    # steht auch in der Ablageorte-Karte derselben Seite.
+    check("ohne Haken faellt die Umgebung weg",
+          BERICHT in ohne and "Bekannte Rechner" not in ohne)
+    check("... die Technik aber nicht", "Architektur" in ohne)
+
+    datei = c.get("/einrichtung/bericht.txt")
+    check("es gibt ihn auch als Datei",
+          datei.status_code == 200 and BERICHT in datei.text)
+    check("... und der Browser laedt sie herunter",
+          "attachment" in datei.headers.get("content-disposition", "")
+          and ".txt" in datei.headers.get("content-disposition", ""))
+    check("... mit demselben Inhalt wie auf der Seite",
+          "Architektur" in datei.text)
+
     # -- Der Server kennt seinen eigenen Stand (A-013)
     print("\n-- Stand: nachsehen, melden, einrichten")
     import updatewacht as uw

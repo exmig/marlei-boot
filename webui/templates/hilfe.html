@@ -3342,6 +3342,65 @@
   </p>
 
   <div class="abschnittskopf">
+    <h3 id="einrichtung-fehlerbericht">Fehlerbericht</h3>
+    <p class="zurkarte"><a href="/einrichtung#fehlerbericht">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    Wenn etwas nicht funktioniert und Sie sich melden, beginnt die Antwort
+    sonst mit Rückfragen: Worauf läuft der Server? Welche Fassung? Welche
+    Dienste in welcher Version? <strong>Jede dieser Rückfragen kostet einen
+    Tag.</strong> Der Bericht sammelt das in einem Text.
+  </p>
+  <p class="muted small">
+    Ein Beispiel dafür, warum es auf die Version ankommt: <code>dnsmasq</code>
+    2.89 und 2.90 verhalten sich beim PXE-Teil unterschiedlich. Ohne die
+    Angabe fängt jede Fehlersuche von vorn an.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <table>
+    <tbody>
+      <tr>
+        <td class="nowrap"><strong>Technik</strong></td>
+        <td class="muted">Distribution, Kernel, Architektur, ob der Server
+          in einer virtuellen Maschine läuft, die Dienste mit ihren
+          Versionen, der Stand dieser Anwendung. <strong>Auf jedem Server
+          dieselbe Art Angabe</strong> — nichts davon gehört Ihrem
+          Betrieb.</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><strong>Umgebung</strong></td>
+        <td class="muted">Ablageorte, wie viel wo liegt, wie viele Rechner
+          bekannt sind, die letzten Zeilen aus dem Journal.
+          <strong>Das trägt Namen und Zahlen aus Ihrem Betrieb</strong> —
+          deshalb lässt sich dieser Teil abwählen, der andere nicht.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>Was kann man hier tun?</h4>
+  <p class="muted">
+    Den Bericht erzeugen, lesen und weitergeben — als Text zum Kopieren
+    oder als Datei zum Anhängen. Die Adresse steht daneben.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="muted">
+    <strong>Der Server verschickt nichts.</strong> Er erzeugt Text, Sie
+    lesen ihn, Sie schicken ihn. Das ist Absicht: Eine Mail aus dem Server
+    heraus bräuchte Zugangsdaten auf einem Bootserver und eine
+    Ausgangsverbindung aus einem Netz, das oft keine hat.
+    <strong>Ihre Zustimmung ist, dass Sie den Text vorher sehen</strong> —
+    dafür gibt es keinen Haken davor, sondern den Bericht selbst.
+  </p>
+  <p class="muted small">
+    Nichts wird gespeichert: Der Bericht entsteht beim Klick und bleibt
+    nicht auf dem Server liegen.
+  </p>
+
+  <div class="abschnittskopf">
     <h3 id="einrichtung-ablageorte">Ablageorte</h3>
     <p class="zurkarte"><a href="/einrichtung#ablageorte">Zur Karte &rarr;</a></p>
   </div>

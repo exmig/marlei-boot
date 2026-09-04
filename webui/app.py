@@ -55,6 +55,7 @@ import konfiguration
 import logs
 import muster
 import quellen
+import bericht
 import einstellungen
 import quellenwacht
 import umgebung
@@ -1154,6 +1155,10 @@ SEITEN = ("/", "/clients", "/systeme", "/quellen", "/einrichtung",
 # Bewusst als Zeichenkette und nicht als Path: Der Pfad gilt auf dem
 # Server, und der laeuft Linux. Auf einem Windows-Arbeitsplatz machte
 # pathlib daraus "\opt\pxe-setup" -- ein Befehl, den niemand tippen kann.
+# Wohin ein Fehlerbericht geht. Der Server verschickt ihn nicht -- er
+# nennt die Adresse, und der Betreiber traegt den Text weiter.
+KONTAKT = os.environ.get("PXE_KONTAKT", "kontakt@exmig.de")
+
 SETUP_DIR = os.environ.get("PXE_SETUP_DIR", "/opt/pxe-setup").rstrip("/")
 
 
@@ -1189,6 +1194,7 @@ SPRUNGMARKEN = {
     "registrierte-clients", "manuelle-registrierung",   # Clients
     "installationsprotokolle",
     "stand", "ablageorte", "einstellungen", "ersteinrichtung",  # Einrichtung
+    "fehlerbericht",
     "quellenwaechter",                                  # Server Health
 }
 
@@ -3179,7 +3185,8 @@ def einrichtung_alt():
 
 @app.get("/einrichtung")
 def einrichtung_seite(request: Request, meldung: str = "", art: str = "",
-                      schritt: str = ""):
+                      schritt: str = "", fehlerbericht: str = "",
+                      umgebung_mit: str = "1"):
     """Wie dieser Server eingerichtet ist: Ablageorte und Einstellungen.
 
     Hier standen einmal auch die Belegung je Verzeichnis und die Dateien
@@ -3277,6 +3284,15 @@ def einrichtung_seite(request: Request, meldung: str = "", art: str = "",
             # /etc/pxeweb.env steht, und daran dreht die Oberflaeche nicht.
             updatestand=updatewacht.stand(),
             updateauswahl=updatewacht.AUSWAHL,
+            # Der Fehlerbericht entsteht erst auf Klick: Er kostet ein
+            # halbes Dutzend Aufrufe nach draussen (dpkg, systemd,
+            # journalctl), und die haben auf einer Seite nichts zu suchen,
+            # die man oeffnet, um einen Pfad nachzusehen.
+            bericht_text=(bericht.text(ASSETS_DIR, mit_umgebung=(umgebung_mit == "1"),
+                                       zusatz=_bericht_zusatz())
+                          if fehlerbericht else ""),
+            bericht_umgebung=(umgebung_mit == "1"),
+            bericht_adresse=KONTAKT,
             # Wie weit die Abfrage vor dem Werksreset gekommen ist:
             # "" nichts, "wort" das Feld steht offen, "sicher" das Wort
             # stimmt und es fehlt nur noch die Bestaetigung.
@@ -3295,6 +3311,40 @@ def einrichtung_seite(request: Request, meldung: str = "", art: str = "",
             jetzige_ip=SERVER_HOST,
         ),
     )
+
+
+def _bericht_zusatz() -> list[tuple[str, str]]:
+    """Was nur die Anwendung ueber sich weiss -- fuer den Block Umgebung.
+
+    Getrennt von bericht.py, weil dort steht, was das SYSTEM sagt, und
+    hier, was dieser Server anbietet. Das Modul soll nicht den Katalog
+    kennen muessen.
+    """
+    systeme = _systeme()
+    with db() as conn:
+        rechner = conn.execute("SELECT count(*) AS n FROM clients").fetchone()["n"]
+    return [
+        ("Einträge", "%d erfasst, %d startbereit"
+         % (len(systeme), sum(1 for e in systeme if e["ready"]))),
+        ("Bekannte Rechner", str(rechner)),
+        ("NFS-Export", uploads.NFS_ROOT or "nicht eingerichtet"),
+        ("Windows-Freigabe", SMB_ROOT or "nicht eingerichtet"),
+    ]
+
+
+@app.get("/einrichtung/bericht.txt")
+def bericht_datei(umgebung_mit: str = "1"):
+    """Derselbe Bericht als Datei -- zum Anhaengen an eine Mail.
+
+    Erzeugt beim Aufruf und direkt ausgeliefert: Es bleibt nichts auf dem
+    Server liegen. Vor allem nichts unter der Ablage -- die liefert nginx
+    offen aus, und im Bericht stehen Namen aus einem fremden Netz.
+    """
+    inhalt = bericht.text(ASSETS_DIR, mit_umgebung=(umgebung_mit == "1"),
+                          zusatz=_bericht_zusatz())
+    name = "marlei-boot-bericht-%s.txt" % datetime.now().strftime("%Y%m%d-%H%M")
+    return PlainTextResponse(
+        inhalt, headers={"Content-Disposition": f'attachment; filename="{name}"'})
 
 
 @app.post("/einrichtung/updatepruefung")

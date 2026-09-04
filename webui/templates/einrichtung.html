@@ -132,6 +132,72 @@
   {% endif %}
 </section>
 
+{# Der Fehlerbericht. Eigene Karte und nicht ein Anhaengsel an "Stand":
+   Dort steht, WAS laeuft; hier entsteht etwas, das man weggibt.
+
+   Erzeugt wird er erst auf Klick -- er kostet ein halbes Dutzend Aufrufe
+   nach draussen (dpkg, systemd, journalctl). Siehe webui/bericht.py. #}
+<section id="fehlerbericht">
+  <div class="kartenkopf">
+    <h2>Fehlerbericht</h2>
+    <a class="kartenhilfe" href="/hilfe#einrichtung-fehlerbericht"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+
+  <p class="muted">
+    Etwas funktioniert nicht? Schreiben Sie eine E-Mail an
+    <a href="mailto:{{ bericht_adresse }}?subject=MARLEI%20Boot"><code>{{ bericht_adresse }}</code></a>.
+    Im Betreff bitte folgendes einfügen: <strong>MARLEI Boot</strong>
+  </p>
+  <p class="muted">
+    Bitte beschreiben Sie den Fehler so genau wie möglich.
+  </p>
+  <ul class="muted">
+    <li>Wann tritt er auf bzw. was war die letzte Aktion davor</li>
+    <li>Betrifft es nur einen Dienst oder den ganzen Server</li>
+  </ul>
+  <p class="muted">
+    Erzeugen Sie einen Fehlerbericht. Dieser Bericht sammelt, was bei einer
+    Rückfrage sonst einzeln erfragt werden müsste — worauf der Server
+    läuft, welche Version, welche Dienste.
+    <strong>Der Server verschickt nichts</strong>: Er erzeugt den Text, Sie
+    lesen ihn und schicken ihn an uns.
+  </p>
+
+  <form method="get" action="/einrichtung" class="sichernspalte">
+    <span>
+      <label>
+        <input type="checkbox" name="umgebung_mit" value="1"
+               {{ "checked" if bericht_umgebung }}>
+        Angaben zu diesem Betrieb mitschicken
+      </label>
+      <span class="muted small">— Ablageorte, Belegung, Zahl der Rechner,
+        Journal-Auszug</span>
+    </span>
+    <input type="hidden" name="fehlerbericht" value="1">
+    <button type="submit" class="folgeknopf">Bericht erzeugen</button>
+  </form>
+
+  {% if bericht_text %}
+  <div class="befehlszeile">
+    <pre class="ipxe" id="berichttext">{{ bericht_text }}</pre>
+    <button type="button" class="kopierknopf" data-quelle="berichttext"
+            title="Bericht kopieren" aria-label="Bericht kopieren">kopieren</button>
+  </div>
+  <p class="muted small">
+    <a href="/einrichtung/bericht.txt?umgebung_mit={{ '1' if bericht_umgebung else '0' }}">Als
+    Datei herunterladen</a> — zum Anhängen an eine Mail. Auf dem Server
+    bleibt nichts liegen.
+  </p>
+  {% else %}
+  <p class="muted small">
+    Ohne den Haken enthält der Bericht nur Angaben, die auf jedem Server
+    gleich aussehen — nichts aus Ihrem Netz.
+  </p>
+  {% endif %}
+
+</section>
+
 <section id="ablageorte">
   <div class="kartenkopf">
     <h2>Ablageorte</h2>

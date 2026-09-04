@@ -339,6 +339,15 @@ pre.ipxe {
   }
 }
 
+/* Ein Fehlerbericht ist lang. Er soll die Seite nicht sprengen und
+   trotzdem ganz lesbar sein -- deshalb rollbar statt gekuerzt: Wer ihn
+   weitergibt, muss ihn vorher sehen koennen, und zwar vollstaendig. */
+pre.ipxe#berichttext {
+  max-height: 24rem;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
 pre.ipxe#syncausgabe {
   max-height: 22rem;
   overflow-y: auto;
