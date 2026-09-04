@@ -12,7 +12,18 @@
   Übernommen wird sie mit einem Befehl auf dem Server — <strong>ohne
   <code>sudo</code></strong>, das Skript fragt selbst danach:
 </p>
-<pre id="befehl-update"><code>{{ update_befehl }}</code></pre>
+{# Kopieren statt abtippen: Der Befehl wird auf einer anderen Maschine
+   eingegeben, meist in einer SSH-Sitzung daneben. Derselbe Knopf wie bei
+   der IP-Uebernahme unter Einrichtung.
+
+   Und bewusst nur ein Kopierknopf: Ein Knopf, der das Update selbst
+   ausfuehrte, hiesse Code als root aus einer Oberflaeche ohne Anmeldung.
+   Siehe B-062 im Backlog. #}
+<div class="befehlszeile">
+  <pre class="ipxe" id="befehl-update">{{ update_befehl }}</pre>
+  <button type="button" class="kopierknopf" data-quelle="befehl-update"
+          title="Befehl kopieren" aria-label="Befehl kopieren">kopieren</button>
+</div>
 <p class="kartenfuss">
   Das Skript holt den neuen Stand und richtet ihn ein — auch das, was mehr
   braucht als <code>git pull</code>.

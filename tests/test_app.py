@@ -4955,6 +4955,13 @@ with TestClient(pxeapp.app) as c:
     check("... mit beiden Versionen darin", "v1.2" in seite and "v1.3" in seite)
     check("... und dem Befehl, der beides tut",
           "/opt/pxe-setup/update.sh" in seite)
+    # Kopieren statt abtippen -- und ausdruecklich nur kopieren: Ein Knopf,
+    # der das Update ausfuehrt, waere Code als root aus einer Oberflaeche
+    # ohne Anmeldung. Siehe B-062.
+    check("... mit einem Kopierknopf daneben",
+          'data-quelle="befehl-update"' in seite)
+    check("... und ohne einen Knopf, der es selbst einspielt",
+          "Update installieren" not in seite)
 
     # Ohne Netz: vermerkt, nicht gemeldet.
     import urllib.error as _ue
