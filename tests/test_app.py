@@ -4947,6 +4947,25 @@ with TestClient(pxeapp.app) as c:
           BERICHT in ohne and "Bekannte Rechner" not in ohne)
     check("... die Technik aber nicht", "Architektur" in ohne)
 
+    # Zwei Funde vom ersten Bericht auf einer echten Maschine:
+    #
+    # 1. nginx stand leer da -- Debian kennt "nginx-core", ohne dass es
+    #    installiert sein muss, und dpkg-query gibt dann eine Zeile mit
+    #    leerer Version aus. Eine leere Version ist keine Auskunft.
+    # 2. Das Journal bestand aus vierzig Zeilen "GET /befunde.html": Die
+    #    Befunde frischen sich alle zehn Sekunden auf.
+    import bericht as bericht_
+
+    check("keine Dienstzeile bleibt leer",
+          all(wert.strip() for _, wert in bericht_.technik()))
+    zugriff = ('2026-09-04T23:15:45 dev uvicorn[1]: INFO:  10.0.0.1:0 - '
+               '"GET /befunde.html HTTP/1.1" 200 OK')
+    ereignis = "2026-09-04T23:17:35 dev systemd[1]: Stopping pxeweb.service"
+    check("Zugriffe fallen aus dem Journal",
+          bool(bericht_._ZUGRIFF.search(zugriff)))
+    check("... echte Meldungen nicht",
+          not bericht_._ZUGRIFF.search(ereignis))
+
     datei = c.get("/einrichtung/bericht.txt")
     check("es gibt ihn auch als Datei",
           datei.status_code == 200 and BERICHT in datei.text)

@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import os
 import platform
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -51,6 +52,17 @@ ZEITLIMIT = 5.0
 # drei Journale machen den Bericht doppelt so lang und halb so lesbar.
 JOURNAL_EINHEIT = "pxeweb"
 JOURNAL_ZEILEN = 40
+
+# Geholt werden viel mehr Zeilen, als am Ende dastehen -- weil die meisten
+# weggeworfen werden.
+#
+# **Der Grund stand im allerersten Bericht:** Die Befunde frischen sich
+# alle zehn Sekunden auf, das sind sechs Zugriffe je Minute. Vierzig
+# Zeilen Journal deckten damit knapp sieben Minuten ab und enthielten
+# nichts als "GET /befunde.html". Eine echte Meldung waere darin nie zu
+# finden gewesen.
+JOURNAL_HOLEN = 500
+_ZUGRIFF = re.compile(r'"(GET|POST|HEAD) [^"]*" [0-9]{3}')
 
 
 def _lauf(befehl: list[str]) -> str:
@@ -84,17 +96,35 @@ def _dienstversionen() -> list[tuple[str, str]]:
     dann mit "nicht installiert" da statt gar nicht -- gerade das ist eine
     Auskunft.
     """
-    pakete = {"nginx": "nginx-core", "dnsmasq": "dnsmasq",
-              "nfs-server": "nfs-kernel-server", "smbd": "samba"}
-    ausgabe = _lauf(["dpkg-query", "-W", "-f=${Package} ${Version}\\n",
-                     *sorted(set(pakete.values()))])
+    # Je Dienst mehrere moegliche Pakete, in der Reihenfolge des Zutrauens.
+    #
+    # **nginx war im ersten Bericht leer**, weil dort "nginx-core" stand
+    # und Debian das Paket kennt, ohne dass es installiert sein muss --
+    # dpkg-query gibt dann eine Zeile mit leerer Version aus. Gefragt wird
+    # deshalb nach mehreren Namen, und genommen wird der erste mit einer
+    # Version. Eine leere Version ist keine Auskunft.
+    pakete = {
+        "nginx": ["nginx-core", "nginx-light", "nginx-full", "nginx"],
+        "dnsmasq": ["dnsmasq", "dnsmasq-base"],
+        "nfs-server": ["nfs-kernel-server"],
+        "smbd": ["samba"],
+    }
+    alle = sorted({name for namen in pakete.values() for name in namen})
+    ausgabe = _lauf(["dpkg-query", "-W", "-f=${Package} ${Version}\n", *alle])
     gefunden = {}
     for zeile in ausgabe.splitlines():
         name, _, version = zeile.partition(" ")
-        if name:
+        if name and version.strip():
             gefunden[name] = version.strip()
-    return [(dienst, gefunden.get(paket, "nicht installiert"))
-            for dienst, paket in pakete.items()]
+    zeilen_aus = []
+    for dienst, namen in pakete.items():
+        treffer = "nicht installiert"
+        for n in namen:
+            if n in gefunden:
+                treffer = gefunden[n] if n == namen[0] else f"{gefunden[n]} ({n})"
+                break
+        zeilen_aus.append((dienst, treffer))
+    return zeilen_aus
 
 
 def technik() -> list[tuple[str, str]]:
@@ -130,10 +160,21 @@ def umgebung(assets_dir: Path, zusatz: list[tuple[str, str]] | None = None
 
 
 def journal() -> str:
-    """Die letzten Zeilen der Anwendung aus dem Journal."""
+    """Die letzten Zeilen der Anwendung -- ohne die Zugriffe.
+
+    Ein Zugriffsprotokoll sagt bei einem Fehlerbericht nichts: Dass jemand
+    die Seite geoeffnet hat, steht ohnehin fest. Was zaehlt, sind Starts,
+    Abbrueche und Ausnahmen -- und die gehen zwischen sechs Zugriffen je
+    Minute unter.
+    """
     ausgabe = _lauf(["journalctl", "-u", JOURNAL_EINHEIT,
-                     "-n", str(JOURNAL_ZEILEN), "--no-pager", "-o", "short-iso"])
-    return ausgabe or "(kein Journal lesbar)"
+                     "-n", str(JOURNAL_HOLEN), "--no-pager", "-o", "short-iso"])
+    if not ausgabe:
+        return "(kein Journal lesbar)"
+    zeilen = [z for z in ausgabe.splitlines() if not _ZUGRIFF.search(z)]
+    if not zeilen:
+        return "(nur Zugriffe im Journal, nichts weiter)"
+    return "\n".join(zeilen[-JOURNAL_ZEILEN:])
 
 
 def _block(titel: str, zeilen: list[tuple[str, str]]) -> str:
