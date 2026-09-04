@@ -121,7 +121,13 @@ def _dienstversionen() -> list[tuple[str, str]]:
         treffer = "nicht installiert"
         for n in namen:
             if n in gefunden:
-                treffer = gefunden[n] if n == namen[0] else f"{gefunden[n]} ({n})"
+                # Der Paketname nur dann in Klammern, wenn er etwas sagt:
+                # Er soll heissen "gefunden unter einem anderen Namen als
+                # erwartet". Heisst das Paket wie der Dienst, ist die
+                # Klammer Rauschen -- "nginx 1.26 (nginx)".
+                treffer = gefunden[n]
+                if n != namen[0] and n != dienst:
+                    treffer += f" ({n})"
                 break
         zeilen_aus.append((dienst, treffer))
     return zeilen_aus
