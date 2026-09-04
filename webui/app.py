@@ -3306,9 +3306,10 @@ def updatepruefung_setzen(tage: str = Form("")):
         updatewacht.vergiss()
     else:
         # Und wer sie einschaltet, soll nicht bis zum naechsten
-        # Stundenschlag warten. Im Hintergrund: Die Antwort auf den Klick
-        # haengt nicht am Netz.
-        updatewacht.starte_blick()
+        # Stundenschlag warten -- die Seite sieht dem Blick kurz zu, damit
+        # sie sein Ergebnis schon tragen kann. Danach laeuft er notfalls
+        # allein weiter; festhalten laesst sich die Seite nicht.
+        updatewacht.starte_blick(warten=updatewacht.BEDENKZEIT)
     return RedirectResponse(
         antwort("/einrichtung",
                 f"Nachgesehen wird jetzt {erlaubt[wert]}.", marke="stand"),

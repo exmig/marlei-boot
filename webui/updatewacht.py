@@ -284,8 +284,21 @@ def blick(hole=None) -> bool:
         return True
 
 
-def starte_blick(hole=None) -> bool:
-    """Einen Blick im Hintergrund anstossen. False, wenn schon einer laeuft.
+# Wie lange die Seite auf einen angestossenen Blick wartet, bevor sie
+# ohne sein Ergebnis gebaut wird. Eine Anfrage an GitHub dauert gemessen
+# rund 150 ms; zwei Sekunden decken auch eine muede Leitung ab und sind
+# kurz genug, dass niemand sie als Haenger empfindet.
+#
+# Ohne dieses Warten ginge das Ergebnis ins Leere: Die Seite entsteht nach
+# dem Speichern genau einmal, und der Blick landete Millisekunden spaeter
+# in einer Datei, die bis zum naechsten Aufruf niemand liest. Genau so ist
+# es am 04.09.2026 aufgefallen -- "die Karte hat sich nicht von alleine
+# aktualisiert", und das stimmte.
+BEDENKZEIT = 2.0
+
+
+def starte_blick(hole=None, warten: float = 0.0) -> bool:
+    """Einen Blick anstossen. False, wenn schon einer laeuft.
 
     **Fuer den Moment, in dem jemand gerade geklickt hat.** Die Wache
     schlaeft in Stunden-Schritten -- das ist richtig fuers Warten und
@@ -293,12 +306,18 @@ def starte_blick(hole=None) -> bool:
     nicht bis zum naechsten Stundenschlag warten, um zu sehen, ob sie
     etwas taugt.
 
-    Im Hintergrund, damit die Seite nicht auf das Netz wartet. Dasselbe
-    Muster wie quellenwacht.starte_lauf() beim Knopf "Pruefen".
+    In einem eigenen Faden, damit ein haengendes Netz die Seite nicht
+    festhaelt -- aber mit ``warten`` sieht der Aufrufer ihm kurz zu.
+    Kommt der Blick in dieser Zeit zurueck, traegt die naechste Seite
+    schon sein Ergebnis; kommt er nicht, laeuft er trotzdem zu Ende und
+    die Karte sagt "wird gerade gesucht".
     """
     if laeuft() or not intervall_tage():
         return False
-    threading.Thread(target=blick, args=(hole,), daemon=True).start()
+    faden = threading.Thread(target=blick, args=(hole,), daemon=True)
+    faden.start()
+    if warten:
+        faden.join(warten)
     return True
 
 

@@ -73,7 +73,11 @@ os.environ["PXE_QUELLENWACHT_STAND"] = str(tmp / "quellenwacht.yaml")
 os.environ["PXE_SETUP_DIR"] = str(tmp / "setup")
 os.environ["PXE_EINSTELLUNGEN"] = str(tmp / "einstellungen.yaml")
 os.environ["PXE_UPDATEWACHT_STAND"] = str(tmp / "updatewacht.yaml")
-os.environ["PXE_UPDATE_ADRESSE"] = "http://127.0.0.1:9/nichts"
+# Eine Adresse, die sofort und ohne Netz scheitert: ein Protokoll, das es
+# nicht gibt. "http://127.0.0.1:9/" waere ein Verbindungsversuch, und wie
+# lange der braucht, entscheidet das Betriebssystem -- der Test wartete
+# dann mal 3 ms und mal 2 s.
+os.environ["PXE_UPDATE_ADRESSE"] = "keinprotokoll://nichts"
 # Die Umgebungspruefung vergleicht Datei gegen Datei. Beide zeigen hier
 # ins Wegwerf-Verzeichnis, damit der Test nicht /etc liest.
 os.environ["PXE_ENV_DATEI"] = str(tmp / "pxeweb.env")
@@ -4950,14 +4954,15 @@ with TestClient(pxeapp.app) as c:
            follow_redirects=False)
     check("abgeschaltet wird nichts angestossen",
           not uw.stand()["zeit"])
-    c.post("/einrichtung/updatepruefung", data={"tage": "7"},
-           follow_redirects=False)
-    for _ in range(50):
-        if uw.stand()["zeit"] or uw.laeuft():
-            break
-        time.sleep(0.05)
+    r = c.post("/einrichtung/updatepruefung", data={"tage": "7"},
+               follow_redirects=False)
+    # Die Seite sieht dem Blick kurz zu (BEDENKZEIT), damit die naechste
+    # Seite sein Ergebnis schon traegt. Sonst liefe er ins Leere: Gebaut
+    # wird die Seite genau einmal, und niemand liest die Datei nach.
     check("einschalten sucht sofort, ohne auf die Stunde zu warten",
-          bool(uw.stand()["zeit"]) or uw.laeuft())
+          bool(uw.stand()["zeit"]))
+    check("... und die naechste Seite traegt das Ergebnis schon",
+          "Noch nicht gesucht" not in c.get(r.headers["location"]).text)
     c.post("/einrichtung/updatepruefung", data={"tage": "30"},
            follow_redirects=False)
     # Abwarten, bis der angestossene Blick durch ist: Er haelt das Schloss,
