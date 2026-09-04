@@ -589,6 +589,18 @@ with TestClient(pxeapp.app) as c:
     # die alte Fassung aus seinem Zwischenspeicher nimmt.
     import re as _re
     treffer = _re.search(r"/static/style\.css\?v=(\d+)", seite)
+    # Eine Seite darf der Browser nicht aufheben: Sie aendert sich mit
+    # jedem Klick, und eine alte Seite nach einem Update sieht aus wie ein
+    # Fehler der Anwendung. Das Stylesheet dagegen SOLL aufgehoben werden
+    # -- es traegt seine Aenderungszeit in der Adresse.
+    kopf = c.get("/einrichtung")
+    check("eine Seite wird nicht aufgehoben",
+          kopf.headers.get("cache-control") == "no-store",
+          str(dict(kopf.headers)))
+    stil = c.get("/static/style.css")
+    check("... das Stylesheet dagegen schon",
+          stil.headers.get("cache-control") != "no-store")
+
     check("Stylesheet traegt eine Fassungsnummer", treffer is not None, seite[:0])
     check("... auf allen Seiten",
           all("/static/style.css?v=" in c.get(pfad).text

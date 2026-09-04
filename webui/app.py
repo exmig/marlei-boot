@@ -126,6 +126,32 @@ KENNZEICHNUNG = os.environ.get("PXE_KENNZEICHNUNG", "").strip()[:20]
 app = FastAPI(title="MARLEI Boot", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
+
+@app.middleware("http")
+async def seiten_nicht_aufheben(request: Request, call_next):
+    """Eine Seite dieser Oberflaeche darf der Browser nicht aufheben.
+
+    **Der Fall vom 04.09.2026, und er kostete eine Stunde Suche:** Nach
+    einem Update sah Markus im Befehlsblock einen schwarzen Balken ohne
+    Text -- kopieren liess sich der Befehl trotzdem. Es war die alte Seite
+    aus dem Zwischenspeicher; ein hartes Neuladen holte den Text zurueck.
+
+    Die Seiten trugen bis dahin **keinen einzigen** Zwischenspeicher-Kopf.
+    Ohne Anweisung entscheidet der Browser selbst, wie lange er eine Seite
+    fuer frisch haelt -- und liegt bei einer Oberflaeche, deren Inhalt sich
+    mit jedem Klick aendert, regelmaessig daneben.
+
+    Nur HTML. Das Stylesheet und die Logos sollen weiter aufgehoben
+    werden: Sie tragen ihre Aenderungszeit in der Adresse (siehe
+    datei_version) und holen sich damit selbst zurueck, wenn sie sich
+    aendern.
+    """
+    antwort = await call_next(request)
+    art = antwort.headers.get("content-type", "")
+    if art.startswith("text/html"):
+        antwort.headers["Cache-Control"] = "no-store"
+    return antwort
+
 # Fuer HTML: mit Autoescaping (Schutz gegen kaputte Geraetenamen im Browser).
 html = Jinja2Templates(directory=str(TEMPLATE_DIR))
 
