@@ -5017,6 +5017,11 @@ with TestClient(pxeapp.app) as c:
           "/opt/pxe-setup/update.sh" not in seite)
     check("... mit einem Kopierknopf daneben",
           'data-quelle="befehl-update"' in seite)
+    # Und einen Rueckfall, wenn das Kopieren nicht geht: Diese Oberflaeche
+    # laeuft ueber http, navigator.clipboard gibt es dort nicht, und
+    # execCommand ist abgekuendigt. Markieren geht immer.
+    check("... und einen Rueckfall aufs Markieren",
+          "markiert — Strg+C" in seite and "selectNodeContents" in seite)
     check("... und ohne einen Knopf, der es selbst einspielt",
           "Update installieren" not in seite)
     check("die Karte steht auch unter Einrichtung als Zahl",

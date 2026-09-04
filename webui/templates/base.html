@@ -204,6 +204,25 @@
     return ging ? Promise.resolve() : Promise.reject();
   }
 
+  // Der Rueckfall, wenn das Kopieren nicht geht: den Text markieren, damit
+  // Strg+C ihn nimmt.
+  //
+  // **Warum es einen braucht.** Diese Oberflaeche laeuft ueber http, also
+  // ohne sicheren Kontext -- navigator.clipboard gibt es dort gar nicht.
+  // Es bleibt execCommand, und das ist seit Jahren abgekuendigt. Faellt es
+  // weg, waere der Knopf still tot, und der Naechste, der es merkt, ist
+  // ein Betreiber. Markieren geht immer und in jedem Kontext.
+  function markieren(element) {
+    try {
+      var bereich = document.createRange();
+      bereich.selectNodeContents(element);
+      var auswahl = window.getSelection();
+      auswahl.removeAllRanges();
+      auswahl.addRange(bereich);
+      return true;
+    } catch (e) { return false; }
+  }
+
   document.addEventListener("click", function (ereignis) {
     var knopf = ereignis.target.closest(".kopierknopf");
     if (!knopf) { return; }
@@ -211,14 +230,22 @@
     if (!quelle) { return; }
     // Der Knopf sagt selbst, ob es geklappt hat -- eine Meldung an anderer
     // Stelle sucht man, und eine, die nichts sagt, waere schlimmer als
-    // nichts. Nach zwei Sekunden steht wieder da, was zu tun ist.
+    // nichts.
     var vorher = knopf.textContent;
+    // Beim Markieren laenger stehen lassen: Der Benutzer muss danach noch
+    // Strg+C druecken, und zwei Sekunden sind dafuer knapp.
+    var frist = 2000;
     ablegen(quelle.textContent.trim()).then(function () {
       knopf.textContent = "kopiert";
     }, function () {
-      knopf.textContent = "ging nicht";
+      if (markieren(quelle)) {
+        knopf.textContent = "markiert — Strg+C";
+        frist = 6000;
+      } else {
+        knopf.textContent = "ging nicht";
+      }
     }).finally(function () {
-      setTimeout(function () { knopf.textContent = vorher; }, 2000);
+      setTimeout(function () { knopf.textContent = vorher; }, frist);
     });
   });
 })();

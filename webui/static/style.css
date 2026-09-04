@@ -321,6 +321,24 @@ pre.ipxe {
   overflow-x: auto;
   margin: .8rem 0 .4rem;
 }
+/* Im Kontrastmodus die Farben des Systems nehmen.
+   
+   Der Block schreibt Vorder- und Hintergrundfarbe fest -- das ist hier
+   richtig, es ist ein Terminal. Erzwingt das System aber eigene Farben
+   (Windows-Kontrastmodus, Chromes erzwungener Dunkelmodus), kann daraus
+   Schrift auf ihrer eigenen Farbe werden: Der Text steht da, kopieren
+   laesst er sich, sehen nicht. Am 04.09.2026 auf der produktiven Maschine
+   berichtet und hier nicht nachstellbar -- diese vier Zeilen kosten
+   nichts und nehmen dem Fall die Grundlage. */
+@media (forced-colors: active) {
+  pre.ipxe {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    forced-color-adjust: none;
+  }
+}
+
 pre.ipxe#syncausgabe {
   max-height: 22rem;
   overflow-y: auto;
