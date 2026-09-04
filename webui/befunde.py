@@ -143,11 +143,11 @@ KATALOG = (
                 "nicht eingerichtet.",
      "wieder": "wenn wieder ein Wert mehr fehlt"},
     {"kennung": "neuefassung", "stufe": "info",
-     "titel": "Es gibt eine neuere Version",
-     "wodurch": "Der Blick ins Repository hat eine höhere Version "
-                "gefunden als die, die hier läuft. Wie oft er hinsieht, "
-                "steht unter Einrichtung in der Karte Stand.",
-     "wieder": "bei der übernächsten Version"},
+     "titel": "Es liegen Änderungen bereit",
+     "wodurch": "Seit dieser Server eingespielt wurde, ist im Repository "
+                "etwas dazugekommen. Wie oft nachgesehen wird, steht "
+                "unter Einrichtung in der Karte Stand.",
+     "wieder": "wenn weitere Änderungen dazukommen"},
 )
 
 
@@ -338,10 +338,12 @@ def sammeln(eingerichtete_ip: str, assets_dir=None,
     # hinterlegt hat. Ein Befund entsteht auf jeder Seite -- eine
     # Netzabfrage darin waere ein Aufruf je Seitenaufbau.
     lage = updatewacht.stand()
-    if lage["neuer"] and lage["dort"]:
+    if lage["neuer"]:
         befunde.append(dict(
             aus_katalog("neuefassung"),
-            marke=updatewacht.marke(lage["dort"]),
+            # Die Zahl der Aenderungen: Sie steigt, wenn weitere
+            # dazukommen -- und genau dann soll die Karte wiederkommen.
+            marke=lage["voraus"],
             fassung=lage))
 
     return sortiert(befunde)

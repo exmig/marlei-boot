@@ -4978,69 +4978,58 @@ with TestClient(pxeapp.app) as c:
     check("ein Zeitraum, den es nicht gibt, wird abgewiesen",
           "art=schlecht" in r.headers["location"] and uw.intervall_tage() == 30)
 
-    # Der Blick selbst -- mit eigenem Holer statt Netz.
-    NEUE = "Es gibt eine neuere Version"
+    # Der Blick selbst -- mit eigenem Holer statt Netz. Geliefert wird,
+    # was GitHubs Vergleich liefert: wieviele Aenderungen der Zweig voraus
+    # ist und wieviele dieser Server hat, die dort fehlen.
+    NEUE = "Es liegen Änderungen bereit"
 
-    # Der Abschnitt davor hat den Versionsstempel geloescht. Genau dann
-    # darf nichts behauptet werden: Ohne "hier" gibt es kein "neuer".
-    check("ohne Stempel wird keine neuere Version behauptet",
-          uw.blick(hole=lambda: "v9.9") and not uw.stand()["neuer"])
+    def vergleich(voraus=0, zurueck=0):
+        return lambda: {"ahead_by": voraus, "behind_by": zurueck}
+
+    # Der Abschnitt davor hat den Versionsstempel geloescht. Ohne ihn gibt
+    # es keinen Punkt, von dem aus gezaehlt wuerde -- und dann wird nichts
+    # behauptet.
+    check("ohne Stempel wird nicht verglichen",
+          not uw.blick(hole=vergleich(9)) and uw.stand()["kein_stempel"])
     check("... und keine Karte", NEUE not in c.get("/").text)
-    # Genau auf einem Tag: Nur so wird ueberhaupt verglichen. Der Stand
-    # dazwischen ist eine Zeile weiter unten eigens geprueft.
-    stempel.write_text("stand=v1.2\ncommit=abc1234\n"
+    check("... und die Karte sagt, dass der Stand fehlt",
+          "es fehlt der Stand" in " ".join(c.get("/einrichtung").text.split()))
+
+    stempel.write_text("stand=v1.0.1\ncommit=abc1234\n"
                        "zweig=main\ninstalliert=2026-08-26 18:00\n",
                        encoding="utf-8")
-    check("vorher steht keine blaue Karte da", NEUE not in c.get("/").text)
 
-    check("ein Blick auf dieselbe Version meldet nichts",
-          uw.blick(hole=lambda: "v1.2") and not uw.stand()["neuer"])
-    check("... und keine Karte", NEUE not in c.get("/").text)
+    check("nichts dazugekommen heisst: kein Befund",
+          uw.blick(hole=vergleich(0)) and not uw.stand()["neuer"])
+    check("... und die Karte sagt es",
+          "Auf dem neuesten Stand" in c.get("/einrichtung").text)
+    check("... und keine Karte ueber der Seite", NEUE not in c.get("/").text)
 
-    # Die Commit-Zahl von "git describe" ist keine Versionsziffer. Bis zum
-    # 04.09.2026 las sie sich als eine -- und seit eine abgenommene Aufgabe
-    # die dritte Stelle hebt, waere der Vergleich falsch gewesen.
-    check("die Commit-Zahl ist keine dritte Stelle",
-          uw.zahlen("v1.0-6-g27be685") == (1, 0)
-          and uw.zahlen("v1.0.1") == (1, 0, 1))
-    check("... und ein Stand zwischen zwei Tags vergleicht gar nicht",
-          uw.entwicklungsstand("v1.0-6-g27be685")
-          and not uw.entwicklungsstand("v1.0.1")
-          and not uw.ist_neuer("v1.0.1", "v1.0-6-g27be685")
-          and uw.ist_neuer("v1.0.1", "v1.0"))
-
-    check("ein Blick auf eine hoehere Version meldet sie",
-          uw.blick(hole=lambda: "v1.3") and uw.stand()["neuer"])
+    check("was dazugekommen ist, wird gezaehlt",
+          uw.blick(hole=vergleich(12)) and uw.stand()["voraus"] == 12)
     seite = c.get("/").text
     check("... als blaue Karte", NEUE in seite
           and 'class="seitenkarte stufe-info"' in seite)
-    check("... mit beiden Versionen darin", "v1.2" in seite and "v1.3" in seite)
+    check("... mit der Zahl darin", "12" in seite and "Änderungen" in seite)
     check("... und dem Befehl, der beides tut",
           "/home/srvbusr/marlei-boot/setup/update.sh" in seite)
     check("... also dem Klon und nicht der gespiegelten Kopie",
           "/opt/pxe-setup/update.sh" not in seite)
-    # Kopieren statt abtippen -- und ausdruecklich nur kopieren: Ein Knopf,
-    # der das Update ausfuehrt, waere Code als root aus einer Oberflaeche
-    # ohne Anmeldung. Siehe B-062.
     check("... mit einem Kopierknopf daneben",
           'data-quelle="befehl-update"' in seite)
     check("... und ohne einen Knopf, der es selbst einspielt",
           "Update installieren" not in seite)
+    check("die Karte steht auch unter Einrichtung als Zahl",
+          "12" in c.get("/einrichtung").text)
 
-    # Ein Stand zwischen zwei Tags: Er ist neuer als sein eigener Tag, und
-    # was davon in einem spaeteren steckt, sagt die Angabe nicht.
-    stempel.write_text("stand=v1.2-6-gabc1234\ncommit=abc1234\n"
-                       "zweig=main\ninstalliert=2026-08-26 18:00\n",
-                       encoding="utf-8")
-    check("ein Stand zwischen zwei Tags vergleicht nicht",
-          uw.blick(hole=lambda: "v1.3") and not uw.stand()["neuer"])
-    check("... und die Karte sagt warum",
-          "Stand zwischen zwei" in " ".join(c.get("/einrichtung").text.split()))
-    check("... und es steht keine Karte da", NEUE not in c.get("/").text)
-    stempel.write_text("stand=v1.2\ncommit=abc1234\n"
-                       "zweig=main\ninstalliert=2026-08-26 18:00\n",
-                       encoding="utf-8")
-    uw.blick(hole=lambda: "v1.3")
+    # Eigene Commits auf dem Server: kein Grund fuer eine Karte, aber die
+    # Karte unter Einrichtung sagt es.
+    check("eigene Aenderungen sind kein Befund",
+          uw.blick(hole=vergleich(0, 3)) and not uw.stand()["neuer"]
+          and uw.stand()["zurueck"] == 3)
+    check("... werden aber genannt",
+          "die es im Repository nicht gibt"
+          in " ".join(c.get("/einrichtung").text.split()))
 
     # Ohne Netz: vermerkt, nicht gemeldet.
     import urllib.error as _ue
@@ -5052,18 +5041,16 @@ with TestClient(pxeapp.app) as c:
     lage = uw.stand()
     check("... und es ist vermerkt", lage["ohne_netz"] and not lage["neuer"])
     check("... als 'gar nicht erreicht'", not lage["erreicht"])
-    seite = c.get("/einrichtung").text
     check("... und die Karte sagt genau das",
-          "GitHub nicht erreichbar" in seite)
+          "GitHub nicht erreichbar" in c.get("/einrichtung").text)
     seite = c.get("/").text
     check("... aber nichts sieht nach einem Fehler aus",
           NEUE not in seite and "stufe-fehler" not in seite)
 
-    # Eine Antwort, die keine Auskunft war -- 404, weil es keine Release
-    # gibt. Das ist NICHT "nicht erreichbar", und bis zum 04.09.2026 stand
-    # genau das da, auf einem Server mit tadelloser Leitung.
+    # Eine Antwort, die keine Auskunft war -- etwa 404, weil der
+    # gestempelte Commit dort nicht existiert.
     def vierhundertvier():
-        raise _ue.HTTPError(uw.ADRESSE, 404, "Not Found", {}, None)
+        raise _ue.HTTPError("http://x", 404, "Not Found", {}, None)
 
     check("eine Antwort ohne Auskunft ist kein Netzausfall",
           not uw.blick(hole=vierhundertvier) and uw.stand()["erreicht"])
@@ -5071,15 +5058,9 @@ with TestClient(pxeapp.app) as c:
           "geantwortet, aber keine" in " ".join(
               c.get("/einrichtung").text.split()))
 
-    # Kein einziger Tag im Repository: nachgesehen, nichts gefunden.
-    check("ohne Tag wird nichts behauptet",
-          uw.blick(hole=lambda: "") and not uw.stand()["neuer"])
-    check("... und die Karte sagt auch das",
-          "keine Version hinterlegt" in c.get("/einrichtung").text)
-
     # "nie" wirft den Befund weg -- sonst bliebe die Karte stehen, bis ein
     # Waechter sie wegnimmt, den es nicht mehr gibt.
-    uw.blick(hole=lambda: "v1.3")
+    uw.blick(hole=vergleich(12))
     check("die Karte steht wieder", NEUE in c.get("/").text)
     c.post("/einrichtung/updatepruefung", data={"tage": "0"},
            follow_redirects=False)

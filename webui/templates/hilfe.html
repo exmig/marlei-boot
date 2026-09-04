@@ -612,8 +612,8 @@
   <p class="muted">
     <strong>Eine Einstellung lohnt sich gleich beim ersten Durchgang:</strong>
     In Schritt 1 steht auf demselben Reiter die Karte <em>Stand</em>, und
-    darin, wie oft der Server bei GitHub suchen soll, ob es eine neuere
-    Version gibt — <em>nie</em>, <em>wöchentlich</em> oder
+    darin, wie oft der Server bei GitHub nachsehen soll, ob etwas
+    dazugekommen ist — <em>nie</em>, <em>wöchentlich</em> oder
     <em>monatlich</em>. Vorgegeben ist wöchentlich. Wer nicht will, dass
     dieser Server von sich aus ins Netz greift, stellt hier <em>nie</em>
     ein; es fließt ohnehin nichts zu uns zurück, und gezählt wird nichts.
@@ -3302,12 +3302,12 @@
 
   <h4>Was kann man hier tun?</h4>
   <p class="muted">
-    <strong>Einstellen, wie oft der Server nach einer neueren Version
-    sucht</strong> — <em>nie</em>, <em>wöchentlich</em> (Vorgabe)
-    oder <em>monatlich</em>. Gefragt wird bei GitHub, nicht bei uns: Es
-    fließt nichts zu uns zurück, und gezählt wird nichts. Findet der Server
-    etwas Neueres, steht darüber eine blaue Karte mit dem Befehl, der es
-    einspielt.
+    <strong>Einstellen, wie oft der Server nachsieht, ob im Repository
+    etwas dazugekommen ist</strong> — <em>nie</em>, <em>wöchentlich</em>
+    (Vorgabe) oder <em>monatlich</em>. Gefragt wird bei GitHub, nicht bei
+    uns: Es fließt nichts zu uns zurück, und gezählt wird nichts. Liegt
+    etwas bereit, steht darüber eine blaue Karte mit dem Befehl, der es
+    holt.
   </p>
   <p class="muted small">
     Die Wahl wirkt sofort, ohne Neustart des Dienstes — und beim
@@ -3325,9 +3325,13 @@
   <h4>Was passiert dabei — und was nicht?</h4>
   <p class="muted">
     Der Stempel wird beim Einspielen gesetzt und rührt sich danach nicht
-    mehr. Er sagt also, <strong>was installiert wurde</strong> — nicht, ob es
-    inzwischen eine neuere Version gibt. Danach sucht dieser Server nur,
-    wenn er soll: Wie oft, steht oben in dieser Karte.
+    mehr. Er sagt also, <strong>was installiert wurde</strong>. Ob seither
+    etwas dazugekommen ist, beantwortet die Suche darüber — und zwar
+    <strong>nicht</strong> über die Versionsnummer, sondern über den
+    Commit, den <code>install.sh</code> mitgestempelt hat. Der Grund: Wer
+    dem README folgt, klont den Zweig und landet zwischen zwei Versionen;
+    zwei solche Angaben lassen sich nicht vergleichen, eine Zahl von
+    Änderungen schon.
   </p>
 
   <h4>Was, wenn nichts dasteht?</h4>

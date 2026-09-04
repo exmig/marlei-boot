@@ -97,18 +97,18 @@
      vier: "keine Antwort" und "eine Antwort, die keine Auskunft war"
      standen beide unter "nicht erreichbar" -- und behaupteten damit auf
      einem Server mit tadelloser Leitung etwas Falsches. #}
+  {# Sechs Lagen, und jede sagt etwas anderes. Gezaehlt werden
+     Aenderungen und keine Versionsnummern -- warum, steht in
+     webui/updatewacht.py. #}
   <p class="muted small">
     {% if updatestand.laeuft %}
     Wird gerade gesucht …
     {% elif not updatestand.intervall %}
     Es wird nicht gesucht.
-    {% elif updatestand.dort %}
-    Zuletzt gefunden: <code>{{ updatestand.dort }}</code>{#
-    #}{% if updatestand.neuer %} — neuer als das, was hier läuft{% endif %}.
-    {% if not updatestand.neuer and updatestand.entwicklungsstand %}
-    Verglichen wird dabei nicht: Hier läuft ein Stand zwischen zwei
-    Versionen, und der ist neuer als seine eigene.
-    {% endif %}
+    {% elif updatestand.kein_stempel %}
+    Verglichen wird nicht: Diese Anwendung ist nicht über
+    <code>install.sh</code> hierhergekommen, es fehlt der Stand, von dem
+    aus gezählt würde.
     {% elif updatestand.ohne_netz and updatestand.erreicht %}
     Beim letzten Versuch hat GitHub geantwortet, aber keine Auskunft
     gegeben. Das ist keine Störung dieses Servers; beim nächsten Mal wird
@@ -116,8 +116,15 @@
     {% elif updatestand.ohne_netz %}
     Beim letzten Versuch war GitHub nicht erreichbar. Das ist keine
     Störung dieses Servers; beim nächsten Mal wird es wieder versucht.
+    {% elif updatestand.voraus %}
+    <strong>{{ updatestand.voraus }}
+    {{ "Änderung liegt" if updatestand.voraus == 1 else "Änderungen liegen" }}
+    bereit</strong> — dazugekommen, seit dieser Server eingespielt wurde.
     {% elif updatestand.gesucht %}
-    Zuletzt gesucht, aber dort ist keine Version hinterlegt.
+    Auf dem neuesten Stand{% if updatestand.zurueck %} — und
+    {{ updatestand.zurueck }}
+    {{ "Änderung" if updatestand.zurueck == 1 else "Änderungen" }} weiter,
+    die es im Repository nicht gibt{% endif %}.
     {% else %}
     Noch nicht gesucht.
     {% endif %}

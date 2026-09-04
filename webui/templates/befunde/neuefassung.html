@@ -2,14 +2,19 @@
    Der Server laeuft weiter, und was er ausrollt, entscheidet der
    Betreiber -- deshalb steht hier ein Befehl und kein Knopf.
 
-   Warum blau und kein Zeichen am Reiter: mappe/08-entscheidungen.md,
-   "Wohin der Server nach Aktualisierungen fragt". #}
+   Gezaehlt werden Aenderungen und nicht Versionsnummern: Dieses Projekt
+   wird ueber "git clone" und "update.sh" verteilt, der Installationsstand
+   ist also fast nie ein Tag. Siehe webui/updatewacht.py. #}
 <p>
-  Hier läuft <code>{{ befund.fassung.hier }}</code>, veröffentlicht ist
-  <strong><code>{{ befund.fassung.dort }}</code></strong>.
+  Seit dieser Server eingespielt wurde, {{ "ist" if befund.fassung.voraus == 1 else "sind" }}
+  im Repository
+  <strong>{{ befund.fassung.voraus }}
+  {{ "Änderung" if befund.fassung.voraus == 1 else "Änderungen" }}</strong>
+  dazugekommen{% if befund.fassung.zweig and befund.fassung.zweig != "main" %}
+  (Zweig <code>{{ befund.fassung.zweig }}</code>){% endif %}.
 </p>
 <p>
-  Übernommen wird sie mit einem Befehl auf dem Server — <strong>ohne
+  Geholt werden sie mit einem Befehl auf dem Server — <strong>ohne
   <code>sudo</code></strong>, das Skript fragt selbst danach:
 </p>
 {# Kopieren statt abtippen: Der Befehl wird auf einer anderen Maschine

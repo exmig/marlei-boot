@@ -1,28 +1,39 @@
 """
-Gibt es eine neuere Version? -- der Blick ins Repository.
+Hat sich das Projekt bewegt, seit dieser Server installiert wurde?
 
 **Git ist ein Hol-Verfahren.** Wer nie `update.sh` tippt, bleibt ewig auf
 dem Installationsstand, ohne es zu merken; der Server sieht dabei
 kerngesund aus. Das ist derselbe Fall wie bei einem Eintrag, dem die
 Dateien fehlen: Es fehlt etwas, und niemand sagt es.
 
-**Gefragt wird bei GitHub, nicht bei uns.** Ein eigener Endpunkt haette
-die Zaehlung der Installationen als Nebenprodukt abgeworfen -- dann haenge
-aber eine Funktion, die jeder will, an einer Zaehlung, die niemand
-verlangt hat. Begruendung in mappe/08-entscheidungen.md, "Wohin der Server
-nach Aktualisierungen fragt".
+**Verglichen werden Commits, nicht Versionsnummern -- und das war ein
+Umbau.** Der erste Entwurf fragte nach dem hoechsten Tag und hielt ihn
+gegen den Stempel. Das passt zu einem Projekt, das Ausgaben ausliefert;
+dieses wird ueber `git clone` und `update.sh` verteilt, und wer dem README
+folgt, landet auf dem Kopf von `main`. Der Stempel lautet dann
+"v1.0.1-8-g7831a68" -- kein Tag, sondern ein Punkt dazwischen. Zwei solche
+Angaben lassen sich nicht vergleichen: Ob das, was im Tag steckt, in den
+acht Aenderungen danach schon enthalten ist, sagt keine von beiden.
+
+Markus am 04.09.2026, als die Karte deshalb schwieg: *"Sinn der Suche ist
+doch zu sehen, gibt es neue Versionen. Was habe ich von dem jetzigen
+Ergebnis."* Nichts -- und die Frage war die falsche. Die richtige lautet:
+**Liegen Aenderungen bereit?** Sie ist beantwortbar, weil `install.sh`
+neben dem Stand auch den **Commit** stempelt: GitHub vergleicht ihn mit
+dem Zweig und sagt, wie viele Aenderungen dazwischenliegen.
+
+**Die Versionsnummern behalten davon unberuehrt ihre Aufgabe:** Sie sagen,
+*was* drin ist (siehe mappe/08-entscheidungen.md, "Was die drei Ziffern
+bedeuten") -- nicht, *ob* man holen soll.
 
 **Wie oft, entscheidet der Betreiber** (einstellungen.updatepruefung):
 nie, woechentlich, monatlich. Darueber steht die Notbremse: Ist der
 Quellenwaechter per PXE_QUELLENWACHT abgeschaltet, ist auf diesem Server
 jede Netzabfrage unerwuenscht -- dann fragt auch dieser Waechter nicht,
-und die Oberflaeche bietet die Auswahl gar nicht erst an. Die Umgebung
-setzt den Rahmen, die Oberflaeche waehlt darin.
+und die Oberflaeche bietet die Auswahl gar nicht erst an.
 
 **Ohne Netz passiert nichts, und es sieht auch nicht danach aus.** Ein
-fehlgeschlagener Blick wird vermerkt und nicht gemeldet: Eine rote Zeile,
-weil die Leitung fehlt, waere der Fehlalarm, den dieses Projekt an anderer
-Stelle ausdruecklich bekaempft.
+fehlgeschlagener Blick wird vermerkt und nicht gemeldet.
 
 Die Bauform ist die von quellenwacht.py -- stuendlicher Takt, Vorlauf nach
 dem Start, Stand in einer Datei. Ein Prozess, der eine Woche am Stueck
@@ -33,7 +44,6 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import threading
 import time
 import urllib.error
@@ -51,19 +61,12 @@ _DB = Path(os.environ.get("PXE_DB", "/var/lib/pxeweb/pxeweb.db"))
 STAND_DATEI = Path(os.environ.get("PXE_UPDATEWACHT_STAND", "")
                    or _DB.parent / "updatewacht.yaml")
 
-# Wo gefragt wird. Ueber die Umgebung zu setzen, damit ein Fork nicht
-# unsere Versionen meldet -- und damit der Test nicht ins Netz muss.
-#
-# **Die Tags und nicht die Releases.** Der erste Entwurf fragte
-# "releases/latest"; das Repository hat aber nur einen Tag und keine
-# Release, und GitHub antwortet darauf mit 404. Aufgefallen am 04.09.2026
-# auf dem Entwicklungsserver, wo die Karte daraufhin "nicht erreichbar"
-# behauptete. Ein Tag ist hier ohnehin die Wahrheit: install.sh stempelt
-# "git describe", und das nennt den Tag. Eine Release ist Beiwerk, das es
-# geben kann und nicht geben muss.
+# Wessen Stand verglichen wird. Ueber die Umgebung zu setzen, damit ein
+# Fork sich mit sich selbst vergleicht -- und damit der Test nicht ins Netz
+# muss.
 REPO = os.environ.get("PXE_REPO", "exmig/marlei-boot").strip("/ ")
-ADRESSE = os.environ.get("PXE_UPDATE_ADRESSE", "") or (
-    f"https://api.github.com/repos/{REPO}/tags")
+VERGLEICH = os.environ.get("PXE_VERGLEICH_ADRESSE", "") or (
+    "https://api.github.com/repos/" + REPO + "/compare/{commit}...{zweig}")
 
 # Die Notbremse. Dieselbe Variable wie beim Quellenwaechter, und das ist
 # Absicht: Sie bedeutet nicht "keine Quellenpruefung", sondern "dieser
@@ -77,6 +80,12 @@ AUSWAHL = ((0, "nie"), (7, "wöchentlich"), (30, "monatlich"))
 TAKT = 3600.0
 VORLAUF = 120.0
 ZEITLIMIT = 10.0
+
+# Wie lange die Seite auf einen angestossenen Blick wartet, bevor sie ohne
+# sein Ergebnis gebaut wird. Eine Anfrage dauert gemessen rund 150 ms; zwei
+# Sekunden decken auch eine muede Leitung ab. Ohne dieses Warten ginge das
+# Ergebnis ins Leere: Die Seite entsteht nach dem Speichern genau einmal.
+BEDENKZEIT = 2.0
 
 
 def gesperrt() -> bool:
@@ -125,78 +134,18 @@ def vergiss() -> None:
         pass
 
 
-# --------------------------------------------------------------------------
-# Versionen vergleichen
-# --------------------------------------------------------------------------
+def _woher() -> tuple[str, str]:
+    """Commit und Zweig aus dem Stempel von install.sh.
 
-# Was "git describe" hinten anhaengt, wenn der Stand NICHT genau auf einem
-# Tag sitzt: "-6-g27be685", dazu wahlweise "-dirty".
-_DAZWISCHEN = re.compile(r"-(\d+)-g[0-9a-f]+(-dirty)?$")
-
-
-def entwicklungsstand(version: str) -> bool:
-    """Sitzt dieser Stand zwischen zwei Tags?
-
-    Dann ist er neuer als der Tag, auf dem er aufsetzt, und wie viel davon
-    schon in einem spaeteren Tag steckt, sagt die Angabe nicht. Verglichen
-    wird deshalb nicht -- **lieber nichts sagen als raten.**
+    Beides oder nichts: Ohne Commit gibt es keinen Punkt, von dem aus
+    verglichen wird. Und der Zweig entscheidet, wogegen verglichen wird --
+    wer von einem anderen Zweig installiert hat, will nicht gegen `main`
+    gemessen werden.
     """
-    return bool(_DAZWISCHEN.search(version.strip()))
-
-
-def zahlen(version: str) -> tuple:
-    """Aus "v1.0.1" wird (1, 0, 1) -- zum Vergleichen.
-
-    **Der Bindestrich trennt nicht.** Er tat es bis zum 04.09.2026, und
-    damit las sich "v1.0-6-g27be685" -- sechs Commits nach v1.0 -- als
-    (1, 0, 6) und also als Version 1.0.6. Solange es keine dritten Stellen
-    gab, fiel das nicht auf; seit eine abgenommene Aufgabe die dritte
-    Stelle hebt, waere der Vergleich schlicht falsch gewesen.
-
-    Der Anhang von "git describe" faellt deshalb weg, und getrennt wird
-    nur am Punkt.
-    """
-    roh = _DAZWISCHEN.sub("", version.strip()).removesuffix("-dirty")
-    teile: list[int] = []
-    for stueck in roh.lstrip("vV").split("."):
-        if not stueck.isdigit():
-            break
-        teile.append(int(stueck))
-    return tuple(teile)
-
-
-def marke(version: str) -> int:
-    """Eine Zahl, die nur steigt, wenn die Version hoeher wird.
-
-    Fuer das Wegklicken (siehe kenntnis.py): Wer eine Version zur Kenntnis
-    nimmt, soll die Karte erst bei der naechsten wiedersehen -- und nicht
-    beim naechsten Blick des Waechters, der dasselbe findet.
-
-    Aus (1, 2, 3) wird 10203. Drei Stellen, zwei Ziffern je Stelle: Mehr
-    braucht eine Versionsnummer nicht, und ein Ueberlauf bei 100 waere
-    hier kein Schaden, sondern nur eine Karte, die einmal zu frueh kommt.
-    """
-    teile = (list(zahlen(version)) + [0, 0, 0])[:3]
-    return teile[0] * 10000 + teile[1] * 100 + teile[2]
-
-
-def ist_neuer(dort: str, hier: str) -> bool:
-    """Ist "dort" eine hoehere Version als "hier"?
-
-    Zwei Faelle sagen ausdruecklich nein: Wenn hier nichts steht (die
-    Anwendung laeuft aus einem Projektordner, nicht ueber install.sh),
-    und wenn sich eine der beiden Angaben nicht in Zahlen lesen laesst.
-    **Lieber nichts sagen als raten** -- eine Karte, die eine Aktualisierung
-    meldet, die es nicht gibt, kostet mehr Vertrauen als eine, die fehlt.
-    """
-    if entwicklungsstand(hier):
-        # Ein Stand zwischen zwei Tags ist neuer als sein Tag -- und ob das
-        # Neuere schon in einem spaeteren Tag steckt, weiss er nicht.
-        return False
-    a, b = zahlen(dort), zahlen(hier)
-    if not a or not b:
-        return False
-    return a > b
+    auskunft = versionsstand.auskunft()
+    if not auskunft.get("da"):
+        return "", ""
+    return auskunft.get("commit", ""), (auskunft.get("zweig", "") or "main")
 
 
 # --------------------------------------------------------------------------
@@ -235,25 +184,22 @@ def faellig() -> bool:
     return datetime.now(timezone.utc) >= naechster
 
 
-def _frag_github(hole=None) -> str:
-    """Die hoechste Version, die dort getaggt ist -- oder "" ohne eine.
+def _frag_github(commit: str, zweig: str, hole=None) -> dict:
+    """Wie weit liegt der Zweig vor dem installierten Commit?
 
-    Gewaehlt wird nach unserer eigenen Rechnung und nicht nach der
-    Reihenfolge der Liste: GitHub sortiert Tags nicht nach Versionen, und
-    "v1.10" stuende sonst hinter "v1.9".
+    GitHub beantwortet das in einer Anfrage: "ahead_by" zaehlt, was auf
+    dem Zweig dazugekommen ist, "behind_by" was dieser Server hat und der
+    Zweig nicht -- letzteres bei einem Rechner mit eigenen Commits.
     """
     if hole is not None:
         return hole()
+    ziel = VERGLEICH.format(commit=commit, zweig=zweig)
     anfrage = urllib.request.Request(
-        ADRESSE, headers={"User-Agent": "pxeweb/1.0",
-                          "Accept": "application/vnd.github+json"})
+        ziel, headers={"User-Agent": "pxeweb/1.0",
+                       "Accept": "application/vnd.github+json"})
     with urllib.request.urlopen(anfrage, timeout=ZEITLIMIT) as antwort:
         daten = json.loads(antwort.read().decode("utf-8", "replace"))
-    if not isinstance(daten, list):
-        return ""
-    namen = [str(e.get("name") or "") for e in daten if isinstance(e, dict)]
-    namen = [n for n in namen if zahlen(n)]
-    return max(namen, key=zahlen, default="")
+    return daten if isinstance(daten, dict) else {}
 
 
 def blick(hole=None) -> bool:
@@ -261,83 +207,59 @@ def blick(hole=None) -> bool:
     if not intervall_tage() or _laeuft.locked():
         return False
     with _laeuft:
-        hier = versionsstand.kurz()
+        commit, zweig = _woher()
         daten = {"zeit": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                 "hier": hier, "dort": "", "neuer": False, "ohne_netz": False}
+                 "commit": commit, "zweig": zweig,
+                 "voraus": 0, "zurueck": 0,
+                 "kein_stempel": not commit,
+                 "ohne_netz": False, "erreicht": False}
+        if not commit:
+            # Ohne Stempel gibt es keinen Punkt, von dem aus verglichen
+            # wird. Kein Fehler: Die Anwendung laeuft dann aus einem
+            # Projektordner und kam nicht ueber install.sh hierher.
+            _schreiben(daten)
+            return False
         try:
-            daten["dort"] = _frag_github(hole)
+            antwort = _frag_github(commit, zweig, hole)
         except (urllib.error.URLError, OSError, ValueError, TimeoutError) as fehler:
             # Vermerkt, nicht gemeldet: Ohne Leitung ist nichts kaputt.
             #
             # "erreicht" trennt zwei Faelle, die man sonst verwechselt und
             # dann falsch benennt: gar keine Antwort (Leitung, DNS,
-            # Zeitlimit) und eine Antwort, die keine Auskunft war (404,
-            # kaputtes JSON). Der zweite hiess bis zum 04.09.2026
-            # faelschlich "nicht erreichbar".
+            # Zeitlimit) und eine Antwort, die keine Auskunft war -- etwa
+            # 404, wenn der gestempelte Commit dort gar nicht existiert,
+            # weil jemand mit eigener Historie arbeitet.
             daten["ohne_netz"] = True
             daten["erreicht"] = isinstance(fehler, urllib.error.HTTPError)
             daten["grund"] = str(fehler)[:200]
             _schreiben(daten)
             return False
-        daten["neuer"] = ist_neuer(daten["dort"], hier)
+        daten["voraus"] = int(antwort.get("ahead_by") or 0)
+        daten["zurueck"] = int(antwort.get("behind_by") or 0)
         _schreiben(daten)
         return True
-
-
-# Wie lange die Seite auf einen angestossenen Blick wartet, bevor sie
-# ohne sein Ergebnis gebaut wird. Eine Anfrage an GitHub dauert gemessen
-# rund 150 ms; zwei Sekunden decken auch eine muede Leitung ab und sind
-# kurz genug, dass niemand sie als Haenger empfindet.
-#
-# Ohne dieses Warten ginge das Ergebnis ins Leere: Die Seite entsteht nach
-# dem Speichern genau einmal, und der Blick landete Millisekunden spaeter
-# in einer Datei, die bis zum naechsten Aufruf niemand liest. Genau so ist
-# es am 04.09.2026 aufgefallen -- "die Karte hat sich nicht von alleine
-# aktualisiert", und das stimmte.
-BEDENKZEIT = 2.0
-
-
-def starte_blick(hole=None, warten: float = 0.0) -> bool:
-    """Einen Blick anstossen. False, wenn schon einer laeuft.
-
-    **Fuer den Moment, in dem jemand gerade geklickt hat.** Die Wache
-    schlaeft in Stunden-Schritten -- das ist richtig fuers Warten und
-    falsch fuers Klicken: Wer die Suche gerade eingeschaltet hat, will
-    nicht bis zum naechsten Stundenschlag warten, um zu sehen, ob sie
-    etwas taugt.
-
-    In einem eigenen Faden, damit ein haengendes Netz die Seite nicht
-    festhaelt -- aber mit ``warten`` sieht der Aufrufer ihm kurz zu.
-    Kommt der Blick in dieser Zeit zurueck, traegt die naechste Seite
-    schon sein Ergebnis; kommt er nicht, laeuft er trotzdem zu Ende und
-    die Karte sagt "wird gerade gesucht".
-    """
-    if laeuft() or not intervall_tage():
-        return False
-    faden = threading.Thread(target=blick, args=(hole,), daemon=True)
-    faden.start()
-    if warten:
-        faden.join(warten)
-    return True
 
 
 def stand() -> dict:
     """Was der letzte Blick ergeben hat -- fuer Karte und Befund."""
     daten = _lesen()
     naechster = naechster_blick()
+    commit, zweig = _woher()
+    voraus = int(daten.get("voraus") or 0)
     return {
         "zeit": daten.get("zeit", ""),
-        "hier": daten.get("hier", "") or versionsstand.kurz(),
-        "dort": daten.get("dort", ""),
-        "neuer": bool(daten.get("neuer")),
+        "commit": daten.get("commit", "") or commit,
+        "zweig": daten.get("zweig", "") or zweig,
+        # Wieviele Aenderungen auf dem Zweig dazugekommen sind, seit dieser
+        # Server eingespielt wurde. Das ist die ganze Auskunft.
+        "voraus": voraus,
+        # Und was dieser Server hat und der Zweig nicht -- eigene Commits.
+        "zurueck": int(daten.get("zurueck") or 0),
+        "neuer": voraus > 0,
+        "kein_stempel": bool(daten.get("kein_stempel")) or not commit,
         "ohne_netz": bool(daten.get("ohne_netz")),
         "erreicht": bool(daten.get("erreicht")),
-        # Nachgesehen worden ist ueberhaupt schon einmal?
         "gesucht": bool(daten.get("zeit")),
-        # Sitzt der laufende Stand zwischen zwei Tags? Dann wird nicht
-        # verglichen, und die Karte sagt warum.
-        "entwicklungsstand": entwicklungsstand(
-            daten.get("hier", "") or versionsstand.kurz()),
         "gesperrt": gesperrt(),
         "intervall": intervall_tage(),
         "laeuft": laeuft(),
@@ -350,6 +272,25 @@ def stand() -> dict:
 # --------------------------------------------------------------------------
 
 _wacht_laeuft = False
+
+
+def starte_blick(hole=None, warten: float = 0.0) -> bool:
+    """Einen Blick anstossen. False, wenn schon einer laeuft.
+
+    **Fuer den Moment, in dem jemand gerade geklickt hat.** Die Wache
+    schlaeft in Stunden-Schritten -- richtig fuers Warten, falsch fuers
+    Klicken.
+
+    In einem eigenen Faden, damit ein haengendes Netz die Seite nicht
+    festhaelt -- aber mit ``warten`` sieht der Aufrufer ihm kurz zu.
+    """
+    if laeuft() or not intervall_tage():
+        return False
+    faden = threading.Thread(target=blick, args=(hole,), daemon=True)
+    faden.start()
+    if warten:
+        faden.join(warten)
+    return True
 
 
 def _wache() -> None:
@@ -370,8 +311,7 @@ def wacht_starten() -> None:
 
     Der Takt haengt bewusst nicht am Intervall: Wer die Einstellung von
     "nie" auf "woechentlich" dreht, soll nicht bis zum naechsten
-    Dienst-Neustart warten. Deshalb laeuft die Wache immer und fragt jede
-    Stunde, ob sie darf.
+    Dienst-Neustart warten.
     """
     global _wacht_laeuft
     if _wacht_laeuft or gesperrt():
