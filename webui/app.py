@@ -55,7 +55,10 @@ import konfiguration
 import logs
 import muster
 import quellen
+import einstellungen
 import quellenwacht
+import umgebung
+import updatewacht
 import selbstauskunft
 import serveradresse
 import sync
@@ -618,6 +621,11 @@ def wacht_starten() -> None:
     Abschaltbar ueber PXE_QUELLENWACHT in /etc/pxeweb.env.
     """
     quellenwacht.wacht_starten()
+    # Und der Blick ins Repository -- ob und wie oft, entscheidet der
+    # Betreiber unter Einrichtung; die Wache selbst laeuft immer und fragt
+    # stuendlich, ob sie darf. Sonst muesste man den Dienst neu starten,
+    # nur weil man von "nie" auf "woechentlich" gedreht hat.
+    updatewacht.wacht_starten()
 
 
 def _katalog_roh() -> list[dict]:
@@ -1110,6 +1118,19 @@ def marken_version() -> int:
 SEITEN = ("/", "/clients", "/systeme", "/quellen", "/einrichtung",
           "/history", "/hilfe")
 
+# Wohin install.sh die Skripte spiegelt -- und damit der Befehl, der einen
+# Server aktualisiert. Bewusst ohne sudo: update.sh besteht darauf, dass
+# "git pull" dem Benutzer gehoert, und fragt fuer install.sh selbst nach
+# dem Passwort. Und bewusst ohne Pfadangabe zum Klon: Das Skript findet
+# ihn ueber die Datei "projektpfad", die install.sh bei jedem Lauf
+# danebenlegt.
+#
+# Bewusst als Zeichenkette und nicht als Path: Der Pfad gilt auf dem
+# Server, und der laeuft Linux. Auf einem Windows-Arbeitsplatz machte
+# pathlib daraus "\opt\pxe-setup" -- ein Befehl, den niemand tippen kann.
+SETUP_DIR = os.environ.get("PXE_SETUP_DIR", "/opt/pxe-setup").rstrip("/")
+UPDATE_BEFEHL = f"{SETUP_DIR}/update.sh"
+
 SPRUNGMARKEN = {
     "upload", "katalog", "download", "custom",          # Quellen
     "registrierte-clients", "manuelle-registrierung",   # Clients
@@ -1163,6 +1184,11 @@ def _rahmen(**ctx) -> dict:
         # wechselt auf Sand, und das Wort steht als Marke in der Kopfzeile.
         # Siehe docs/gestaltung.md, "Ein Server, der nicht die Produktion ist".
         "kennzeichnung": KENNZEICHNUNG,
+        # Der eine Befehl, der einen Server auf den neuesten Stand bringt.
+        # Er steht in zwei Befundkarten und unter Einrichtung -- an drei
+        # Stellen derselbe Satz waere frueher oder spaeter dreimal ein
+        # anderer.
+        "update_befehl": UPDATE_BEFEHL,
         # Der Katalog der Befunde. Die Hilfe rendert daraus die Tabelle
         # "Welche Karte wann kommt" -- aus derselben Quelle, aus der die
         # Karten entstehen. Von Hand geschrieben waere sie ein zweiter Ort
@@ -3144,7 +3170,12 @@ def einrichtung_seite(request: Request, meldung: str = "", art: str = "",
     for ort in orte:
         ort["zustand"] = konfiguration.zustand(Path(ort["pfad"]))
 
-    einstellungen = [
+    # Heisst nicht "einstellungen": So heisst das Modul, in dem steht, was
+    # der Betreiber in der Oberflaeche entscheidet -- und eine lokale
+    # Variable desselben Namens verdeckte es hier lautlos. Was hier steht,
+    # sind ohnehin die Werte aus der Umgebung, nicht Einstellungen der
+    # Anwendung.
+    umgebungswerte = [
         {"name": "PXE_BASE_URL", "wert": BASE_URL,
          "wofuer": "Adresse, die in die iPXE-Skripte geschrieben wird -- der "
                    "bootende Rechner muss sie erreichen koennen"},
@@ -3186,7 +3217,13 @@ def einrichtung_seite(request: Request, meldung: str = "", art: str = "",
             # ich eigentlich dran, wenn etwas nicht stimmt?
             stand=versionsstand.auskunft(),
             orte=orte,
-            einstellungen=einstellungen,
+            einstellungen=umgebungswerte,
+            # Der Blick ins Repository: was er zuletzt ergeben hat, und
+            # wie oft er stattfindet. Die Auswahl steht in der Karte
+            # Stand, nicht in der Karte Einstellungen -- die zeigt, was in
+            # /etc/pxeweb.env steht, und daran dreht die Oberflaeche nicht.
+            updatestand=updatewacht.stand(),
+            updateauswahl=updatewacht.AUSWAHL,
             # Wie weit die Abfrage vor dem Werksreset gekommen ist:
             # "" nichts, "wort" das Feld steht offen, "sicher" das Wort
             # stimmt und es fehlt nur noch die Bestaetigung.
@@ -3205,6 +3242,45 @@ def einrichtung_seite(request: Request, meldung: str = "", art: str = "",
             jetzige_ip=SERVER_HOST,
         ),
     )
+
+
+@app.post("/einrichtung/updatepruefung")
+def updatepruefung_setzen(tage: str = Form("")):
+    """Wie oft der Server nachsieht, ob es eine neuere Fassung gibt.
+
+    Die einzige Einstellung, die diese Seite schreibt -- und sie schreibt
+    sie **nicht** nach /etc/pxeweb.env, sondern neben die Datenbank. Warum:
+    siehe einstellungen.py. Sie wirkt sofort; der Waechter fragt
+    stuendlich, ob er darf.
+    """
+    if updatewacht.gesperrt():
+        # Die Umgebung setzt den Rahmen, die Oberflaeche waehlt darin --
+        # ueberstimmen kann sie ihn nicht.
+        return RedirectResponse(
+            antwort("/einrichtung",
+                    "Abgeschaltet über PXE_QUELLENWACHT — daran dreht die "
+                    "Oberfläche nicht.", schlecht=True, marke="stand"),
+            status_code=303)
+    erlaubt = dict(updatewacht.AUSWAHL)
+    try:
+        wert = int(tage)
+    except (TypeError, ValueError):
+        wert = -1
+    if wert not in erlaubt:
+        return RedirectResponse(
+            antwort("/einrichtung", "Das ist kein gültiger Zeitraum.",
+                    schlecht=True, marke="stand"),
+            status_code=303)
+    einstellungen.setze("updatepruefung", wert)
+    # Der gemerkte Befund gilt nicht mehr fuer die neue Einstellung: Wer
+    # auf "nie" stellt, soll die blaue Karte nicht behalten, bis der
+    # Waechter, den es nicht mehr gibt, sie wegnimmt.
+    if not wert:
+        updatewacht.vergiss()
+    return RedirectResponse(
+        antwort("/einrichtung",
+                f"Nachgesehen wird jetzt {erlaubt[wert]}.", marke="stand"),
+        status_code=303)
 
 
 @app.post("/einrichtung/werkseinstellung")

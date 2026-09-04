@@ -1,0 +1,20 @@
+{# Die einzige blaue Karte: wissenswert, niemand muss deswegen handeln.
+   Der Server laeuft weiter, und was er ausrollt, entscheidet der
+   Betreiber -- deshalb steht hier ein Befehl und kein Knopf.
+
+   Warum blau und kein Zeichen am Reiter: mappe/08-entscheidungen.md,
+   "Wohin der Server nach Aktualisierungen fragt". #}
+<p>
+  Hier läuft <code>{{ befund.fassung.hier }}</code>, veröffentlicht ist
+  <strong><code>{{ befund.fassung.dort }}</code></strong>.
+</p>
+<p>
+  Übernommen wird sie mit einem Befehl auf dem Server — <strong>ohne
+  <code>sudo</code></strong>, das Skript fragt selbst danach:
+</p>
+<pre id="befehl-update"><code>{{ update_befehl }}</code></pre>
+<p class="kartenfuss">
+  Das Skript holt den neuen Stand und richtet ihn ein — auch das, was mehr
+  braucht als <code>git pull</code>.
+  &middot; <a href="/einrichtung#stand">Wie oft nachgesehen wird &rarr;</a>
+</p>

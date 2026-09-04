@@ -58,6 +58,49 @@
     <code>{{ stand.datei }}</code>. Geraten wird er nicht.
   </p>
   {% endif %}
+
+  {# Wie oft nachgesehen wird, ob es eine neuere Version gibt.
+
+     Diese Karte und nicht die Karte Einstellungen: Die zeigt, was in
+     /etc/pxeweb.env steht, und daran dreht die Oberflaeche nicht. Die
+     Frage, wie oft gesucht wird, steht bei der Frage, welche Version
+     laeuft. Warum ueberhaupt in der Oberflaeche und nicht in der
+     Umgebungsdatei: mappe/08-entscheidungen.md. #}
+  <hr class="kartentrenner">
+  {% if updatestand.gesperrt %}
+  <p class="muted small">
+    <strong>Es wird nicht nachgesehen.</strong> Auf diesem Server ist jede
+    Netzabfrage über <code>PXE_QUELLENWACHT</code> in
+    <code>/etc/pxeweb.env</code> abgeschaltet — daran dreht diese Seite
+    nicht.
+  </p>
+  {% else %}
+  <form method="post" action="/einrichtung/updatepruefung" class="sichernspalte">
+    <span>
+      <strong>Nach neuen Versionen suchen</strong>
+      <span class="muted small">— bei GitHub, nicht bei uns</span>
+    </span>
+    <select name="tage" aria-label="Wie oft nach neuen Versionen gesucht wird">
+      {% for tage, wort in updateauswahl %}
+      <option value="{{ tage }}" {{ "selected" if tage == updatestand.intervall }}>{{ wort }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">Übernehmen</button>
+  </form>
+  <p class="muted small">
+    {% if not updatestand.intervall %}
+    Es wird nicht nachgesehen.
+    {% elif updatestand.dort %}
+    Zuletzt gesehen: <code>{{ updatestand.dort }}</code>
+    {%- if updatestand.neuer %} — neuer als das, was hier läuft{% endif %}.
+    {% elif updatestand.ohne_netz %}
+    Beim letzten Versuch war das Repository nicht erreichbar. Das ist keine
+    Störung dieses Servers; beim nächsten Mal wird es wieder versucht.
+    {% else %}
+    Noch nicht nachgesehen.
+    {% endif %}
+  </p>
+  {% endif %}
 </section>
 
 <section id="ablageorte">

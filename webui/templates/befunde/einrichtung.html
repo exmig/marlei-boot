@@ -1,0 +1,20 @@
+{# Die Umgebung ist aelter als der Code. Gelb und nicht rot: Der Server
+   tut seine Arbeit, aber was an den fehlenden Werten haengt, tut sie
+   nicht -- und man saehe es sonst nirgends. Siehe webui/umgebung.py. #}
+<p>
+  In <code>/etc/pxeweb.env</code>
+  {{ "fehlt ein Wert" if befund.fehlend | length == 1 else "fehlen Werte" }},
+  {{ "den" if befund.fehlend | length == 1 else "die" }} der laufende Code
+  erwartet:
+  {% for name in befund.fehlend %}<code>{{ name }}</code>{{ ", " if not loop.last }}{% endfor %}.
+</p>
+<p>
+  Das passiert, wenn eine neue Version mehr mitbringt als Code — ein Dienst,
+  ein Konto, eine neue Zeile. <code>git pull</code> richtet so etwas nicht
+  ein, <code>install.sh</code> schon. Derselbe Befehl tut beides:
+</p>
+<pre id="befehl-einrichtung"><code>{{ update_befehl }}</code></pre>
+<p class="kartenfuss">
+  Ohne <code>sudo</code> aufrufen — das Skript fragt selbst danach.
+  &middot; <a href="/einrichtung#einstellungen">Was eingerichtet ist &rarr;</a>
+</p>

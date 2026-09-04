@@ -609,6 +609,17 @@
     wie sie. Bedienen lässt sich hier nichts.
   </p>
 
+  <p class="muted">
+    <strong>Eine Einstellung lohnt sich gleich beim ersten Durchgang:</strong>
+    In Schritt 1 steht auf demselben Reiter die Karte <em>Stand</em>, und
+    darin, wie oft der Server bei GitHub suchen soll, ob es eine neuere
+    Version gibt — <em>nie</em>, <em>wöchentlich</em> oder
+    <em>monatlich</em>. Vorgegeben ist wöchentlich. Wer nicht will, dass
+    dieser Server von sich aus ins Netz greift, stellt hier <em>nie</em>
+    ein; es fließt ohnehin nichts zu uns zurück, und gezählt wird nichts.
+    Siehe <a href="#einrichtung-stand">Stand</a>.
+  </p>
+
   <div class="abschnittskopf">
     <h3 id="rundgang-1">Schritt 1 &mdash; nachsehen, dass die Adresse stimmt</h3>
   </div>
@@ -3268,7 +3279,7 @@
 
   <h4>Wofür ist diese Karte da?</h4>
   <p class="muted">
-    Sie sagt, <strong>welche Fassung dieses Servers gerade läuft</strong> und
+    Sie sagt, <strong>welche Version dieses Servers gerade läuft</strong> und
     wann sie eingespielt wurde. Bei einer Rückfrage zu einem Fehler ist das
     die Angabe, die zählt — ohne sie lässt sich nicht sagen, ob ein Problem
     schon behoben ist.
@@ -3291,23 +3302,37 @@
 
   <h4>Was kann man hier tun?</h4>
   <p class="muted">
-    Nichts — die Karte zeigt an. Geändert wird der Stand auf dem Server, mit
-    einem erneuten <code>install.sh</code>.
+    <strong>Einstellen, wie oft der Server nach einer neueren Version
+    sucht</strong> — <em>nie</em>, <em>wöchentlich</em> (Vorgabe)
+    oder <em>monatlich</em>. Gefragt wird bei GitHub, nicht bei uns: Es
+    fließt nichts zu uns zurück, und gezählt wird nichts. Findet der Server
+    etwas Neueres, steht darüber eine blaue Karte mit dem Befehl, der es
+    einspielt.
+  </p>
+  <p class="muted small">
+    Die Wahl wirkt sofort, ohne Neustart des Dienstes. Ist auf diesem Server
+    über <code>PXE_QUELLENWACHT</code> jede Netzabfrage abgeschaltet, steht
+    hier statt der Auswahl der Hinweis darauf — die Oberfläche überstimmt
+    das nicht.
+  </p>
+  <p class="muted">
+    Den Stand selbst ändert diese Karte nicht: Das tut ein erneutes
+    <code>install.sh</code> auf dem Server.
   </p>
 
   <h4>Was passiert dabei — und was nicht?</h4>
   <p class="muted">
     Der Stempel wird beim Einspielen gesetzt und rührt sich danach nicht
     mehr. Er sagt also, <strong>was installiert wurde</strong> — nicht, ob es
-    inzwischen eine neuere Fassung gibt. Danach sieht dieser Server nicht von
-    selbst.
+    inzwischen eine neuere Version gibt. Danach sucht dieser Server nur,
+    wenn er soll: Wie oft, steht oben in dieser Karte.
   </p>
 
   <h4>Was, wenn nichts dasteht?</h4>
   <p class="muted">
     Dann ist diese Anwendung nicht über <code>install.sh</code> auf den
     Server gekommen — sie läuft zum Beispiel direkt aus einem Arbeitsordner.
-    Ein Fehler ist das nicht, aber eine Fassung lässt sich dann nicht nennen.
+    Ein Fehler ist das nicht, aber eine Version lässt sich dann nicht nennen.
   </p>
 
   <div class="abschnittskopf">
@@ -3872,7 +3897,7 @@
       Partitionieren aus. Ubuntu sieht dort nach, ob es die Platte
       verschlüsselt einrichten könnte, und sucht dafür einen Ordner, den es
       <strong>groß geschrieben</strong> erwartet. Wurde das Abbild von einer
-      älteren Fassung dieses Servers ausgepackt, liegt er klein
+      älteren Version dieses Servers ausgepackt, liegt er klein
       geschrieben da — und auf einem Linux-Dateisystem ist das ein anderer
       Name.
     </p>

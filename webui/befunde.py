@@ -44,6 +44,8 @@ import time
 
 import dienste
 import serveradresse
+import umgebung
+import updatewacht
 
 # Die Reihenfolge, in der die Karten stehen, wenn mehrere gleichzeitig
 # gelten: dringend zuerst, von oben nach unten.
@@ -134,6 +136,18 @@ KATALOG = (
                 "mindestens werden %d GB zurückgehalten."
                 % (dienste.SOCKEL // 1024 ** 3),
      "wieder": "wenn wieder ein Gigabyte weniger frei ist"},
+    {"kennung": "einrichtung", "stufe": "warnung",
+     "titel": "Die Einrichtung ist älter als der Code",
+     "wodurch": "In /etc/pxeweb.env fehlen Werte, die der laufende Code "
+                "erwartet. Der Server läuft, aber was daran hängt, ist "
+                "nicht eingerichtet.",
+     "wieder": "wenn wieder ein Wert mehr fehlt"},
+    {"kennung": "neuefassung", "stufe": "info",
+     "titel": "Es gibt eine neuere Version",
+     "wodurch": "Der Blick ins Repository hat eine höhere Version "
+                "gefunden als die, die hier läuft. Wie oft er hinsieht, "
+                "steht unter Einrichtung in der Karte Stand.",
+     "wieder": "bei der übernächsten Version"},
 )
 
 
@@ -303,5 +317,31 @@ def sammeln(eingerichtete_ip: str, assets_dir=None,
             groesstes=dienste.groesstes_abbild(),
             sockel=dienste.SOCKEL,
             platz=belegung))
+
+    # -- Passt die Umgebung noch zum Code? Der Fall vom 30.08.2026:
+    # gesund gemeldet, Freigabe fehlt, und niemand haette erraten koennen,
+    # warum. Siehe umgebung.py.
+    luecken = umgebung.fehlend()
+    if luecken:
+        befunde.append(dict(
+            aus_katalog("einrichtung"),
+            # Die Zahl der fehlenden Werte: Sie steigt, wenn es schlimmer
+            # wird, und faellt sonst weg.
+            marke=len(luecken),
+            fehlend=luecken))
+
+    # -- Eine neuere Version. Die einzige blaue Karte: wissenswert, aber
+    # niemand muss deswegen etwas tun -- der Server laeuft weiter, und was
+    # er ausrollt, entscheidet der Betreiber (A-013).
+    #
+    # Gefragt wird hier nicht; gelesen wird nur, was der Waechter zuletzt
+    # hinterlegt hat. Ein Befund entsteht auf jeder Seite -- eine
+    # Netzabfrage darin waere ein Aufruf je Seitenaufbau.
+    lage = updatewacht.stand()
+    if lage["neuer"] and lage["dort"]:
+        befunde.append(dict(
+            aus_katalog("neuefassung"),
+            marke=updatewacht.marke(lage["dort"]),
+            fassung=lage))
 
     return sortiert(befunde)

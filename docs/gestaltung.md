@@ -867,6 +867,14 @@ nicht die Folge: *„Die Platte ist fast voll"*. Ob der Platz noch reicht,
 hängt daran, wie groß das nächste Abbild ist, und das wissen wir nicht.
 Behaupten wäre schlimmer als beschreiben.
 
+*Nachtrag 04.09.2026 (A-013): **Blau hat seinen ersten Kandidaten** — die
+neuere Fassung im Repository. Sie passt auf die Definition: wissenswert,
+niemand muss sofort handeln, und sie gilt dem Server. Erst war ein Zeichen
+am Reiter *Einrichtung* vorgesehen; verworfen, weil es eine dritte
+Textsorte neben Karte und Meldung gewesen wäre — und weil die blaue Karte
+für genau diesen Fall vorgemerkt war. Begründung in
+`mappe/08-entscheidungen.md`.*
+
 **Was der Durchgang außerdem ergeben hat:** Die blaue Karte hat keinen
 einzigen Kandidaten. Kein heutiger Absatz sagt „wissenswert, niemand muss
 handeln, und es gilt dem Server". Die beiden natürlichen Fälle sind noch

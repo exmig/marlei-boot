@@ -60,6 +60,17 @@ os.environ["PXE_QUELLEN"] = str(tmp / "quellen.env")
 # Pruefer statt des Netzes.
 os.environ["PXE_QUELLENWACHT"] = "aus"
 os.environ["PXE_QUELLENWACHT_STAND"] = str(tmp / "quellenwacht.yaml")
+# A-013: Was der Betreiber in der Oberflaeche waehlt, und was der Blick
+# ins Repository ergeben hat -- beides ins Wegwerf-Verzeichnis. Die
+# Adresse zeigt ins Nichts: Gefragt wird im Test mit einem eigenen Holer,
+# nie ueber das Netz.
+os.environ["PXE_EINSTELLUNGEN"] = str(tmp / "einstellungen.yaml")
+os.environ["PXE_UPDATEWACHT_STAND"] = str(tmp / "updatewacht.yaml")
+os.environ["PXE_UPDATE_ADRESSE"] = "http://127.0.0.1:9/nichts"
+# Die Umgebungspruefung vergleicht Datei gegen Datei. Beide zeigen hier
+# ins Wegwerf-Verzeichnis, damit der Test nicht /etc liest.
+os.environ["PXE_ENV_DATEI"] = str(tmp / "pxeweb.env")
+os.environ["PXE_ENV_VORLAGE"] = str(tmp / "pxeweb.env.example")
 
 # Ein Server, auf dem gearbeitet wurde: Die Ausgabenlisten werden seit
 # August 2026 leer ausgeliefert -- mitgeliefert ist die Auswahl der
@@ -4873,6 +4884,123 @@ with TestClient(pxeapp.app) as c:
     check("... sondern gesagt, warum nichts dasteht",
           "install.sh" in seite and "Version 0" in seite)
     check("... und kurz() bleibt leer", versionsstand.kurz() == "")
+
+    # -- Der Server kennt seinen eigenen Stand (A-013)
+    print("\n-- Stand: nachsehen, melden, einrichten")
+    import updatewacht as uw
+    import einstellungen as einst
+    import umgebung as umg
+
+    # Der Test laeuft mit PXE_QUELLENWACHT="aus" -- das ist die Notbremse,
+    # und mit ihr faengt die Pruefung an: Sie muss wirken.
+    seite = c.get("/einrichtung").text
+    check("bei gezogener Notbremse gibt es keine Auswahl",
+          'name="tage"' not in seite and "PXE_QUELLENWACHT" in seite)
+    r = c.post("/einrichtung/updatepruefung", data={"tage": "7"},
+               follow_redirects=False)
+    check("... und die Einstellung laesst sich auch nicht setzen",
+          "art=schlecht" in r.headers["location"])
+    check("... der Waechter haelt sich fuer abgeschaltet",
+          uw.gesperrt() and uw.intervall_tage() == 0)
+
+    # Ab hier ohne Notbremse: So sieht ein gewoehnlicher Server aus.
+    uw._NOTBREMSE = ""
+
+    seite = c.get("/einrichtung").text
+    check("ohne Notbremse steht die Auswahl da", 'name="tage"' in seite)
+    check("... mit woechentlich als Vorgabe",
+          uw.intervall_tage() == 7
+          and '<option value="7" selected>' in seite.replace(" >", ">"))
+
+    r = c.post("/einrichtung/updatepruefung", data={"tage": "30"},
+               follow_redirects=False)
+    check("monatlich laesst sich waehlen",
+          "art=schlecht" not in r.headers["location"])
+    check("... und wirkt sofort, ohne Neustart", uw.intervall_tage() == 30)
+    check("... und steht in einstellungen.yaml",
+          Path(os.environ["PXE_EINSTELLUNGEN"]).is_file()
+          and einst.hole("updatepruefung") == 30)
+    check("... und nicht in der Umgebungsdatei",
+          "updatepruefung" not in Path(os.environ["PXE_ENV_DATEI"]).read_text(
+              encoding="utf-8") if Path(os.environ["PXE_ENV_DATEI"]).is_file()
+          else True)
+
+    r = c.post("/einrichtung/updatepruefung", data={"tage": "3"},
+               follow_redirects=False)
+    check("ein Zeitraum, den es nicht gibt, wird abgewiesen",
+          "art=schlecht" in r.headers["location"] and uw.intervall_tage() == 30)
+
+    # Der Blick selbst -- mit eigenem Holer statt Netz.
+    NEUE = "Es gibt eine neuere Version"
+
+    # Der Abschnitt davor hat den Versionsstempel geloescht. Genau dann
+    # darf nichts behauptet werden: Ohne "hier" gibt es kein "neuer".
+    check("ohne Stempel wird keine neuere Version behauptet",
+          uw.blick(hole=lambda: "v9.9") and not uw.stand()["neuer"])
+    check("... und keine Karte", NEUE not in c.get("/").text)
+    stempel.write_text("stand=v1.2-3-gabc1234\ncommit=abc1234\n"
+                       "zweig=main\ninstalliert=2026-08-26 18:00\n",
+                       encoding="utf-8")
+    check("vorher steht keine blaue Karte da", NEUE not in c.get("/").text)
+
+    check("ein Blick auf dieselbe Version meldet nichts",
+          uw.blick(hole=lambda: "v1.2") and not uw.stand()["neuer"])
+    check("... und keine Karte", NEUE not in c.get("/").text)
+
+    check("ein Blick auf eine hoehere Version meldet sie",
+          uw.blick(hole=lambda: "v1.3") and uw.stand()["neuer"])
+    seite = c.get("/").text
+    check("... als blaue Karte", NEUE in seite
+          and 'class="seitenkarte stufe-info"' in seite)
+    check("... mit beiden Versionen darin", "v1.2" in seite and "v1.3" in seite)
+    check("... und dem Befehl, der beides tut",
+          "/opt/pxe-setup/update.sh" in seite)
+
+    # Ohne Netz: vermerkt, nicht gemeldet.
+    import urllib.error as _ue
+
+    def kaputt():
+        raise _ue.URLError("kein Netz")
+
+    check("ohne Netz kommt der Blick nicht zustande", not uw.blick(hole=kaputt))
+    lage = uw.stand()
+    check("... und es ist vermerkt", lage["ohne_netz"] and not lage["neuer"])
+    seite = c.get("/").text
+    check("... aber nichts sieht nach einem Fehler aus",
+          NEUE not in seite and "stufe-fehler" not in seite)
+
+    # "nie" wirft den Befund weg -- sonst bliebe die Karte stehen, bis ein
+    # Waechter sie wegnimmt, den es nicht mehr gibt.
+    uw.blick(hole=lambda: "v1.3")
+    check("die Karte steht wieder", NEUE in c.get("/").text)
+    c.post("/einrichtung/updatepruefung", data={"tage": "0"},
+           follow_redirects=False)
+    check("nie schaltet ab und raeumt den Befund weg",
+          uw.intervall_tage() == 0 and NEUE not in c.get("/").text)
+
+    # -- Die Umgebung ist aelter als der Code
+    ALT = "Die Einrichtung ist älter als der Code"
+    check("ohne /etc/pxeweb.env keine Meldung",
+          not umg.fehlend() and ALT not in c.get("/").text)
+
+    vorlage = Path(os.environ["PXE_ENV_VORLAGE"])
+    vorlage.write_text("# Kopf\nPXE_BASE_URL=http://x\nPXE_SMB_ROOT=/srv/smb\n",
+                       encoding="utf-8")
+    echt = Path(os.environ["PXE_ENV_DATEI"])
+    echt.write_text("PXE_BASE_URL=http://x\n", encoding="utf-8")
+    check("fehlt ein Wert, sagt der Server es", umg.fehlend() == ["PXE_SMB_ROOT"])
+    seite = c.get("/").text
+    check("... als gelbe Karte mit dem Namen darin",
+          ALT in seite and "PXE_SMB_ROOT" in seite
+          and 'class="seitenkarte stufe-warnung"' in seite)
+    check("... und demselben Befehl", "/opt/pxe-setup/update.sh" in seite)
+
+    echt.write_text("PXE_BASE_URL=http://x\nPXE_SMB_ROOT=/srv/smb\n",
+                    encoding="utf-8")
+    check("ist alles da, schweigt er wieder",
+          not umg.fehlend() and ALT not in c.get("/").text)
+    echt.unlink()
+    vorlage.unlink()
 
     # -- Angefangen und nicht fertig (A-021, aus B-003)
     #

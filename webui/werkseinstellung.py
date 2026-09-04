@@ -55,6 +55,8 @@ ZUSTAND = (
     "freigabe.yaml",         # was im Bootmenue angeboten wird
     "gruppen.yaml",          # Reihenfolge der Gruppen
     "namen.yaml",            # eigene Namen fuer Menueeintraege
+    "einstellungen.yaml",    # was der Betreiber in der Oberflaeche waehlte
+    "updatewacht.yaml",      # der letzte Blick ins Repository
     "logs",                  # Installationsprotokolle (ein Verzeichnis)
 )
 
