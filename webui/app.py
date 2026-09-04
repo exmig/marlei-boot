@@ -1194,7 +1194,7 @@ SPRUNGMARKEN = {
     "registrierte-clients", "manuelle-registrierung",   # Clients
     "installationsprotokolle",
     "stand", "ablageorte", "einstellungen", "ersteinrichtung",  # Einrichtung
-    "fehlerbericht",
+    "fehlerbericht", "verbesserungen",
     "quellenwaechter",                                  # Server Health
 }
 

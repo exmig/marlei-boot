@@ -4925,6 +4925,15 @@ with TestClient(pxeapp.app) as c:
     # suchen, die man oeffnet, um einen Pfad nachzusehen.
     check("... aber ohne Klick steht kein Bericht da", BERICHT not in seite)
 
+    # Vorschlaege haben eine eigene Karte -- und ausdruecklich keinen
+    # Bericht: Bei einer Idee hilft nicht, worauf der Server laeuft,
+    # sondern was jemandem fehlt.
+    check("Verbesserungen stehen in einer eigenen Karte",
+          'id="verbesserungen"' in seite and "Verbesserungen" in seite)
+    check("... mit eigenem Betreff", "MARLEI%20Boot%20-%20Verbesserungen" in seite)
+    check("... und ohne Bericht",
+          "erzeugen" not in seite.split('id="verbesserungen"')[1].split("</section>")[0])
+
     seite = c.get("/einrichtung?fehlerbericht=1").text
     check("nach dem Klick steht er da", BERICHT in seite)
     check("... mit dem Block Technik", "Technik" in seite)
