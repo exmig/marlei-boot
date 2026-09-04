@@ -16,7 +16,7 @@
 set -euo pipefail
 
 REPO="${1:-$HOME/pxe-server.git}"
-WORKTREE="${2:-$HOME/prj_pxe_server}"
+WORKTREE="${2:-$HOME/marlei-boot}"
 BRANCH="${GIT_DEPLOY_BRANCH:-main}"
 
 if ! command -v git >/dev/null; then
