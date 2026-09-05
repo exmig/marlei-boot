@@ -29,6 +29,41 @@
       <td class="nowrap"><a href="/protokoll?einheit={{ d.name }}">Protokoll</a></td>
     </tr>
     {% endfor %}
+    {# Die Firewall steht unter den Diensten und ist keiner: Sie gehoert
+       der Maschine, nicht diesem Server, und er fasst sie nicht an. Sie
+       steht trotzdem hier, weil sie in derselben Zeile beantwortet wird
+       wie die Dienste -- "kommt beim bootenden Rechner etwas an?".
+
+       Nur an oder aus. Was sie durchlaesst, weiss diese Anwendung nicht:
+       Die Regeln liegen root-only. Welche Ports der Bootweg braucht, steht
+       unter Einrichtung in der Karte Firewall. #}
+    {# Die Ampel ist grau und nicht rot: Eine eingeschaltete Firewall ist
+       kein Fehler -- sie ist eine Unbekannte. Rot hiesse "kaputt", gruen
+       hiesse "geprueft"; beides waere gelogen. #}
+    {% if firewall %}
+    <tr class="firewallzeile">
+      <td class="nowrap">
+        <span class="ampel {{ 'unklar' if firewall.aktiv else 'an' }}"></span>
+        <strong>Firewall</strong>
+      </td>
+      <td>
+        {% if firewall.aktiv %}
+        <span class="muted small">aktiv</span>
+        {% else %}
+        <span class="muted small">keine aktiv</span>
+        {% endif %}
+      </td>
+      <td class="muted small">
+        {% if firewall.aktiv %}
+        {{ firewall.namen | join(', ') }} — was sie durchlässt, weiß dieser
+        Server nicht
+        {% else %}
+        nichts blockiert den Bootweg von hier aus
+        {% endif %}
+      </td>
+      <td class="nowrap"><a href="/einrichtung#firewall">Ports</a></td>
+    </tr>
+    {% endif %}
   </tbody>
 </table>
 {% if dienste and dienste[0].zustand == "unbekannt" %}

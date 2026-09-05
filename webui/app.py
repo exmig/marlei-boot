@@ -47,6 +47,7 @@ import kenntnis
 import bezeichnungen
 import dienste
 import eigene
+import firewall
 import freigabe
 import gruppen
 import isoscan
@@ -1194,7 +1195,7 @@ SPRUNGMARKEN = {
     "registrierte-clients", "manuelle-registrierung",   # Clients
     "installationsprotokolle",
     "stand", "ablageorte", "einstellungen", "ersteinrichtung",  # Einrichtung
-    "fehlerbericht", "verbesserungen",
+    "fehlerbericht", "verbesserungen", "firewall",
     "quellenwaechter",                                  # Server Health
 }
 
@@ -1566,7 +1567,12 @@ def status_fragment(request: Request):
     return html.TemplateResponse(
         request, "_status.html",
         {"laufend": _laufend(), "auslastung": _auslastung(),
-         "vorgaenge": _vorgaenge(), "dienste": dienste.zustaende()},
+         "vorgaenge": _vorgaenge(), "dienste": dienste.zustaende(),
+         # Muss mit, weil die Zeile in _dienste.html steht und dieses
+         # Stueck alle fuenf Sekunden nachgeholt wird. Fehlt sie hier,
+         # verschwindet die Firewall-Zeile beim ersten Auffrischen --
+         # derselbe Fall wie am 02.09.2026 bei den Ampeln.
+         "firewall": firewall.lage()},
     )
 
 
@@ -1603,6 +1609,7 @@ def serverhealth(request: Request, meldung: str = "", art: str = ""):
             # jetzt aus _rahmen() und steht auf jeder Seite -- siehe
             # webui/befunde.py.
             dienste=zustand,
+            firewall=firewall.lage(),
             laufend=_laufend(),
             auslastung=_auslastung(),
             vorgaenge=_vorgaenge(),
@@ -3345,6 +3352,14 @@ def einrichtung_seite(request: Request, meldung: str = "", art: str = "",
                           if fehlerbericht else ""),
             bericht_umgebung=mit_umgebung,
             bericht_adresse=KONTAKT,
+            # Die Firewall: gemeldet, nicht angefasst. Der Server richtet
+            # keine ein -- sie gehoert der Maschine, auf der er laeuft.
+            # Warum die Karte nur meldet und nicht prueft, steht im Kopf
+            # von webui/firewall.py.
+            firewall=firewall.lage(),
+            firewall_ports=firewall.PORTS,
+            firewall_nfs=firewall.NFS_HINWEIS,
+            firewall_zu=firewall.NICHT_OEFFNEN,
             # Wie weit die Abfrage vor dem Werksreset gekommen ist:
             # "" nichts, "wort" das Feld steht offen, "sicher" das Wort
             # stimmt und es fehlt nur noch die Bestaetigung.

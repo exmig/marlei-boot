@@ -73,6 +73,9 @@ os.environ["PXE_QUELLENWACHT_STAND"] = str(tmp / "quellenwacht.yaml")
 os.environ["PXE_SETUP_DIR"] = str(tmp / "setup")
 os.environ["PXE_EINSTELLUNGEN"] = str(tmp / "einstellungen.yaml")
 os.environ["PXE_UPDATEWACHT_STAND"] = str(tmp / "updatewacht.yaml")
+# Die Datei, die "ufw enable" umschreibt. Sie gibt es hier nicht -- der
+# Test legt sie sich an, wenn er eine eingeschaltete Firewall braucht.
+os.environ["PXE_UFW_CONF"] = str(tmp / "ufw.conf")
 # Eine Adresse, die sofort und ohne Netz scheitert: ein Protokoll, das es
 # nicht gibt. "http://127.0.0.1:9/" waere ein Verbindungsversuch, und wie
 # lange der braucht, entscheidet das Betriebssystem -- der Test wartete
@@ -5556,6 +5559,66 @@ with TestClient(pxeapp.app) as c:
     nachbau = seite.split(marke)[-1].split("</table>")[0]
     check("... auch der Nachbau im Rundgang",
           nachbau.count('class="ampel') == len(_d.EINHEITEN))
+
+    # -- Die Firewall wird gemeldet, nicht angefasst (A-012)
+    #
+    # Der Bootserver richtet keine ein: Sie gehoert der Maschine, auf der
+    # er laeuft. Und pruefen koennte er sie ohne root nicht -- die Regeln
+    # liegen root-only. Beides muss die Karte sagen, sonst sieht sie aus,
+    # als haette sie geprueft.
+    print("\n-- Firewall: melden, nicht pruefen")
+    import firewall as fw
+
+    ufwdatei = Path(os.environ["PXE_UFW_CONF"])
+    ufwdatei.unlink(missing_ok=True)
+    fw._ufw.__globals__["UFW_CONF"] = ufwdatei
+
+    check("ohne ufw-Datei wird keine ufw gemeldet",
+          not any(f["name"] == "ufw" for f in fw.lage()["gefunden"]))
+    seite = c.get("/einrichtung").text
+    check("die Karte steht trotzdem auf der Seite", 'id="firewall"' in seite)
+    check("... und sagt, dass keine installiert ist",
+          "keine Firewall installiert" in seite)
+    check("... die Portliste steht auch dann da",
+          all(p["port"] in seite for p in fw.PORTS))
+
+    ufwdatei.write_text("# Vorspann\nENABLED=no\nLOGLEVEL=low\n",
+                        encoding="utf-8")
+    check("eine abgeschaltete ufw wird gefunden und als aus gemeldet",
+          fw.lage()["gefunden"][0] == {"name": "ufw", "an": False}
+          and not fw.lage()["aktiv"])
+
+    ufwdatei.write_text("ENABLED=yes\n", encoding="utf-8")
+    lage = fw.lage()
+    check("eine eingeschaltete ufw gilt als aktiv",
+          lage["aktiv"] and lage["namen"] == ["ufw"])
+    seite = c.get("/einrichtung").text
+    check("die Karte nennt sie beim Namen", ">ufw</strong>" in seite)
+    # Der Satz, an dem alles haengt: Die Karte darf nicht so tun, als
+    # haette sie nachgesehen.
+    # Zeilenweise gelesen stuende der Satz mit einem Umbruch mittendrin --
+    # geprueft wird der Wortlaut, nicht der Umbruch.
+    fliess = " ".join(seite.split())
+    check("... und sagt, dass sie nicht weiss, was durchkommt",
+          "weiß nicht, was sie durchlässt" in fliess
+          and "nicht geprüft" in fliess)
+    check("... nirgends behauptet sie, ein Port sei offen",
+          "offen" not in seite.split('id="firewall"')[1].split("</section>")[0]
+          .replace("offen sein muss", "").replace("zu öffnen", ""))
+
+    # Die Zeile unter den Diensten -- und zwar in BEIDEN Fassungen: Server
+    # Health baut sie beim Aufruf, /status.html holt sie alle fuenf
+    # Sekunden nach. Fehlt sie dort, verschwindet sie beim Auffrischen.
+    for wo in ("/", "/status.html"):
+        stueck = c.get(wo).text
+        check("%s traegt die Firewall-Zeile" % wo,
+              "firewallzeile" in stueck and "aktiv" in stueck)
+        check("... mit grauer Ampel, nicht mit roter",
+              'class="ampel unklar"' in stueck)
+
+    ufwdatei.unlink()
+    check("ohne Firewall sagt die Zeile das",
+          "keine aktiv" in c.get("/").text)
 
     # -- Werkseinstellung: alles weg, aber erst nach drei Schritten
     #

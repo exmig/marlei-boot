@@ -3589,6 +3589,73 @@
   </p>
 
   <div class="abschnittskopf">
+    <h3 id="einrichtung-firewall">Firewall</h3>
+    <p class="zurkarte"><a href="/einrichtung#firewall">Zur Karte &rarr;</a></p>
+  </div>
+
+  <h4>Wofür ist diese Karte da?</h4>
+  <p class="muted">
+    <strong>Eine Firewall bringt den Netzstart lautlos zum Schweigen.</strong>
+    Sie ist der einzige Fehler, bei dem alles gesund aussieht:
+    <code>dnsmasq</code> antwortet weiter, die Ampeln stehen auf Grün, der
+    Server meldet keinen Befund — und beim bootenden Rechner kommt trotzdem
+    nichts an. Die Karte sagt, ob hier eine läuft, und was der Bootweg
+    braucht.
+  </p>
+
+  <h4>Was steht darin?</h4>
+  <p class="muted">
+    Oben, welche Firewall installiert ist und ob sie eingeschaltet ist.
+    Darunter die Ports, auf die die Dienste dieses Servers hören — mit dem
+    Dienst dahinter und wofür er sie braucht.
+  </p>
+
+  <h4>Was passiert dabei — und was nicht?</h4>
+  <p class="hint">
+    <strong>Dieser Server richtet keine Firewall ein und ändert keine
+    Regel.</strong> Sie gehört der Maschine, auf der er läuft, und damit
+    Ihnen — dieselbe Grenze wie bei der
+    <a href="#einrichtung-serverip">IP-Adresse</a>. Ein Werkzeug, das
+    ungefragt Regeln auf einer fremden Maschine setzt, ist das, wovor man
+    Werkzeuge sonst warnt; und ein <code>ufw enable</code> über eine
+    SSH-Sitzung sperrt aus, wer 22 vergisst.
+  </p>
+  <p class="muted">
+    <strong>Gemeldet wird, nicht geprüft</strong> — und dafür gibt es einen
+    technischen Grund, nicht nur eine Haltung. Die Anwendung läuft als
+    <code>pxeweb</code> ohne erweiterbare Rechte. Ohne <code>root</code>
+    lässt sich erfahren, <em>ob</em> eine Firewall eingeschaltet ist; die
+    Regeln selbst sind nur für <code>root</code> lesbar. Die Karte sagt
+    deshalb nirgends, ein Port sei offen — sie sagt, welcher offen sein
+    muss.
+  </p>
+  <p class="muted small">
+    Nebenbei die Falle beim Nachsehen von Hand:
+    <code>systemctl is-active ufw</code> meldet <em>active</em>, auch wenn
+    die Firewall abgeschaltet ist — die Einheit läuft dann als leerer
+    Rahmen. Was gilt, sagt <code>ufw status</code>.
+  </p>
+
+  <h4>Was, wenn nichts dasteht?</h4>
+  <p class="muted">
+    Steht dort <em>keine Firewall installiert</em>, ist das keine Warnung:
+    Auf einem Bootserver im eigenen LAN ist das der übliche Fall, und dem
+    Netzstart steht von dieser Maschine aus nichts im Weg. Die Portliste
+    bleibt trotzdem stehen — als Antwort auf die Frage, was zu öffnen wäre,
+    falls sich das ändert.
+  </p>
+  <p class="hint">
+    <strong>NFS ist die Falle in der Liste.</strong> <code>NFSv3</code> hört
+    nicht nur auf 111 und 2049: <code>mountd</code>, <code>statd</code> und
+    <code>nlockmgr</code> bekommen bei jedem Start neue, zufällige
+    Portnummern. Eine Regel, die nur die beiden bekannten öffnet, lässt
+    große Live-Systeme trotzdem scheitern — und der Fehler sieht dann nach
+    einem Problem des Abbilds aus. Entweder die Ports in
+    <code>/etc/nfs.conf</code> festnageln, oder dem eigenen Subnetz
+    insgesamt erlauben, was dieser Server ohnehin nur lesend exportiert.
+  </p>
+
+  <div class="abschnittskopf">
     <h3 id="einrichtung-ersteinrichtung">Ersteinrichtung</h3>
     <p class="zurkarte"><a href="/einrichtung#ersteinrichtung">Zur Karte &rarr;</a></p>
   </div>

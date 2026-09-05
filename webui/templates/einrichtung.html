@@ -288,6 +288,89 @@
   </p>
 </section>
 
+{# Die Firewall. Sie steht hinter den Einstellungen und vor der
+   Ersteinrichtung: Es ist die letzte Angabe ueber diese Maschine, und
+   danach kommt nur noch der Knopf, der alles loescht.
+
+   **Diese Karte meldet und prueft nicht.** Der Bootserver richtet keine
+   Firewall ein -- sie gehoert der Maschine, auf der er laeuft, dieselbe
+   Grenze wie bei der Netzkonfiguration. Und pruefen koennte er sie ohne
+   root ohnehin nicht; warum, steht im Kopf von webui/firewall.py. #}
+<section id="firewall">
+  <div class="kartenkopf">
+    <h2>Firewall</h2>
+    <a class="kartenhilfe" href="/hilfe#einrichtung-firewall"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+
+  {% if firewall.gefunden %}
+  <table class="schmal">
+    <tbody>
+      {% for f in firewall.gefunden %}
+      <tr>
+        <td class="nowrap">
+          <span class="ampel {{ 'an' if f.an else 'aus' }}"></span>
+          <strong>{{ f.name }}</strong>
+        </td>
+        <td>
+          {% if f.an %}
+          <span class="badge missing">aktiv</span>
+          {% else %}
+          <span class="badge ok">aus</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">
+    <strong>Auf dieser Maschine ist keine Firewall installiert.</strong>
+    Dann steht dem Netzstart von hier aus nichts im Weg — und die Liste
+    unten ist die Antwort auf die Frage, was zu öffnen wäre, falls sich das
+    ändert.
+  </p>
+  {% endif %}
+
+  {% if firewall.aktiv %}
+  <p class="hint">
+    <strong>Hier läuft eine Firewall, und dieser Server weiß nicht, was sie
+    durchlässt.</strong> Er fasst sie nicht an — sie gehört Ihrer Maschine,
+    nicht ihm. Was er nicht kann, ist nachsehen: Die Regeln liegen nur für
+    <code>root</code> lesbar, und diese Anwendung läuft ohne. <strong>Ein
+    blockierter Port fällt nirgends auf</strong>: Die Dienste laufen weiter,
+    der Server meldet sich gesund, und beim bootenden Rechner kommt nichts
+    an. Die Liste unten ist deshalb das, was Sie selbst prüfen müssen.
+  </p>
+  {% endif %}
+
+  <h3>Was der Bootweg braucht</h3>
+  <p class="muted small">
+    Reine Auskunft — abgelesen an den Diensten dieses Servers, nicht
+    geprüft. Ob Ihre Firewall das durchlässt, sehen nur Sie.
+  </p>
+  <table>
+    <tbody>
+      {% for p in firewall_ports %}
+      <tr>
+        <td class="nowrap"><code>{{ p.port }}</code></td>
+        <td class="nowrap muted small">{{ p.dienst }}</td>
+        <td class="muted">{{ p.wofuer }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="hint">
+    <strong>NFS ist die Falle in dieser Liste.</strong> {{ firewall_nfs }}
+  </p>
+  <p class="muted small">{{ firewall_zu }}</p>
+
+  <p class="kartenfuss">
+    Nachgesehen in <code>{{ firewall.quelle }}</code> und bei
+    <code>systemctl</code> — nicht in den Regeln selbst.
+  </p>
+</section>
+
 {# Zuletzt, und mit Absicht ganz unten: Wer die Seite überfliegt, soll
    nicht als Erstes über einen Knopf stolpern, der alles löscht.
 
