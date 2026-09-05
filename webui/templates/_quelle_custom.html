@@ -104,6 +104,7 @@
 {% if selbst %}
 {% for e in selbst %}
 {% call karte(e, e.zustand.text, e.eigen.meldung, gut=e.zustand.gut,
+              laeuft=e.zustand.laeuft,
               loeschen="/eintraege/" + e.slug + "/delete",
               zeitpunkt=e.eigen.angelegt, zeit_titel="Angelegt",
             zurueck="custom") %}

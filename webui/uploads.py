@@ -160,6 +160,13 @@ ZUSTAENDE = {
     "fehler": "Fehler",
 }
 
+# Die drei davon, bei denen gerade jemand am Werk ist. Die Eintragskarte
+# in der Oberflaeche steht offen, solange einer davon gilt, und danach zu
+# -- egal wie es ausging. Steht hier und nicht in der Vorlage: Welche
+# Zustaende es gibt, weiss dieses Modul, und eine Liste, die anderswo
+# abgeschrieben ist, veraltet still.
+LAEUFT = ("laedt", "empfangen", "entpacken")
+
 WEGE = {
     "nfs": "wird über NFS gestreamt",
     "ram": "wird in den Arbeitsspeicher geladen",

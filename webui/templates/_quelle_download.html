@@ -54,6 +54,7 @@
    ausgepackt wird. Siehe webui/uploads.py. #}
 {% for e in geholt %}
 {% call karte(e, e.zustand.text, e.upload.meldung, gut=e.zustand.gut,
+              laeuft=e.zustand.laeuft,
               menue_info=true,
               loeschen="/uploads/" + e.slug + "/delete",
               neu_einlesen="/uploads/" + e.slug + "/reload" if e.upload.neu_lesbar else "",

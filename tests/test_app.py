@@ -5336,6 +5336,31 @@ with TestClient(pxeapp.app) as c:
           ">Abbrechen<" not in seite.replace(" ", "")
           and "Nicht übertragen" in seite and "Nicht holen" in seite)
 
+    # -- Eine Karte steht offen, solange jemand am Werk ist
+    #
+    # Markus am 05.09.2026 an einem Kali-netinst auf dev-marlei: Der stand
+    # auf "kein Netzwerkstart moeglich", und seine Karte blieb dauerhaft
+    # aufgeklappt. Ein Zustand, der bleibt, ist keine Meldung mehr -- er
+    # ist eine Eigenschaft, und eine Liste, in der die Haelfte offen
+    # steht, hat keine geschlossene mehr.
+    def offen_bei(status, quelle=""):
+        zustand = up.lies_zustand(probe_slug) or {}
+        zustand["status"] = status
+        if quelle:
+            zustand["quelle"] = quelle
+        up.schreib_zustand(probe_slug, zustand)
+        stueck = c.get("/quellen").text.split("eintrag-" + probe_slug)[1][:120]
+        return "open" in stueck
+
+    probe_slug, _ = up.anlegen("klappprobe.iso")
+    # Welche Zustaende es gibt, weiss uploads.py -- hier wird nicht
+    # abgeschrieben, sondern gefragt. Kommt einer dazu, faellt er hier auf.
+    for laufend in up.LAEUFT:
+        check("»%s« steht offen" % laufend, offen_bei(laufend))
+    for ruhend in set(up.ZUSTAENDE) - set(up.LAEUFT):
+        check("»%s« steht zu" % ruhend, not offen_bei(ruhend))
+    up.loesche(probe_slug)
+
     # -- Angefangen und nicht fertig (A-021, aus B-003)
     #
     # Der Server konnte "noch nie geholt" und "war da und ist weg" nicht

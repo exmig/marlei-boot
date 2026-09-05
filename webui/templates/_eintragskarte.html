@@ -20,22 +20,34 @@
    zurueckscrollen. Der Server prueft sie gegen app.SPRUNGMARKEN. #}
 {% macro karte(e, zustand="", meldung="", loeschen="", neu_einlesen="",
                neu_titel="", zeitpunkt="", zeit_titel="",
-               dateien_weg=false, offen=true, gut=false,
+               dateien_weg=false, laeuft=false, gut=false,
                menue_info=false, zurueck="", abbrechen="") %}
-{# Offen, solange etwas in Arbeit ist oder schiefging: was man wissen
-   muss, gehoert nicht hinter einen Klick. Ein "bereit" ist kein Grund
-   dafuer ("gut") -- da gibt es nichts zu tun.
+{# Offen genau so lange, wie jemand am Werk ist -- geladen, geprueft,
+   entpackt. Danach zu, egal wie es ausging.
 
-   Der Katalog schaltet das ganz ab ("offen=false"). Dort heisst der
-   Zustand oft "fehlt", und das ist kein Zwischenfall, sondern der
-   Normalzustand fuer alles, was noch nie geholt wurde -- acht von
-   vierzehn Karten stuenden sonst offen. Zu sehen ist es trotzdem: das
-   Abzeichen steht neben dem Namen. #}
+   **Bis zum 05.09.2026 blieb auch offen, was schiefgegangen war**, unter
+   der Ueberlegung: Was man wissen muss, gehoert nicht hinter einen Klick.
+   Das ging nach hinten los. Ein Kali-netinst auf dev-marlei stand auf
+   "kein Netzwerkstart moeglich" -- kein Zwischenfall, sondern die
+   Auskunft ueber ein Abbild, das eben nicht ueber das Netz startet -- und
+   seine Karte stand seither dauerhaft offen. Eine Liste, in der die
+   Haelfte der Karten aufgeklappt ist, hat keine geschlossene mehr: Dann
+   faellt die eine, an der wirklich gerade etwas passiert, nicht mehr auf.
+
+   **Verborgen wird dabei nichts.** Das Abzeichen steht neben dem Namen,
+   in Rot, und sagt bereits, woran man ist; der Grund steht einen Klick
+   dahinter. Ein Zustand, der bleibt, ist keine Meldung mehr -- er ist
+   eine Eigenschaft.
+
+   Der Katalog braucht dafuer keine Ausnahme mehr. Bis heute schaltete er
+   das Aufklappen eigens ab ("offen=false"), weil dort acht von vierzehn
+   Karten auf "fehlt" stehen; mit der neuen Regel steht "fehlt" ohnehin
+   zugeklappt da. #}
 {# Die Sprungmarke: Server Health verweist von einem Befund des
    Wächters hierher, und bei einem selbst angelegten Eintrag ist das
    Ziel er selbst -- nicht eine Quelle, die es für ihn nicht gibt. #}
 <details class="eintragskarte" id="eintrag-{{ e.slug }}"
-         {% if zustand and offen and not gut %}open{% endif %}>
+         {% if laeuft %}open{% endif %}>
   <summary>
     {# Das Namensfeld ist die Ueberschrift. Ein Klick hinein darf die
        Karte nicht auf- und zuklappen -- darum kuemmert sich das Skript

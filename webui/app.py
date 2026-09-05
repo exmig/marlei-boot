@@ -1305,13 +1305,15 @@ def _zustand(eintrag: dict) -> dict:
     upload = eintrag.get("upload") or {}
     if eigen and eigen.get("status") != "bereit":
         return {"text": "wird geholt" if eigen.get("status") == "laedt" else "Fehler",
-                "gut": False, "meldung": eigen.get("meldung", "")}
+                "gut": False, "laeuft": eigen.get("status") == "laedt",
+                "meldung": eigen.get("meldung", "")}
     if upload and upload.get("status") != "bereit":
         return {"text": upload.get("zustand_text", ""), "gut": False,
+                "laeuft": upload.get("status") in uploads.LAEUFT,
                 "meldung": upload.get("meldung", "")}
     if eintrag.get("ready"):
-        return {"text": "bereit", "gut": True, "meldung": ""}
-    return {"text": "fehlt", "gut": False, "meldung": ""}
+        return {"text": "bereit", "gut": True, "laeuft": False, "meldung": ""}
+    return {"text": "fehlt", "gut": False, "laeuft": False, "meldung": ""}
 
 
 def _angefangen(eintrag: dict) -> bool:
