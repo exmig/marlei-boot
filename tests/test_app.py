@@ -5142,6 +5142,29 @@ with TestClient(pxeapp.app) as c:
           "geantwortet, aber keine" in " ".join(
               c.get("/einrichtung").text.split()))
 
+    # Ein Befund gilt fuer den Stand, gegen den er gezaehlt wurde.
+    #
+    # Der Fall vom 05.09.2026 auf .30: Die Karte sagte "1 Aenderung liegt
+    # bereit", waehrend update.sh "Schon aktuell" meldete. Beide hatten
+    # recht -- gezaehlt worden war gegen den Commit VOR dem Update, und
+    # der naechste Blick war erst in einer Woche faellig.
+    uw.blick(hole=vergleich(12))
+    check("gegen den gestempelten Commit gilt der Befund",
+          uw.stand()["voraus"] == 12)
+    stempel.write_text("stand=v1.0.2\ncommit=def5678\n"
+                       "zweig=main\ninstalliert=2026-09-05 11:33\n",
+                       encoding="utf-8")
+    check("nach einem Update ist er keine veraltete Auskunft, sondern keine",
+          uw.stand()["voraus"] == 0 and not uw.stand()["gesucht"])
+    check("... die Karte behauptet also nichts mehr",
+          NEUE not in c.get("/").text
+          and "Noch nicht gesucht" in c.get("/einrichtung").text)
+    check("... und der Waechter fragt sofort nach, nicht in einer Woche",
+          uw.faellig())
+    check("... danach steht wieder etwas da",
+          uw.blick(hole=vergleich(0)) and uw.stand()["gesucht"]
+          and "Auf dem neuesten Stand" in c.get("/einrichtung").text)
+
     # "nie" wirft den Befund weg -- sonst bliebe die Karte stehen, bis ein
     # Waechter sie wegnimmt, den es nicht mehr gibt.
     uw.blick(hole=vergleich(12))

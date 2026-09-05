@@ -134,6 +134,34 @@ def vergiss() -> None:
         pass
 
 
+def _befund() -> dict:
+    """Der gemerkte Befund -- oder nichts, wenn er zu einem anderen Stand
+    gehoert.
+
+    **Der Fall vom 05.09.2026:** Auf .30 stand "1 Aenderung liegt bereit",
+    waehrend ``update.sh`` "Schon aktuell" meldete. Beide hatten recht, und
+    genau das war der Fehler: Der Befund war gegen den Commit VOR dem
+    Update gezaehlt worden, und der naechste Blick war erst in einer Woche
+    faellig. Eine Woche lang haette die Karte etwas behauptet, das seit dem
+    Update nicht mehr stimmte.
+
+    **Ein Befund gilt fuer den Stand, gegen den er gezaehlt wurde.** Ist
+    ein anderer eingespielt, ist er keine veraltete Auskunft, sondern gar
+    keine -- und wird weggeworfen statt gealtert. Damit faellt auch
+    ``faellig()`` sofort auf True: Der Waechter fragt nach dem Neustart,
+    den install.sh ohnehin ausloest, binnen zwei Minuten nach.
+    """
+    daten = _lesen()
+    commit, zweig = _woher()
+    if not commit or not daten.get("commit"):
+        # Ohne Stempel gibt es nichts zu vergleichen -- dann steht im
+        # Befund, warum (kein_stempel), und das soll stehen bleiben.
+        return daten
+    if daten.get("commit") != commit or (daten.get("zweig") or "main") != zweig:
+        return {}
+    return daten
+
+
 def _woher() -> tuple[str, str]:
     """Commit und Zweig aus dem Stempel von install.sh.
 
@@ -163,7 +191,7 @@ def naechster_blick() -> datetime | None:
     tage = intervall_tage()
     if not tage:
         return None
-    zeit = _lesen().get("zeit")
+    zeit = _befund().get("zeit")
     if not zeit:
         return None                       # noch nie gefragt -- sofort dran
     try:
@@ -242,7 +270,7 @@ def blick(hole=None) -> bool:
 
 def stand() -> dict:
     """Was der letzte Blick ergeben hat -- fuer Karte und Befund."""
-    daten = _lesen()
+    daten = _befund()
     naechster = naechster_blick()
     commit, zweig = _woher()
     voraus = int(daten.get("voraus") or 0)
