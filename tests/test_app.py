@@ -5314,6 +5314,59 @@ with TestClient(pxeapp.app) as c:
           len(selbstgebaut) == 1 and "ziel = seite" in selbstgebaut[0],
           str(selbstgebaut))
 
+    # -- Die Hilfe, wie sie im Netz steht (A-007)
+    #
+    # Geprueft wird hier und nicht erst im Ablauf, der sie ablegt: Dort
+    # faellt ein Fehler erst nach dem Push auf, und bis dahin steht
+    # entweder eine kaputte Seite im Netz oder gar keine.
+    print("\n-- Die Hilfe fuer draussen")
+    import importlib.util as _il
+
+    _spec = _il.spec_from_file_location(
+        "hilfevorschau", Path(__file__).resolve().parent.parent
+        / "tools" / "hilfe-vorschau.py")
+    vorschau = _il.module_from_spec(_spec)
+    _spec.loader.exec_module(vorschau)
+
+    hilfeordner = tmp / "hilfe-im-netz"
+    vorschau.baue(hilfeordner)
+    seite = (hilfeordner / "index.html").read_text(encoding="utf-8")
+
+    check("die Seite entsteht ohne laufenden Server", len(seite) > 100000)
+    check("... und heisst index.html, damit der Verweis eine Adresse ist",
+          (hilfeordner / "index.html").is_file())
+    check("... mit dem Stylesheet daneben",
+          (hilfeordner / "style.css").is_file())
+    # Die beiden Dinge, die auf einer veroeffentlichten Seite nichts zu
+    # suchen haben: ein Klick, der ins 404 fuehrt, und eine Aussage ueber
+    # eine fremde Maschine.
+    check("kein Verweis zeigt mehr auf eine Route des Servers",
+          vorschau.pruefe(seite) == [])
+    check("... auch nicht die Reiterleiste",
+          'class="reiterleiste"' in seite
+          and 'href="/' not in seite.split('class="reiterleiste"')[1][:600])
+    check("... die aber stehen bleibt, samt aktivem Reiter",
+          ">Systeme</a>" in seite and 'class="aktiv">Hilfe</a>' in seite)
+    check("Verweise auf die Seite selbst werden zu Sprungmarken",
+          'href="#lizenz"' in seite)
+    check("die Wegweiser ohne Ziel sind weg",
+          'class="zurkarte"' not in seite
+          and 'class="zumregister"' not in seite)
+    # Der Kopf zeigt sonst die Adresse aus PXE_BASE_URL -- in einer
+    # Vorschau waere das die eines fremden Heimnetzes.
+    check("im Kopf steht ein Platzhalter, keine Adresse",
+          "&lt;BootServer-IP&gt;" in seite and "192.168.178." not in seite)
+    # Das Kapitel, dessentwegen es diese Seite ueberhaupt gibt.
+    check("Der erste Durchgang steht darauf",
+          'id="rundgang"' in seite and "Der erste Durchgang" in seite)
+
+    # Und die Gegenprobe: Die Pruefung muss anschlagen, sonst waere sie
+    # eine Beruhigung statt einer Pruefung.
+    check("eine Route schlaegt an",
+          vorschau.pruefe('<a href="/systeme">x</a>') != [])
+    check("eine Seitenkarte auch",
+          vorschau.pruefe('<div class="seitenkarte stufe-info">x</div>') != [])
+
     # -- Werkseinstellung: alles weg, aber erst nach drei Schritten
     #
     # Der zerstoerendste Knopf der Oberflaeche, und sie hat keine
