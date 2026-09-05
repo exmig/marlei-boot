@@ -5359,6 +5359,14 @@ with TestClient(pxeapp.app) as c:
     # Das Kapitel, dessentwegen es diese Seite ueberhaupt gibt.
     check("Der erste Durchgang steht darauf",
           'id="rundgang"' in seite and "Der erste Durchgang" in seite)
+    # Der Fund vom 05.09.2026: Die Seite holte alle zehn Sekunden die
+    # Befunde nach, bekam von GitHub eine 404-Seite und setzte deren
+    # Inhalt oben in den Kasten. Zu sehen war "There isn't a GitHub Pages
+    # site here" -- im Kopf der Hilfe.
+    check("die Seite fragt keinen Server, den es nicht gibt",
+          'fetch("/' not in seite and "/befunde.html" not in seite)
+    check("... die uebrigen Skripte bleiben aber",
+          "kopierknopf" in seite and "--leiste-hoehe" in seite)
 
     # Und die Gegenprobe: Die Pruefung muss anschlagen, sonst waere sie
     # eine Beruhigung statt einer Pruefung.
@@ -5366,6 +5374,8 @@ with TestClient(pxeapp.app) as c:
           vorschau.pruefe('<a href="/systeme">x</a>') != [])
     check("eine Seitenkarte auch",
           vorschau.pruefe('<div class="seitenkarte stufe-info">x</div>') != [])
+    check("eine Abfrage an den Server auch",
+          vorschau.pruefe('fetch("/befunde.html")') != [])
 
     # -- Die Hilfe zaehlt die Dienste richtig
     #

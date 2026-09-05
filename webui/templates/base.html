@@ -127,7 +127,17 @@
     // Liest gerade jemand? Dann diesmal nicht anfassen.
     if (kasten.querySelector("details[open]")) { setTimeout(holen, 10000); return; }
     fetch("/befunde.html?von=" + encodeURIComponent(location.pathname))
-      .then(function (r) { return r.text(); })
+      // Nur eine Antwort, die auch eine ist. Ohne diese Zeile landet der
+      // Inhalt JEDER Antwort im Kasten -- auch der einer Fehlerseite, und
+      // die traegt dann als Befund oben auf der Seite. Aufgefallen am
+      // 05.09.2026 an der veroeffentlichten Hilfe: Dort gibt es keinen
+      // Server, und nach zehn Sekunden stand die 404-Seite von GitHub im
+      // Kopf. Ein Server kann dasselbe liefern, wenn nginx steht und die
+      // Anwendung nicht.
+      .then(function (r) {
+        if (!r.ok) { throw new Error(r.status); }
+        return r.text();
+      })
       .then(function (t) {
         // Noch einmal nachsehen: Zwischen Frage und Antwort kann jemand
         // eine Karte aufgeklappt haben.

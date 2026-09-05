@@ -111,9 +111,17 @@ WEGWEISER = re.compile(
 # "steht unter Server Health" liest sich ohne Verweis genauso.
 ROUTE = re.compile(r'<a\s[^>]*href="/[^"]*"[^>]*>(.*?)</a>', re.S)
 
+# Das Stueck, das alle zehn Sekunden die Befunde nachholt. Auf einem
+# Server ist es noetig, hier ist es schaedlich -- siehe veroeffentlichen().
+NACHHOLEN = re.compile(r'// Die Befunde nachholen\..*?\n\}\)\(\);\n', re.S)
+
 # Ein href, das nach der Behandlung noch auf eine Route zeigt -- danach
 # sucht die Pruefung.
 UEBRIG = re.compile(r'href="/(?!/)[^"]*"')
+
+# Und eine Abfrage, die im Browser des Lesers an einen Server ginge, den
+# es nicht gibt.
+ABFRAGE = re.compile(r'fetch\(\s*"/')
 
 
 def veroeffentlichen(html: str) -> str:
@@ -133,6 +141,14 @@ def veroeffentlichen(html: str) -> str:
         "Zur Karte ->"  ist nur der Weg           -> faellt ganz weg
         /systeme        setzt einen Server voraus -> nur noch Text
 
+    **Und ein Verweis, den man nicht sieht.** Jede Seite holt alle zehn
+    Sekunden die Befunde nach; auf Pages ist das ein 404, und dessen Inhalt
+    landete im Kasten ganz oben -- Markus sah am 05.09.2026 auf der
+    veroeffentlichten Hilfe nach ein paar Sekunden
+    *"There isn't a GitHub Pages site here"* im Kopf. Das Stueck faellt
+    hier weg: Wo es keinen Server gibt, gibt es auch keinen Befund, der
+    sich aendern koennte.
+
     **Die Reiterleiste bleibt stehen**, weil sie zu dem gehoert, was die
     Seite zeigen soll: So sieht die Oberflaeche aus. Ohne ``href`` ist sie
     kein Verweis mehr -- ``nav a`` faerbt sie ohnehin gedaempft, sie sieht
@@ -147,6 +163,9 @@ def veroeffentlichen(html: str) -> str:
     html = LEISTE.sub(
         lambda t: re.sub(r'\s+href="/[^"]*"\s*', " ", t.group(0)), html)
     html = WEGWEISER.sub("", html)
+    html = NACHHOLEN.sub(
+        "// Die Befunde werden hier NICHT nachgeholt -- siehe\n"
+        "// tools/hilfe-vorschau.py, veroeffentlichen().\n", html)
     return ROUTE.sub(r"\1", html)
 
 
@@ -173,6 +192,9 @@ def pruefe(html: str) -> list:
     if 'class="seitenkarte' in html:
         klagen.append("Eine Seitenkarte steht auf der Seite -- sie meldet "
                       "den Zustand eines laufenden Servers.")
+    if ABFRAGE.search(html):
+        klagen.append("Die Seite fragt einen Server, den es hier nicht "
+                      "gibt -- und traegt dessen Fehlerseite dann selbst.")
     return klagen
 
 
