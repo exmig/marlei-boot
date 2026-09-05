@@ -5220,6 +5220,122 @@ with TestClient(pxeapp.app) as c:
     echt.unlink()
     vorlage.unlink()
 
+    # -- Eine laufende Uebertragung wird steuerbar (A-001)
+    #
+    # **Die Grenze ist uploads.uebernehmen(), und sie ist scharf.** Davor
+    # liegt die vorherige Fassung unberuehrt daneben, ein Abbruch kostet
+    # nur die Uebertragung. Danach ist sie ueberschrieben -- ausgepackt
+    # wird in dasselbe Verzeichnis --, und ein Abbruch koennte nur noch
+    # waehlen, welchen Scherbenhaufen er hinterlaesst. Deshalb gibt es ihn
+    # nur waehrend der Uebertragung.
+    print("\n-- Eine laufende Uebertragung abbrechen")
+    import uploads as up
+
+    check("ein frischer Vorgang traegt keinen Zettel",
+          not up.abgebrochen("iso-gibtsnicht"))
+    up.brich_ab("iso-probe")
+    check("der Zettel liegt, sobald jemand abbricht", up.abgebrochen("iso-probe"))
+    up.vergiss_abbruch("iso-probe")
+    check("... und wird vor dem naechsten Anlauf weggenommen",
+          not up.abgebrochen("iso-probe"))
+
+    # Der Download, mit einer Quelle, die niemals aufhoert zu liefern.
+    # Ohne den Abbruch liefe diese Schleife bis zur vollen Platte -- sie
+    # ist damit zugleich die Probe, dass der Zettel wirklich gelesen wird.
+    class _EndloseQuelle:
+        headers = {"content-length": ""}
+
+        def read(self, n):
+            return b"x" * n
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+    echt_urlopen2 = _ur.urlopen
+    _ur.urlopen = lambda *_a, **_k: _EndloseQuelle()
+    try:
+        slug_ab = up.hole_von_url("http://x.example/endlos-probe.iso")
+        # Kurz laufen lassen, damit wirklich Daten ankommen -- ein
+        # Abbruch, der schon vor dem ersten Brocken greift, prueft nichts.
+        for _ in range(100):
+            if (up.lies_zustand(slug_ab) or {}).get("groesse"):
+                break
+            time.sleep(0.02)
+        lief = bool((up.lies_zustand(slug_ab) or {}).get("groesse"))
+        up.brich_ab(slug_ab)
+        for _ in range(200):
+            if not up.verzeichnis(slug_ab).exists():
+                break
+            time.sleep(0.02)
+    finally:
+        _ur.urlopen = echt_urlopen2
+
+    check("ein Download laeuft an", lief)
+    check("... und der Abbruch haelt ihn binnen Sekunden an",
+          not up.verzeichnis(slug_ab).exists())
+    check("... es bleibt kein halber Eintrag zurueck",
+          up.lies_zustand(slug_ab) is None)
+    check("... und kein roter Rest: wer abbricht, weiss davon",
+          not any(e["slug"] == slug_ab for e in pxeapp._systeme()))
+
+    # Die Route. Sie weist ab, statt still nichts zu tun -- ein Knopf, der
+    # nichts bewirkt und nichts sagt, ist schlimmer als keiner.
+    r = c.post("/uploads/%s/abbrechen" % slug_ab, data={"zurueck": "download"},
+               follow_redirects=False)
+    check("abbrechen ohne laufende Uebertragung wird abgewiesen",
+          "art=schlecht" in r.headers["location"])
+
+    # "quelle" gesetzt, damit der Eintrag in der Download-Karte landet --
+    # dort sitzt der Knopf. Ein Upload steht waehrend der Uebertragung nie
+    # auf "laedt": Da traegt der Browser, und der Zustand heisst
+    # "empfangen".
+    slug_steht, _ = up.anlegen("stillstand-probe.iso")
+    zustand_steht = up.lies_zustand(slug_steht) or {}
+    zustand_steht["status"] = "laedt"
+    zustand_steht["quelle"] = "http://x.example/stillstand-probe.iso"
+    up.schreib_zustand(slug_steht, zustand_steht)
+    r = c.post("/uploads/%s/abbrechen" % slug_steht, data={"zurueck": "download"},
+               follow_redirects=False)
+    check("waehrend geladen wird, greift er",
+          "art=schlecht" not in r.headers["location"]
+          and up.abgebrochen(slug_steht))
+    check("... und fuehrt an die Karte zurueck",
+          "#download" in r.headers["location"])
+    # Der Knopf steht an der Karte, solange geladen wird -- und nur dann.
+    seite = c.get("/quellen").text
+    check("die Karte traegt den Knopf, solange geladen wird",
+          "/uploads/%s/abbrechen" % slug_steht in seite
+          and "Download abbrechen" in seite)
+    zustand_steht["status"] = "entpacken"
+    up.schreib_zustand(slug_steht, zustand_steht)
+    check("beim Entpacken nicht mehr",
+          "/uploads/%s/abbrechen" % slug_steht not in c.get("/quellen").text)
+    up.vergiss_abbruch(slug_steht)
+    up.loesche(slug_steht)
+
+    # Der Upload vom Arbeitsplatz kommt ohne Route aus: Dort traegt der
+    # Browser, und der bricht selbst ab (xhr.abort). Was der Server daraus
+    # macht, steht weiter oben unter "abgebrochener Upload meldet 499" --
+    # derselbe Weg, den ein geschlossener Reiter schon immer nahm, samt der
+    # Probe, dass eine ersetzte Fassung ihn unveraendert ueberlebt.
+    # Geprueft wird hier deshalb nur, was neu ist: die Seite.
+    seite = c.get("/quellen").text
+    check("die Upload-Karte hat einen Abbruchknopf",
+          'id="iso-stopp"' in seite and "Übertragung abbrechen" in seite)
+    check("... und die Seite fragt vor dem Verlassen nach",
+          "beforeunload" in seite)
+    check("... aber nur, solange etwas laeuft",
+          "if (!uebertraegt) { return; }" in seite)
+    # Zwei Knoepfe mit demselben Wort waeren eine Falle: Der eine haelt
+    # eine laufende Uebertragung an, der andere sagt, dass gar nicht erst
+    # angefangen wird.
+    check("kein zweiter Knopf heisst blank »Abbrechen«",
+          ">Abbrechen<" not in seite.replace(" ", "")
+          and "Nicht übertragen" in seite and "Nicht holen" in seite)
+
     # -- Angefangen und nicht fertig (A-021, aus B-003)
     #
     # Der Server konnte "noch nie geholt" und "war da und ist weg" nicht

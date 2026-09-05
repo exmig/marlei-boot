@@ -3158,6 +3158,45 @@ def upload_neu_einlesen(slug: str, zurueck: str = Form("")):
     return RedirectResponse(sprung("/quellen", zurueck), status_code=303)
 
 
+@app.post("/uploads/{slug}/abbrechen")
+def upload_abbrechen(slug: str, zurueck: str = Form("")):
+    """Einen laufenden Download anhalten.
+
+    **Nur waehrend geladen wird.** Die Grenze ist uploads.uebernehmen():
+    Davor liegt die vorherige Fassung unberuehrt daneben und ein Abbruch
+    kostet nur die Uebertragung; danach ist sie ueberschrieben, weil in
+    dasselbe Verzeichnis ausgepackt wird. Ein Knopf am Entpacken koennte
+    nur noch waehlen, welchen Scherbenhaufen er hinterlaesst -- deshalb
+    gibt es ihn dort nicht, und deshalb weist diese Route ab, statt still
+    nichts zu tun.
+
+    **Der Upload vom Arbeitsplatz kommt hier nicht vorbei.** Dort traegt
+    der Browser, und der bricht selbst ab; der Server sieht einen
+    ClientDisconnect und raeumt in upload_iso auf.
+
+    Angehalten wird nicht sofort, sondern beim naechsten Brocken -- das
+    dauert Bruchteile einer Sekunde. Aufgeraeumt wird im ladenden Faden
+    selbst, ueber denselben Weg wie ein Fehlschlag.
+    """
+    try:
+        zustand = uploads.lies_zustand(slug) or {}
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Unbekannte Kennung")
+
+    if zustand.get("status") != "laedt":
+        return RedirectResponse(
+            antwort("/quellen",
+                    "Hier wird gerade nichts geladen — abbrechen lässt sich "
+                    "nur eine laufende Übertragung.",
+                    schlecht=True, marke=zurueck),
+            status_code=303)
+
+    uploads.brich_ab(slug)
+    return RedirectResponse(
+        antwort("/quellen", "Wird abgebrochen …", marke=zurueck),
+        status_code=303)
+
+
 @app.post("/uploads/{slug}/delete")
 def upload_loeschen(slug: str, zurueck: str = Form("")):
     """Abbild und Eintrag wieder entfernen."""

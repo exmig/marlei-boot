@@ -94,6 +94,63 @@ SMB_ROOT = os.environ.get("PXE_SMB_ROOT", "").rstrip("/")
 # Abbilder gleichzeitig die Platte belegen und sich gegenseitig ausbremsen.
 _riegel = threading.Lock()
 
+# Wessen Download abgebrochen werden soll.
+#
+# **Abgebrochen wird nur, solange uebertragen wird -- nie beim Entpacken.**
+# Markus am 05.09.2026: *"Die Entscheidung, dass es hochgeladen werden
+# soll, hat der User schon getroffen."* Dahinter steht mehr als eine
+# Vorliebe: Die Grenze liegt bei uebernehmen(), und sie ist scharf. Davor
+# liegt die vorherige Fassung unberuehrt daneben, ein Abbruch kostet nur
+# die Uebertragung. Danach ist sie ueberschrieben -- ausgepackt wird in
+# dasselbe Verzeichnis --, und ein Abbruch koennte nur noch waehlen,
+# welchen Scherbenhaufen er hinterlaesst. Ein Knopf, der etwas anbietet,
+# was es nicht mehr gibt, ist schlimmer als keiner.
+#
+# **Ein Zeichen, kein Abschuss.** Einen Thread von aussen zu beenden gibt
+# es in Python nicht, und es waere auch das Falsche: mitten im Schreiben
+# abgeschnitten, bliebe genau der halbe Zustand liegen. Stattdessen liegt
+# hier ein Zettel, und die Ladeschleife sieht bei jedem Brocken nach.
+#
+# **Nur fuer den Download.** Beim Upload traegt der Browser, und der
+# bricht selbst ab (xhr.abort); der Server merkt es als ClientDisconnect
+# und raeumt dort auf. Zwei Wege, weil es zwei Sender sind -- aber
+# dieselbe Aufraeumung dahinter.
+#
+# **Im Speicher und nicht in der Zustandsdatei.** Ein Abbruch gilt fuer
+# einen laufenden Vorgang; startet der Dienst neu, ist der Vorgang ohnehin
+# tot, und ein Zettel, der das ueberlebt, braeche den naechsten Anlauf ab.
+_abbrueche: set = set()
+_abbruch_riegel = threading.Lock()
+
+
+class Abgebrochen(Exception):
+    """Jemand hat den Vorgang abgebrochen. Kein Fehler -- eine Bedienung."""
+
+
+def brich_ab(slug: str) -> None:
+    """Den Zettel hinlegen. Wirkt erst, wenn die Schleife nachsieht."""
+    with _abbruch_riegel:
+        _abbrueche.add(slug)
+
+
+def abgebrochen(slug: str) -> bool:
+    with _abbruch_riegel:
+        return slug in _abbrueche
+
+
+def vergiss_abbruch(slug: str) -> None:
+    """Vor jedem neuen Anlauf: Ein alter Zettel gilt nicht fuer den naechsten."""
+    with _abbruch_riegel:
+        _abbrueche.discard(slug)
+
+
+def _pruefe_abbruch(slug: str) -> None:
+    if abgebrochen(slug):
+        raise Abgebrochen()
+
+
+ABBRUCH_MELDUNG = "Abgebrochen."
+
 ZUSTAENDE = {
     "laedt": "wird geladen",
     "empfangen": "wird geprüft",
@@ -535,6 +592,10 @@ def hole_von_url(url: str, als_neue: bool = False) -> str:
         raise ValueError("Nur http:// und https:// sind erlaubt.")
 
     slug, ziel = anlegen(name_aus_adresse(adresse), als_neue=als_neue)
+    # Ein Zettel vom letzten Mal gilt nicht fuer diesen Lauf. Sonst braeche
+    # ein Abbruch von gestern den Download von heute ab, und niemand kaeme
+    # darauf, woran es liegt.
+    vergiss_abbruch(slug)
     daten = lies_zustand(slug) or {"slug": slug}
     daten.update(status="laedt", quelle=adresse, meldung="Download beginnt ...")
     schreib_zustand(slug, daten)
@@ -579,6 +640,10 @@ def _lade(slug: str, url: str, ziel: Path) -> None:
             zuletzt = time.monotonic()
             with ziel.open("wb") as raus:
                 while True:
+                    # Bei 256 KB je Brocken sieht die Schleife oft genug
+                    # nach, dass ein Abbruch sofort wirkt -- und die
+                    # Abfrage selbst kostet nichts gegen das Lesen.
+                    _pruefe_abbruch(slug)
                     brocken = antwort.read(1024 * 256)
                     if not brocken:
                         break
@@ -601,6 +666,13 @@ def _lade(slug: str, url: str, ziel: Path) -> None:
     # Auf allen drei Wegen dasselbe: "verwerfe" entscheidet, ob hier ein
     # neuer Eintrag faellt oder eine vorherige Fassung zurueckkehrt. Ein
     # abgebrochener Ersatz darf nicht mehr kosten als den Ersatz selbst.
+    except Abgebrochen:
+        # Vor den anderen beiden, und ausdruecklich NICHT als Fehler: Wer
+        # abbricht, weiss davon -- eine rote Karte, die ihm erzaehlt, was
+        # er gerade selbst getan hat, ist keine Auskunft.
+        verwerfe(slug, ABBRUCH_MELDUNG)
+        vergiss_abbruch(slug)
+        return
     except urllib.error.HTTPError as fehler:
         verwerfe(slug, f"Der Server antwortet mit {fehler.code} {fehler.reason}.",
                  als_fehler=True)

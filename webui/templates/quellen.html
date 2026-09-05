@@ -359,8 +359,14 @@
 
   // Laeuft gerade eine Uebertragung aus DIESEM Browser? Dann darf die
   // Seite nicht neu laden: das braeche sie ab, und das halbe Abbild waere
-  // umsonst gewesen.
+  // umsonst gewesen. Am selben Zeichen haengen seit A-001 auch der
+  // Abbruchknopf und die Rueckfrage vor dem Verlassen.
   var uebertraegt = false;
+
+  // Die laufende Anfrage selbst -- ohne sie liesse sie sich nicht
+  // abbrechen, und der Knopf daneben.
+  var laufend = null;
+  var stopp = document.getElementById("iso-stopp");
 
   // Den gewaehlten Namen anzeigen -- das erledigte sonst der eingebaute
   // Knopf, den wir durch einen eigenen ersetzt haben.
@@ -433,8 +439,10 @@
     knopf.disabled = true;
     uebertraegt = true;
     karteUpload.fortschritt(0);
+    stopp.hidden = false;
 
     var xhr = new XMLHttpRequest();
+    laufend = xhr;
     xhr.open("PUT", "/uploads/" + encodeURIComponent(f.name)
                     + (daneben ? "?neu=1" : ""));
     xhr.upload.addEventListener("progress", function (e) {
@@ -445,9 +453,7 @@
                         + (e.total / 1073741824).toFixed(2) + " GB");
     });
     xhr.addEventListener("load", function () {
-      knopf.disabled = false;
-      uebertraegt = false;
-      karteUpload.fortschritt(null);
+      fertig();
       if (xhr.status === 201) {
         karteUpload.zeige("Übertragen. Der Server sieht sich das Abbild jetzt an …");
         verfolgen(karteUpload, vomArbeitsplatz);
@@ -456,13 +462,64 @@
       }
     });
     xhr.addEventListener("error", function () {
-      knopf.disabled = false;
-      uebertraegt = false;
-      karteUpload.fortschritt(null);
+      fertig();
       karteUpload.zeige("Die Verbindung ist abgebrochen.");
+    });
+    // Abgebrochen wird im Browser: xhr.abort() legt die Verbindung auf.
+    // Der Server sieht einen ClientDisconnect und raeumt dort auf -- halbe
+    // Datei weg, vorherige Fassung zurueck. Kein zweiter Weg daneben; es
+    // ist derselbe, den ein geschlossener Reiter schon immer genommen hat.
+    xhr.addEventListener("abort", function () {
+      fertig();
+      karteUpload.zeige("Übertragung abgebrochen. Auf dem Server bleibt "
+                        + "nichts liegen.");
+      // Kurz warten und dann neu laden: Der Server raeumt gerade auf, und
+      // die Karte des Eintrags soll den Zustand danach zeigen, nicht den
+      // von vorhin.
+      setTimeout(function () { location.reload(); }, 1500);
     });
     xhr.send(f);
   }
+
+  // Was nach jedem Ausgang gleich ist. Stand dreimal fast gleich da --
+  // und beim dritten Mal fehlte prompt eine Zeile.
+  function fertig() {
+    knopf.disabled = false;
+    uebertraegt = false;
+    laufend = null;
+    stopp.hidden = true;
+    karteUpload.fortschritt(null);
+  }
+
+  stopp.addEventListener("click", function () {
+    if (!laufend) { return; }
+    // Erst das Zeichen wegnehmen, dann auflegen: Sonst fragt das
+    // beforeunload unten bei dem Neuladen nach, das wir selbst ausloesen.
+    uebertraegt = false;
+    laufend.abort();
+  });
+
+  // Die Rueckfrage vor dem Verlassen.
+  //
+  // **Nur solange etwas zu verlieren ist.** Ein beforeunload, das immer
+  // haengt, erzieht dazu, es wegzuklicken -- und dann wirkt es auch dann
+  // nicht, wenn es zaehlt. Deshalb haengt es am selben Zeichen wie der
+  // Abbruchknopf und ist sonst nicht da.
+  //
+  // Seit dem 30.08.2026 wiegt das schwer: Vorher holte der Server aus
+  // einem Windows-Abbild vier Startdateien, heute wird das ganze Medium
+  // ausgepackt -- 5 bis 7 GB. Ein Reiterwechsel kostet damit nicht mehr
+  // einen Moment, sondern eine Viertelstunde.
+  //
+  // Den Text bestimmt der Browser, nicht wir: Seit 2016 zeigt keiner mehr
+  // eine eigene Nachricht an. preventDefault ist der Weg, den die heutige
+  // Empfehlung nennt; returnValue steht daneben, weil aeltere Browser nur
+  // den kennen.
+  window.addEventListener("beforeunload", function (ereignis) {
+    if (!uebertraegt) { return; }
+    ereignis.preventDefault();
+    ereignis.returnValue = "";
+  });
 
   // Von einer Adresse holen: derselbe Ablauf wie eine Karte hoeher -- erst
   // die Frage nach der Kennung, dann losschicken, dann zusehen. Nur traegt

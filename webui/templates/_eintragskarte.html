@@ -21,7 +21,7 @@
 {% macro karte(e, zustand="", meldung="", loeschen="", neu_einlesen="",
                neu_titel="", zeitpunkt="", zeit_titel="",
                dateien_weg=false, offen=true, gut=false,
-               menue_info=false, zurueck="") %}
+               menue_info=false, zurueck="", abbrechen="") %}
 {# Offen, solange etwas in Arbeit ist oder schiefging: was man wissen
    muss, gehoert nicht hinter einen Klick. Ein "bereit" ist kein Grund
    dafuer ("gut") -- da gibt es nichts zu tun.
@@ -186,8 +186,27 @@
 
   {# Die Knoepfe zuletzt: erst sieht man, womit man es zu tun hat, dann
      kann man es wegwerfen. #}
-  {% if loeschen or neu_einlesen or dateien_weg %}
+  {% if loeschen or neu_einlesen or dateien_weg or abbrechen %}
   <div class="row kartenknoepfe">
+    {# Der Abbruch steht zuerst und alleine da, solange geladen wird: Er
+       ist in dem Moment das Einzige, was hier zu tun ist -- loeschen kann
+       man einen Eintrag, an dem gerade geschrieben wird, ohnehin nicht
+       sinnvoll.
+
+       Es gibt ihn NUR waehrend der Uebertragung. Sobald der Server
+       auspackt, ist die vorherige Fassung ueberschrieben -- ausgepackt
+       wird in dasselbe Verzeichnis --, und ein Abbruch koennte nur noch
+       waehlen, welchen Scherbenhaufen er hinterlaesst. Siehe
+       webui/uploads.py. #}
+    {% if abbrechen %}
+    <form method="post" action="{{ abbrechen }}">
+      {% if zurueck %}<input type="hidden" name="zurueck" value="{{ zurueck }}">{% endif %}
+      <button type="submit" class="danger"
+              title="Hält den Download an — die vorherige Fassung bleibt, wie sie ist">
+        Download abbrechen
+      </button>
+    </form>
+    {% endif %}
     {# Nur die Dateien, nicht den Eintrag: Ein Katalogeintrag ueberlebt das
        Wegraeumen -- er steht danach auf "fehlt", und der Abgleich holt ihn
        wieder. Bei einem Upload waere dasselbe das Ende des Eintrags,

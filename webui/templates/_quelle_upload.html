@@ -22,6 +22,18 @@
            accept=".iso,application/x-cd-image">
     <span class="muted small" id="iso-name">Keine ausgewählt</span>
     <button type="button" id="iso-start">Vom Arbeitsplatz hochladen</button>
+    {# Steht neben dem Startknopf und nicht an seiner Stelle: Wer abbricht,
+       will meist gleich darauf etwas anderes waehlen, und ein Knopf, der
+       an derselben Stelle seine Beschriftung wechselt, wird versehentlich
+       geklickt.
+
+       "Übertragung abbrechen" und nicht "Abbrechen": Das Wort steht in
+       der Rueckfrage darunter schon, dort mit anderer Wirkung. Zwei
+       Knoepfe mit demselben Wort waeren eine Falle. #}
+    <button type="button" id="iso-stopp" class="danger" hidden
+            title="Bricht die laufende Übertragung ab — auf dem Server bleibt nichts liegen">
+      Übertragung abbrechen
+    </button>
   </div>
   <progress id="iso-fortschritt" max="100" value="0" hidden></progress>
   <p id="iso-meldung" class="hint" hidden></p>
@@ -36,7 +48,10 @@
     <div class="row">
       <button type="button" id="iso-ersetzen" class="danger">Vorhandenes ersetzen</button>
       <button type="button" id="iso-daneben">Als neue Ausgabe aufnehmen</button>
-      <button type="button" id="iso-abbrechen" class="ghost">Abbrechen</button>
+      {# Hiess bis zum 05.09.2026 "Abbrechen" -- so wie der Knopf, der
+         seit dem Tag eine laufende Übertragung anhält. Dieser hier hält
+         nichts an: Er sagt, dass gar nicht erst angefangen wird. #}
+      <button type="button" id="iso-abbrechen" class="ghost">Nicht übertragen</button>
     </div>
   </div>
   </div>
