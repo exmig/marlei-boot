@@ -1,0 +1,99 @@
+# ===========================================================================
+# Die Hilfe ins Netz stellen -- bei jeder Aenderung, ohne dass jemand daran
+# denken muss.
+#
+# WOFUER. Das Kapitel "Der erste Durchgang" ist das beste Stueck Werbung
+# dieses Projekts: acht Schritte, jeder mit einem Ausschnitt der Oberflaeche
+# daneben. Zu sehen bekommt es sonst nur, wer den Server vorher installiert
+# -- also gerade nicht der, der noch ueberlegt, ob sich das lohnt. GitHub
+# zeigt eine HTML-Vorlage als Quelltext, und in Markdown nachgebaut fiele
+# genau das weg, worum es geht. Deshalb Pages.
+#
+# WARUM VON SELBST. Eine Seite von Hand nachzuziehen heisst, sie veralten zu
+# lassen; nach drei Monaten ist sie schlechter als keine, weil eine alte
+# Oberflaeche wie ein totes Projekt aussieht. Wer sie einmal von Hand
+# hochlaedt, macht die Arbeit zweimal.
+#
+# WENN ER FEHLSCHLAEGT. GitHub schickt eine Mail an den, der geschoben hat,
+# und der Lauf steht rot unter Actions. Eine Marke im README waere die
+# sichtbarste Meldung -- sie stand hier einen Tag lang und ist am 05.09.2026
+# wieder heraus: Die Startseite richtet sich an Betreiber, nicht an
+# Entwickler, und ein rotes Zeichen dort sagt ihnen "kaputt", wo nur eine
+# Seite nicht neu gebaut wurde.
+#
+# WAS HIER NICHT PASSIERT. Es wird nichts installiert und nichts getestet.
+# Dieser Ablauf rendert eine Vorlage und legt das Ergebnis ab -- mehr nicht.
+# ===========================================================================
+name: Hilfe veröffentlichen
+
+on:
+  push:
+    branches: [main]
+    # Nur was die Seite wirklich veraendert. Ohne diese Liste liefe der
+    # Ablauf bei jedem Commit -- und ein Ablauf, der staendig grundlos
+    # laeuft, wird nicht mehr angesehen, wenn er einmal rot ist.
+    paths:
+      - 'webui/templates/hilfe.html'
+      - 'webui/templates/base.html'
+      - 'webui/static/**'
+      - 'webui/befunde.py'
+      - 'webui/bezeichnungen.py'
+      - 'tools/hilfe-vorschau.py'
+      - '.github/workflows/hilfe.yml'
+  # Von Hand ausloesbar: fuer den ersten Lauf und fuer den Fall, dass jemand
+  # nachsehen will, ob es noch geht.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Zwei Laeufe gleichzeitig wuerden sich beim Ablegen in die Quere kommen.
+# Abgebrochen wird der laufende NICHT: Er ist womoeglich schon halb
+# veroeffentlicht, und eine halbe Seite ist schlimmer als eine alte.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  bauen:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.ablegen.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Nicht requirements.txt: Das Werkzeug rendert nur eine Vorlage und
+      # braucht weder FastAPI noch uvicorn. Was es braucht, steht hier --
+      # und faellt auf, wenn es mehr wird.
+      - name: Was zum Rendern gebraucht wird
+        run: pip install 'jinja2>=3.1' 'pyyaml>=6.0'
+
+      # --streng: Bricht ab, wenn auf der Seite noch ein Verweis auf eine
+      # Route des Servers steht oder eine Seitenkarte darauf gelandet ist.
+      # Beides waere still falsch -- ein Klick ins 404 und eine Aussage
+      # ueber eine fremde Maschine.
+      - name: Seite bauen und prüfen
+        run: python tools/hilfe-vorschau.py build/hilfe --streng
+
+      # enablement schaltet Pages beim ersten Lauf selbst ein, statt es
+      # von einem Klick unter Settings abhaengig zu machen. Geht das schief,
+      # steht die Quelle dort von Hand auf "GitHub Actions".
+      - name: Pages einrichten
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/hilfe
+
+      - name: Ablegen
+        id: ablegen
+        uses: actions/deploy-pages@v4

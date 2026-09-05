@@ -139,11 +139,16 @@ Stand, an dem gearbeitet wird. Wer eine feste Fassung will, nimmt ein
 Release.
 
 Der ganze Weg bis zu einem Rechner, der vom Netz startet, steht in der
-Hilfe des Servers unter **Der erste Durchgang** — acht Schritte, jeder mit
-dem Ausschnitt der Oberfläche daneben, um den es geht. **Das ist der Weg,
-den man einmal durcharbeitet und danach kann:** Wer ihn hinter sich hat,
-kennt den Arbeitsablauf. Alles Weitere schlägt man in der Hilfe nach,
-statt es vorher zu lernen.
+Hilfe unter **Der erste Durchgang** — acht Schritte, jeder mit dem
+Ausschnitt der Oberfläche daneben, um den es geht. **Das ist der Weg, den
+man einmal durcharbeitet und danach kann:** Wer ihn hinter sich hat, kennt
+den Arbeitsablauf. Alles Weitere schlägt man in der Hilfe nach, statt es
+vorher zu lernen.
+
+**[Diese Hilfe steht im Netz](https://exmig.github.io/marlei-boot/)** — man
+kann sie lesen, ohne etwas installiert zu haben. Es ist dieselbe Seite, die
+der Server ausliefert; nur die Wege in die Oberfläche fehlen, denn dahin
+führt von dort aus nichts.
 
 ## Was heute so ist, kann morgen anders sein
 
