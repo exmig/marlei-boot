@@ -4934,7 +4934,7 @@ with TestClient(pxeapp.app) as c:
     check("... und ohne Bericht",
           "erzeugen" not in seite.split('id="verbesserungen"')[1].split("</section>")[0])
 
-    seite = c.get("/einrichtung?fehlerbericht=1").text
+    seite = c.get("/einrichtung?fehlerbericht=1&umgebung_mit=1").text
     check("nach dem Klick steht er da", BERICHT in seite)
     check("... mit dem Block Technik", "Technik" in seite)
     check("... und dem Block Umgebung", "Umgebung" in seite)
@@ -4946,6 +4946,22 @@ with TestClient(pxeapp.app) as c:
     check("ohne Haken faellt die Umgebung weg",
           BERICHT in ohne and "Bekannte Rechner" not in ohne)
     check("... die Technik aber nicht", "Architektur" in ohne)
+
+    # Der Fall vom 05.09.2026: Ein abgewaehlter Haken schickt gar nichts.
+    # Der Vorgabewert hiess "1", also kam immer der volle Bericht -- das
+    # Abwaehlen war wirkungslos. Was die Faelle trennt, ist das Formular:
+    # Es schickt fehlerbericht=1 mit, und dann heisst "kein umgebung_mit"
+    # ausdruecklich nein.
+    leer = c.get("/einrichtung?fehlerbericht=1").text
+    check("ein abgewaehlter Haken schickt gar nichts -- und wirkt trotzdem",
+          BERICHT in leer and "Bekannte Rechner" not in leer)
+    check("... und der Haken steht danach offen",
+          "checked" not in leer.split('name="umgebung_mit"')[1][:120])
+    check("beim ersten Aufruf steht er dagegen",
+          "checked" in c.get("/einrichtung").text.split(
+              'name="umgebung_mit"')[1][:120])
+    check("... und der Text nennt ihn freiwillig",
+          "Freiwillige Angaben zur Serverumgebung" in seite)
 
     # Zwei Funde vom ersten Bericht auf einer echten Maschine:
     #

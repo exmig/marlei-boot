@@ -3186,7 +3186,7 @@ def einrichtung_alt():
 @app.get("/einrichtung")
 def einrichtung_seite(request: Request, meldung: str = "", art: str = "",
                       schritt: str = "", fehlerbericht: str = "",
-                      umgebung_mit: str = "1"):
+                      umgebung_mit: str = ""):
     """Wie dieser Server eingerichtet ist: Ablageorte und Einstellungen.
 
     Hier standen einmal auch die Belegung je Verzeichnis und die Dateien
@@ -3262,6 +3262,17 @@ def einrichtung_seite(request: Request, meldung: str = "", art: str = "",
                    "Kopfzeile. Leer heisst: das ist die Produktion"},
     ]
 
+    # Der abgewaehlte Haken schickt gar nichts -- deshalb darf der
+    # Vorgabewert nicht "1" heissen. Bis zum 05.09.2026 tat er es, und
+    # damit war der Haken wirkungslos: Abwaehlen sah aus wie ein leeres
+    # Feld, und ein leeres Feld sah aus wie die Vorgabe.
+    #
+    # Was die beiden Faelle trennt, ist das Formular selbst: Es schickt
+    # immer fehlerbericht=1 mit. Kommt der Aufruf von dort, heisst "kein
+    # umgebung_mit" ausdruecklich nein; kommt er ohne, ist es der erste
+    # Aufruf der Seite, und dann steht der Haken.
+    mit_umgebung = (umgebung_mit == "1") if fehlerbericht else True
+
     netzlage = serveradresse.netzlage()
 
     return html.TemplateResponse(
@@ -3288,10 +3299,10 @@ def einrichtung_seite(request: Request, meldung: str = "", art: str = "",
             # halbes Dutzend Aufrufe nach draussen (dpkg, systemd,
             # journalctl), und die haben auf einer Seite nichts zu suchen,
             # die man oeffnet, um einen Pfad nachzusehen.
-            bericht_text=(bericht.text(ASSETS_DIR, mit_umgebung=(umgebung_mit == "1"),
+            bericht_text=(bericht.text(ASSETS_DIR, mit_umgebung=mit_umgebung,
                                        zusatz=_bericht_zusatz())
                           if fehlerbericht else ""),
-            bericht_umgebung=(umgebung_mit == "1"),
+            bericht_umgebung=mit_umgebung,
             bericht_adresse=KONTAKT,
             # Wie weit die Abfrage vor dem Werksreset gekommen ist:
             # "" nichts, "wort" das Feld steht offen, "sicher" das Wort
