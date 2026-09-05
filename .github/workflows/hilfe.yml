@@ -63,9 +63,9 @@ jobs:
       name: github-pages
       url: ${{ steps.ablegen.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -82,18 +82,23 @@ jobs:
       - name: Seite bauen und prüfen
         run: python tools/hilfe-vorschau.py build/hilfe --streng
 
-      # enablement schaltet Pages beim ersten Lauf selbst ein, statt es
-      # von einem Klick unter Settings abhaengig zu machen. Geht das schief,
-      # steht die Quelle dort von Hand auf "GitHub Actions".
+      # EINMAL VON HAND, und zwar vorher: Settings -> Pages -> Build and
+      # deployment -> Source: GitHub Actions.
+      #
+      # Der erste Lauf am 05.09.2026 versuchte es selbst (enablement: true)
+      # und bekam "Create Pages site failed: Resource not accessible by
+      # integration". In einem Repository, das einer Organisation gehoert,
+      # darf der GITHUB_TOKEN eine Pages-Seite nicht anlegen -- lesen und
+      # ablegen ja, erschaffen nein. Der Versuch bleibt deshalb draussen:
+      # Ein Schritt, der jedes Mal dasselbe nicht darf, ist kein Komfort,
+      # sondern ein rotes Kreuz mit Ansage.
       - name: Pages einrichten
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
+        uses: actions/configure-pages@v6
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: build/hilfe
 
       - name: Ablegen
         id: ablegen
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
