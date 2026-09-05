@@ -5587,6 +5587,11 @@ with TestClient(pxeapp.app) as c:
     check("eine abgeschaltete ufw wird gefunden und als aus gemeldet",
           fw.lage()["gefunden"][0] == {"name": "ufw", "an": False}
           and not fw.lage()["aktiv"])
+    karte = c.get("/einrichtung").text.split('id="firewall"')[1].split("</section>")[0]
+    check("... in der Karte grau, nicht rot",
+          "installiert, aber aus" in karte
+          and 'class="ampel unklar"' in karte
+          and 'class="ampel aus"' not in karte)
 
     ufwdatei.write_text("ENABLED=yes\n", encoding="utf-8")
     lage = fw.lage()
@@ -5609,16 +5614,29 @@ with TestClient(pxeapp.app) as c:
     # Die Zeile unter den Diensten -- und zwar in BEIDEN Fassungen: Server
     # Health baut sie beim Aufruf, /status.html holt sie alle fuenf
     # Sekunden nach. Fehlt sie dort, verschwindet sie beim Auffrischen.
+    # Die Ampel beantwortet dieselbe Frage wie in den Zeilen darueber --
+    # laeuft dieser Posten? -- und keine andere. Bis zum 05.09.2026 hing
+    # sie an "gut oder schlecht fuers Booten"; dann stand Gruen neben
+    # "keine aktiv", also "laeuft nicht, laeuft aber".
+    def zeile(wo):
+        return c.get(wo).text.split("firewallzeile")[1][:400]
+
     for wo in ("/", "/status.html"):
         stueck = c.get(wo).text
         check("%s traegt die Firewall-Zeile" % wo,
               "firewallzeile" in stueck and "aktiv" in stueck)
-        check("... mit grauer Ampel, nicht mit roter",
-              'class="ampel unklar"' in stueck)
+        check("... eine laufende Firewall bekommt eine gruene Ampel",
+              'class="ampel an"' in zeile(wo))
 
     ufwdatei.unlink()
     check("ohne Firewall sagt die Zeile das",
           "keine aktiv" in c.get("/").text)
+    for wo in ("/", "/status.html"):
+        check("... und %s zeigt sie grau, nicht gruen" % wo,
+              'class="ampel unklar"' in zeile(wo)
+              and 'class="ampel an"' not in zeile(wo))
+    check("rot kommt in dieser Zeile nie vor",
+          'class="ampel aus"' not in zeile("/"))
 
     # -- Werkseinstellung: alles weg, aber erst nach drei Schritten
     #

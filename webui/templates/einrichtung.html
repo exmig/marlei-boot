@@ -306,17 +306,22 @@
   {% if firewall.gefunden %}
   <table class="schmal">
     <tbody>
+      {# Dieselbe Ampel wie unter den Diensten auf Server Health, und sie
+         beantwortet dieselbe Frage: Laeuft dieser Posten? Gruen heisst
+         "sie laeuft", grau "installiert, aber aus". **Rot kommt nicht
+         vor** -- eine abgeschaltete Firewall ist kein Ausfall dieses
+         Servers, und ob das gut oder schlecht ist, entscheidet nicht er. #}
       {% for f in firewall.gefunden %}
       <tr>
         <td class="nowrap">
-          <span class="ampel {{ 'an' if f.an else 'aus' }}"></span>
+          <span class="ampel {{ 'an' if f.an else 'unklar' }}"></span>
           <strong>{{ f.name }}</strong>
         </td>
         <td>
           {% if f.an %}
-          <span class="badge missing">aktiv</span>
+          <span class="badge ok">aktiv</span>
           {% else %}
-          <span class="badge ok">aus</span>
+          <span class="muted small">installiert, aber aus</span>
           {% endif %}
         </td>
       </tr>

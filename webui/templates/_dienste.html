@@ -37,13 +37,23 @@
        Nur an oder aus. Was sie durchlaesst, weiss diese Anwendung nicht:
        Die Regeln liegen root-only. Welche Ports der Bootweg braucht, steht
        unter Einrichtung in der Karte Firewall. #}
-    {# Die Ampel ist grau und nicht rot: Eine eingeschaltete Firewall ist
-       kein Fehler -- sie ist eine Unbekannte. Rot hiesse "kaputt", gruen
-       hiesse "geprueft"; beides waere gelogen. #}
+    {# Die Ampel beantwortet hier dieselbe Frage wie in den Zeilen darueber
+       und keine andere: **Laeuft dieser Posten?** Gruen heisst also "eine
+       Firewall laeuft", grau "hier gibt es keine, die laufen koennte".
+
+       **Rot kommt nicht vor:** Eine Firewall ist nie ein Ausfall dieses
+       Servers. Und was wir nicht wissen -- ob sie die Bootports
+       durchlaesst -- ist keine Farbe, sondern der Satz daneben.
+
+       Bis zum 05.09.2026 war es umgekehrt: grau bei aktiv, gruen bei
+       "keine aktiv". Das haengte die Farbe an "gut oder schlecht fuers
+       Booten" statt an dieselbe Frage wie die Dienste -- und dann stand
+       Gruen neben "keine aktiv", also "laeuft nicht, laeuft aber". Zwei
+       Bedeutungen in einer Spalte. #}
     {% if firewall %}
     <tr class="firewallzeile">
       <td class="nowrap">
-        <span class="ampel {{ 'unklar' if firewall.aktiv else 'an' }}"></span>
+        <span class="ampel {{ 'an' if firewall.aktiv else 'unklar' }}"></span>
         <strong>Firewall</strong>
       </td>
       <td>
