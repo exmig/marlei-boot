@@ -840,13 +840,14 @@ wo sie sind. Das sind die interessanten Fälle:
   gehört auf die Seite, auf der man die Einträge sieht.
 
 **Der eine, der umgezogen ist:** *„Ein Dienst läuft nicht"* (*Server
-Health*, Dienste) — und zwar aufgeteilt, denn die vier Dienste sind nicht
+Health*, Dienste) — und zwar aufgeteilt, denn die fünf Dienste sind nicht
 gleich viel wert:
 
 | Dienst | Karte | warum |
 |---|---|---|
 | `dnsmasq`, `nginx`, `pxeweb` | rot | Fällt einer aus, kommt **kein** Rechner mehr durch — der eine beantwortet die PXE-Anfrage, der zweite liefert Kernel und Initrd, der dritte erzeugt die Boot-Skripte |
 | `nfs-server` | gelb | Nur die großen Live-Systeme starten nicht; alles andere läuft weiter |
+| `smbd` | gelb | Nur Windows lässt sich nicht installieren — die Installationsquellen liegen auf einer Freigabe dieses Servers |
 
 Dass man `nginx` und `pxeweb` im Ausfall kaum je zu sehen bekommt — ohne
 sie gibt es keine Seite, auf der eine Karte stehen könnte —, ist kein

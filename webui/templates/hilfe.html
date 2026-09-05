@@ -136,8 +136,7 @@
       <tr>
         <td class="nowrap"><strong>Arbeitsspeicher</strong></td>
         <td class="muted">1 GB genügt, 2 GB sind entspannter. Gemessen sind
-          es <strong>0,4 GB</strong> im Betrieb, mit allen vier Diensten und
-          NFS.</td>
+          es <strong>0,4 GB</strong> im Betrieb, mit allen fünf Diensten.</td>
       </tr>
       <tr>
         <td class="nowrap"><strong>Prozessor</strong></td>
@@ -1239,7 +1238,7 @@
     Und dann kommt man hierher &mdash; auf die Startseite. Sie ist der fünfte
     und letzte Reiter des Ablaufs und beantwortet die Frage, die man beim
     Ankommen am Ende stellt: <strong>Hat alles funktioniert?</strong> Die
-    Antwort fängt bei den Diensten an &mdash; vier Stück, vier Ampeln:
+    Antwort fängt bei den Diensten an &mdash; fünf Stück, fünf Ampeln:
   </p>
 
   <div class="rundgang-bild">
@@ -1272,6 +1271,12 @@
           <td><span class="badge missing">inactive</span></td>
           <td class="muted small">hängt große Live-Systeme beim Client ein</td>
           <td class="nowrap"><a href="/protokoll?einheit=nfs-server">Protokoll</a></td>
+        </tr>
+        <tr>
+          <td class="nowrap"><span class="ampel an"></span> <strong>smbd</strong></td>
+          <td><span class="badge ok">läuft</span></td>
+          <td class="muted small">gibt die Windows-Installationsquellen frei (nur lesend)</td>
+          <td class="nowrap"><a href="/protokoll?einheit=smbd">Protokoll</a></td>
         </tr>
       </tbody>
     </table>
@@ -1757,9 +1762,10 @@
 
   <h4>Wofür ist diese Karte da?</h4>
   <p class="muted">
-    Vier Dienste müssen laufen, damit ein Netzwerkstart funktioniert. Die
-    Karte sagt auf einen Blick, ob sie es tun — und ist damit die erste
-    Station, wenn gar nichts geht.
+    Fünf Dienste hat dieser Server, und sie wiegen nicht gleich: <strong>drei
+    tragen den Bootweg</strong> — ohne sie kommt kein Rechner durch —, zwei
+    tragen je eine Hälfte des Angebots. Die Karte sagt auf einen Blick, ob
+    sie laufen, und ist damit die erste Station, wenn gar nichts geht.
   </p>
 
   <h4>Was steht darin?</h4>
@@ -1784,8 +1790,20 @@
         <td class="muted">Hängt große Live-Systeme beim bootenden Rechner ein,
           statt sie in dessen Arbeitsspeicher zu laden. Nur für diese
           Einträge nötig.</td></tr>
+      <tr><td class="nowrap"><code>smbd</code></td>
+        <td class="muted">Gibt die Windows-Installationsquellen frei, nur
+          lesend. Die WinPE hängt diese Freigabe ein und startet das Setup
+          von dort. Nur für Windows-Einträge nötig.</td></tr>
     </tbody>
   </table>
+  <p class="muted small">
+    <strong>Die letzten beiden fallen anders aus als die ersten drei.</strong>
+    Fehlt einer der drei oben, geht gar nichts mehr; fehlt
+    <code>nfs-server</code>, starten die großen Live-Systeme nicht, und fehlt
+    <code>smbd</code>, lässt sich Windows nicht installieren. Alles Übrige
+    läuft weiter — deshalb ist die Karte über der Seite dort gelb und nicht
+    rot.
+  </p>
 
   <h4>Was kann man hier tun?</h4>
   <p class="muted">
@@ -1814,7 +1832,7 @@
 
   <h4>Was, wenn nichts dasteht?</h4>
   <p class="muted">
-    Steht bei allen vier <em>„nicht abfragbar“</em>, kommt der Dienst nicht
+    Steht bei allen fünf <em>„nicht abfragbar“</em>, kommt der Dienst nicht
     an <code>systemctl</code> heran — dann sagt die Karte nichts über die
     Dienste, sondern etwas über sich selbst. Nachsehen lässt sich das auf
     dem Server mit <code>systemctl status &lt;dienst&gt;</code>.
@@ -1822,7 +1840,7 @@
   <p class="muted small">
     Läuft ein einzelner nicht, erscheint <strong>über der Seite eine
     Karte</strong> — rot, wenn es einen Dienst des Bootwegs erwischt hat,
-    und gelb, wenn nur NFS fehlt. Sie nennt die Folge, den Dienst und den
+    und gelb, wenn nur <code>nfs-server</code> oder <code>smbd</code> fehlt. Sie nennt die Folge, den Dienst und den
     Befehl, mit dem sein Journal auf dem Server zu lesen ist — für den
     Fall, dass auch die Oberfläche nicht mehr erreichbar ist. Was die
     Farben bedeuten, steht unter
@@ -1836,7 +1854,7 @@
 
   <h4>Wofür ist diese Karte da?</h4>
   <p class="muted">
-    Sie zeigt das Journal eines der vier Dienste — dasselbe, was auf dem
+    Sie zeigt das Journal eines der fünf Dienste — dasselbe, was auf dem
     Server <code>journalctl -u &lt;dienst&gt; -f</code> ausgibt. Man kommt
     über <em>Protokoll</em> in der Karte <a href="#serverhealth-dienste">Dienste</a>
     hierher; einen eigenen Reiter hat die Seite nicht.
@@ -1874,7 +1892,7 @@
     Hintergrund, ruht sie.
   </p>
   <p class="muted small">
-    Gezeigt werden nur die vier Dienste dieses Servers; ein beliebiges
+    Gezeigt werden nur die fünf Dienste dieses Servers; ein beliebiges
     Journal lässt sich hier nicht abrufen. Und gelesen wird nur: Aus dem
     Protokoll heraus lässt sich kein Dienst starten oder anhalten.
   </p>

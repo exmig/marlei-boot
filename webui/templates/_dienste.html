@@ -34,6 +34,7 @@
 {% if dienste and dienste[0].zustand == "unbekannt" %}
 <p class="muted small">
   <code>systemctl</code> ist von hier aus nicht erreichbar — auf dem Server
-  nachsehen mit <code>systemctl is-active nginx dnsmasq pxeweb nfs-server</code>.
+  nachsehen mit
+  <code>systemctl is-active nginx dnsmasq pxeweb nfs-server smbd</code>.
 </p>
 {% endif %}

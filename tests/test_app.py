@@ -5367,6 +5367,45 @@ with TestClient(pxeapp.app) as c:
     check("eine Seitenkarte auch",
           vorschau.pruefe('<div class="seitenkarte stufe-info">x</div>') != [])
 
+    # -- Die Hilfe zaehlt die Dienste richtig
+    #
+    # Am 05.09.2026 von Markus auf der veroeffentlichten Seite gefunden:
+    # Dort standen "vier Dienste, vier Ampeln", und der Nachbau zeigte vier
+    # Zeilen -- smbd war seit dem 30.08.2026 dabei und in der Hilfe an
+    # sieben Stellen nicht. Dieselbe Sorte Fehler wie beim Befund-Katalog:
+    # Die Wahrheit steht in dienste.EINHEITEN, die Hilfe schreibt sie ab,
+    # und Abschriften veralten still.
+    print("\n-- Die Hilfe zaehlt die Dienste")
+    import dienste as _d
+    import re as _re
+
+    ZAHLWORT = {1: "einen", 2: "zwei", 3: "drei", 4: "vier", 5: "fünf",
+                6: "sechs", 7: "sieben", 8: "acht"}
+    richtig = ZAHLWORT.get(len(_d.EINHEITEN), "")
+
+    for einheit in _d.EINHEITEN:
+        check("%s steht in der Hilfe" % einheit, einheit in seite)
+    # Kein Vergleich der Beschreibungen: In dienste.py stehen sie ohne
+    # Umlaute ("haengt ... ein"), in der Hilfe mit. Ein Test, der beides
+    # gleichsetzt, prueft die Schreibweise und nicht die Sache.
+    #
+    # Jede Stelle, die eine Zahl vor "Dienste" schreibt, muss dieselbe
+    # schreiben. Gesucht wird das Wort davor -- eine Zahl, die nicht die
+    # richtige ist, faellt damit auf, egal in welchem Satz sie steht.
+    falsch = sorted({w.lower() for w in
+                     _re.findall(r"(\w+) Dienste", seite)
+                     if w.lower() in ZAHLWORT.values()
+                     and w.lower() != richtig})
+    check("... und keine Stelle zaehlt anders (%s)" % richtig, falsch == [],
+          "" if not falsch else "gefunden: " + ", ".join(falsch))
+    # Der Nachbau im Rundgang zeigt die Karte -- er muss so viele Zeilen
+    # haben, wie es Dienste gibt. Gezaehlt werden die Ampeln darin.
+    marke = "%s Stück, %s Ampeln" % (richtig, richtig)
+    check("der Rundgang kündigt die Zahl an", marke in seite)
+    nachbau = seite.split(marke)[-1].split("</table>")[0]
+    check("... auch der Nachbau im Rundgang",
+          nachbau.count('class="ampel') == len(_d.EINHEITEN))
+
     # -- Werkseinstellung: alles weg, aber erst nach drei Schritten
     #
     # Der zerstoerendste Knopf der Oberflaeche, und sie hat keine

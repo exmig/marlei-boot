@@ -35,7 +35,7 @@ sudo PXE_OS_EGAL=1 ./setup/install.sh
 
 | | Minimum | Empfohlen | Warum |
 |---|---|---|---|
-| Arbeitsspeicher | 1 GB | 2 GB | Der Bootserver ist genügsam: gemessen **0,4 GB** im Betrieb, mit allen vier Diensten und NFS |
+| Arbeitsspeicher | 1 GB | 2 GB | Der Bootserver ist genügsam: gemessen **0,4 GB** im Betrieb, mit allen fünf Diensten |
 | Prozessor | 1 Kern | 2 Kerne | 1 % Last im Leerlauf. Holen und Auspacken hängen an der Platte, nicht am Rechenwerk |
 | Platte | 20 GB | 60 GB | **Die einzige Zahl, die wirklich wächst** — nicht der Bootserver wächst, sondern was er ablegt. Siehe unten |
 | Netz | Kabel ins selbe LAN | | Über WLAN startet kein Rechner per PXE — mehr unter *Netz, Adresse und Zugang* |

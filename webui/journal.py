@@ -7,7 +7,7 @@ geantwortet wird. Bisher ging das nur ueber SSH.
 
 Zwei Dinge sind hier bewusst eng gefasst:
 
-1. Nur die vier Dienste dieses Servers. Es gibt keinen freien Parameter,
+1. Nur die fuenf Dienste dieses Servers. Es gibt keinen freien Parameter,
    ueber den sich ein beliebiges Journal abrufen liesse -- die Gruppe
    systemd-journal erlaubt dem Dienst zwar mehr, die Weboberflaeche gibt
    davon aber nichts preis.
