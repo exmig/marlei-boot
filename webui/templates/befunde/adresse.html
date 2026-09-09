@@ -1,0 +1,21 @@
+{# Der Adressbefund: die Voraussetzung ist weggefallen.
+
+   Stand bis zum 28.08.2026 als Absatz ueber den Karten auf Server Health
+   und noch einmal unter Einrichtung -- und auf den drei anderen Reitern
+   gar nicht. Jetzt eine Seitenkarte in base.html und damit ueberall.
+
+   Der Rahmen kommt von dort; hier steht nur, was in der Karte steht.
+   Siehe webui/befunde.py und docs/gestaltung.md, "Die Karte und ihre
+   drei Bereiche". #}
+<p>
+  Eingerichtet ist <code>{{ befund.eingerichtet }}</code>, tatsächlich läuft
+  dieser Server unter <code>{{ befund.tatsaechlich }}</code>. Die Dienste
+  laufen alle — aber jedes Boot-Skript zeigt auf die alte Adresse. Ein
+  Rechner, der jetzt über das Netz startet, findet nichts und sagt nicht,
+  warum.
+</p>
+<p class="kartenfuss">
+  Nachgezogen wird das unter Einrichtung, mit einem Befehl auf dem Server
+  &middot; <a href="/einrichtung?schritt=ip#ersteinrichtung">IP-Adresse
+  übernehmen &rarr;</a>
+</p>

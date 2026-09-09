@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"
+     role="img" aria-labelledby="zeichen-name">
+  <title id="zeichen-name">Exmig</title>
+  <desc>Das Zeichen: „ex“ aus der Wortmarke, weiß auf navy Kachel. Fürs Favicon,
+    wo fünf Buchstaben zu einem Fleck würden. Die Kachelfarbe ist --marke-ex
+    aus webui/static/style.css und muss mit ihr zusammen geändert werden.</desc>
+  <rect width="512" height="512" rx="92.16" fill="#063b6f"/>
+  <g transform="translate(40.05 104.48) scale(0.91)" fill="#ffffff">
+    <g fill="none" stroke="#ffffff" stroke-width="44">
+      <!-- e: Ring, rechts offen zwischen Balken und Fuß -->
+      <path d="M 110 254 A 87 87 0 1 1 197 167"/>
+      <!-- e: Querbalken, übernimmt rechts die Außenkante des Rings -->
+      <path d="M 72 168 H 219"/>
+      <!-- e: Fuß, tangential am Kreisboden, läuft nach rechts ins x -->
+      <path d="M 110 254 H 247"/>
+    </g>
+    <polygon points="192.39,57 254.61,57 473.61,276 411.39,276"/>
+    <polygon points="404.89,57 467.11,57 250.11,276 187.89,276"/>
+  </g>
+</svg>

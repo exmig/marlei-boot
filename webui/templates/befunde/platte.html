@@ -1,0 +1,27 @@
+{# Der Platz reicht nicht mehr fuer ein weiteres Abbild. Die Regel steht
+   in dienste.platz_knapp(); der Balken auf Server Health wird nach
+   derselben Regel rot.
+
+   Die Ueberschrift darf jetzt die Folge nennen und nicht nur den Zustand:
+   Solange die Schwelle ein Prozentsatz war, wussten wir nicht, ob der Platz
+   noch reicht -- die Reserve bemisst sich am groessten Abbild, das hier
+   liegt, also wissen wir es. #}
+<p>
+  Frei sind noch
+  <strong>{{ "%.1f"|format(befund.platz.frei / 1073741824) }} GB</strong>
+  von {{ "%.0f"|format(befund.platz.gesamt / 1073741824) }} GB
+  ({{ befund.platz.anteil }} % belegt). Zurückgehalten werden sollten
+  {{ "%.0f"|format(befund.reserve / 1073741824) }} GB —
+  {% if befund.groesstes > befund.sockel %}so viel, wie das größte Abbild
+  hier belegt.{% else %}die Vorgabe für einen Server, auf dem noch kein
+  großes Abbild liegt.{% endif %}
+</p>
+<p>
+  Geht der Platz mitten im Holen aus, bleibt ein halber Eintrag liegen: Im
+  Bootmenü steht er, startbereit ist er nicht.
+</p>
+<p class="kartenfuss">
+  Was wie viel belegt, steht auf Server Health unter <em>Speicherplatz</em>
+  &middot; <a href="/#speicherplatz">Nachsehen &rarr;</a>
+  &middot; <a href="/systeme">Einträge aufräumen &rarr;</a>
+</p>

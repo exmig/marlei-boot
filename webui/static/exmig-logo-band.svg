@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="exmig" viewBox="0 0 1057 380"
+     role="img" aria-labelledby="exmig-name exmig-beschreibung">
+  <title id="exmig-name">Exmig</title>
+  <desc id="exmig-beschreibung">Wortmarke Exmig: „ex“ in Hellblau für Expertise, „mig“ in Türkis für
+    Made in Germany. Die Buchstaben jedes Wortteils verschmelzen miteinander.
+    Diese Fassung gehört auf das Navy-Band des Seitenkopfs, nicht auf den Seitengrund.</desc>
+
+  <style>
+    /* Ein Strich, zwei Farben. Wer das Logo schwerer oder leichter will, ändert
+       --strich-ex und --strich-mig -- sonst nichts.
+
+       Dieselben Farbwerte stehen als --marke-ex und --marke-mig in
+       webui/static/style.css. Sie müssen zusammen geändert werden: Diese
+       Datei wird als Bild eingebunden und kann die Token der Seite nicht
+       lesen. */
+    .exmig {
+      --ex:  #b8dcfb;   /* EX  = Expertise */
+      --mig: #15bcb4;   /* MIG = Made in Germany */
+      --strich-ex:  44;
+      --strich-mig: 36;
+    }
+    #exmig-ex  { fill: var(--ex); }
+    #exmig-mig { fill: var(--mig); }
+    #exmig-ex  .strich { fill: none; stroke: var(--ex);  stroke-width: var(--strich-ex); }
+    #exmig-mig .strich { fill: none; stroke: var(--mig); stroke-width: var(--strich-mig); }
+  </style>
+
+  <!-- Die fill/stroke-Angaben an den Elementen sind der Rückfall, falls das
+       Stylesheet nicht mitkommt (etwa beim Einbetten über <img> in alten Browsern). -->
+  <g id="exmig-ex" fill="#b8dcfb">
+    <g class="strich" fill="none" stroke="#b8dcfb" stroke-width="44">
+      <!-- e: Ring, rechts offen zwischen Balken und Fuß -->
+      <path d="M 110 254 A 87 87 0 1 1 197 167"/>
+      <!-- e: Querbalken, übernimmt rechts die Außenkante des Rings -->
+      <path d="M 72 168 H 219"/>
+      <!-- e: Fuß, tangential am Kreisboden, läuft nach rechts ins x -->
+      <path d="M 110 254 H 247"/>
+    </g>
+    <!-- x: zwei Diagonalen, oben auf x-Höhe und unten auf der Grundlinie waagerecht
+         beschnitten. Der linke Unterarm endet im Fuß des e: die Verschmelzung. -->
+    <polygon points="192.39,57 254.61,57 473.61,276 411.39,276"/>
+    <polygon points="404.89,57 467.11,57 250.11,276 187.89,276"/>
+  </g>
+
+  <g id="exmig-mig" fill="#15bcb4">
+    <g class="strich" fill="none" stroke="#15bcb4" stroke-width="36">
+      <!-- m: drei Stämme, zwei Halbkreisbögen mit Scheitel auf x-Höhe -->
+      <path d="M 497 276 V 163 A 67.75 67.75 0 0 1 632.5 163 V 276"/>
+      <path d="M 632.5 163 A 67.75 67.75 0 0 1 768 163 V 276"/>
+      <!-- i: Stamm -->
+      <path d="M 818.5 77 V 276"/>
+      <!-- g: Schüssel, Stamm, offene Unterschlinge (gleicher Radius, Mitte auf der Grundlinie) -->
+      <circle cx="955" cy="176" r="83"/>
+      <path d="M 1038 176 V 277.5"/>
+      <path d="M 1038 277.5 A 83 83 0 0 1 873.81 294.76"/>
+    </g>
+    <!-- i: Punkt -->
+    <circle cx="817" cy="26" r="25"/>
+  </g>
+</svg>

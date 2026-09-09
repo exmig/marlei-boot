@@ -1,0 +1,39 @@
+{% if auslastung.cpu is not none %}
+<div class="kachel">
+  <span class="zahl">{{ auslastung.cpu }}<span class="muted"> %</span></span>
+  <span class="muted small">Prozessor</span>
+</div>
+{% endif %}
+{% if auslastung.last %}
+<div class="kachel">
+  <span class="zahl">{{ "%.2f"|format(auslastung.last[0]) }}</span>
+  <span class="muted small">
+    Last (1 min) &middot; {{ auslastung.kerne }} Kern{{ "e" if auslastung.kerne != 1 }}
+  </span>
+</div>
+{% endif %}
+{% if auslastung.speicher %}
+<div class="kachel">
+  <span class="zahl">{{ auslastung.speicher.anteil }}<span class="muted"> %</span></span>
+  <span class="muted small">
+    Speicher &middot; {{ "%.1f"|format(auslastung.speicher.belegt / 1073741824) }} von
+    {{ "%.1f"|format(auslastung.speicher.gesamt / 1073741824) }} GB
+  </span>
+</div>
+{% endif %}
+{% if auslastung.netz %}
+<div class="kachel">
+  <span class="zahl">
+    {{ "%.1f"|format(auslastung.netz.raus / 1048576) }}<span class="muted"> MB/s</span>
+  </span>
+  <span class="muted small">
+    Netz hinaus &middot; herein {{ "%.1f"|format(auslastung.netz.rein / 1048576) }} MB/s
+  </span>
+</div>
+{% endif %}
+{% if auslastung.cpu is none and not auslastung.last %}
+<p class="muted small">
+  Auslastung nicht abfragbar — <code>/proc</code> ist von hier aus nicht
+  lesbar. Auf einem Linux-Server sollte das nicht vorkommen.
+</p>
+{% endif %}

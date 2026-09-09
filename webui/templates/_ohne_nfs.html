@@ -1,0 +1,18 @@
+{# Befund, eingebunden von Upload und Download: Ohne NFS gilt auf DIESEM
+   Server eine echte Groessengrenze, und sie gehoert an die Stelle, an der
+   man das Abbild aussucht -- nicht in die Hilfe.
+
+   Gebaut wie jeder Befund (siehe docs/gestaltung.md, "Drei Sorten
+   Text"): was ist,
+   was daraus folgt, wo es sich beheben laesst. Warum ein Live-System ohne
+   NFS ueberhaupt in den Arbeitsspeicher muss, steht in der Hilfe.
+
+   Als eigene Vorlage und nicht zweimal geschrieben: Derselbe Satz an zwei
+   Stellen laeuft frueher oder spaeter auseinander. #}
+{% if not nfs_root %}
+<p class="hint">
+  Kein NFS eingerichtet &mdash; ein Live-Abbild darf deshalb höchstens etwa
+  halb so groß sein wie der Arbeitsspeicher des bootenden Rechners.
+  Einrichten lässt sich NFS unter <a href="/einrichtung">Einrichtung</a>.
+</p>
+{% endif %}

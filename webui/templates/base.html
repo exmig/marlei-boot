@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}MARLEI Boot{% endblock %}</title>
+  <!-- Der Anhang ist die Aenderungszeit der Datei: aendert sie sich, aendert
+       sich die Adresse und der Browser holt sie zwangslaeufig neu. -->
+  <link rel="stylesheet" href="/static/style.css?v={{ stil_version }}">
+  <!-- Zwei Zeilen, weil nicht jeder Browser SVG als Favicon nimmt: Wer kann,
+       nimmt das Zeichen und hat es in jeder Groesse scharf; die anderen die
+       .ico. Beide zeigen dasselbe -- nur "ex", denn fuenf Buchstaben sind im
+       Reiter ein Fleck. -->
+  <link rel="icon" href="/static/favicon.ico?v={{ marken_version }}" sizes="any">
+  <link rel="icon" type="image/svg+xml"
+        href="/static/exmig-zeichen.svg?v={{ marken_version }}">
+</head>
+<body{% if kennzeichnung %} class="gekennzeichnet"{% endif %}>
+  <!-- Der Seitenkopf sind zwei Geschwister und kein Element, weil sich die
+       beiden Teile verschieden verhalten: Das Band scrollt weg, die
+       Reiterleiste bleibt oben kleben. Ein sticky Kind klebt nur innerhalb
+       seines Elternteils -- im Kopf waeren das null Pixel, und es klebte
+       gar nicht. Warum so: docs/gestaltung.md, "Das Band im Seitenkopf". -->
+  <header class="kopfband">
+    <div class="kopfzeile">
+      <h1>MARLEI Boot</h1>
+      <span class="muted small"><code>{{ base_url }}</code></span>
+      {# Ist das hier nicht die Produktion, steht es hier -- und der
+         Seitengrund wechselt dazu auf Sand. Die Farbe allein waere ein
+         Code, den man kennen muss; das Wort laesst keinen Zweifel.
+         Warum so: docs/gestaltung.md, "Ein Server, der nicht die
+         Produktion ist". #}
+      {% if kennzeichnung %}
+      <span class="kennzeichnung">{{ kennzeichnung }}</span>
+      {% endif %}
+      <!-- Die Marke steht am rechten Ende derselben Zeile. Breite und Hoehe
+           stehen dran, damit der Platz schon vor dem Laden stimmt und die
+           Zeile nicht springt; die sichtbare Groesse macht das Stylesheet.
+
+           Eigene Datei: Auf dem Band braeuchte das Navy des gewoehnlichen
+           Logos 1,0:1 -- es waere unsichtbar. exmig-logo-band.svg traegt
+           dort ein helles Blau und schaltet nicht mit dem Thema, weil das
+           Band in beiden Themen dasselbe ist. -->
+      <img class="marke" src="/static/exmig-logo-band.svg?v={{ marken_version }}"
+           width="1057" height="380" alt="Exmig">
+    </div>
+  </header>
+  <div class="reiterleiste">
+    <nav>
+      <a href="/"         class="{{ 'aktiv' if aktiv == 'serverhealth' }}">Server Health</a>
+      <a href="/clients"  class="{{ 'aktiv' if aktiv == 'clients' }}">Clients</a>
+      <a href="/systeme"  class="{{ 'aktiv' if aktiv == 'systeme' }}">Systeme</a>
+      <a href="/quellen"  class="{{ 'aktiv' if aktiv == 'quellen' }}">Quellen</a>
+      <a href="/einrichtung" class="{{ 'aktiv' if aktiv == 'einrichtung' }}">Einrichtung</a>
+      <a href="/history"  class="{{ 'aktiv' if aktiv == 'history' }}">History</a>
+      <a href="/hilfe"    class="{{ 'aktiv' if aktiv == 'hilfe' }}">Hilfe</a>
+    </nav>
+  </div>
+  <main>
+    {# Die einmalige Meldung steht zuerst: Sie ist die Antwort auf einen
+       Klick, den jemand gerade getan hat, und wer sie sucht, sucht sie
+       hier. Die Befunde darunter sind von anderer Art -- sie gelten,
+       solange sie gelten, und niemand hat nach ihnen gefragt. #}
+    {% if meldung %}<p class="hint meldung {{ meldungsart }}"
+       role="status">{{ meldung }}</p>{% endif %}
+
+    {# Befunde, die dem Server gelten und nicht einer einzelnen Karte:
+       Fehler, Warnung, Info -- in dieser Reihenfolge, dringend zuerst.
+       Sie stehen hier und nicht in einem Reiter, weil sie nicht davon
+       abhaengen duerfen, welchen Reiter jemand geoeffnet hat.
+
+       Der Behaelter traegt einen Namen, weil das Stueck alle zehn
+       Sekunden nachgeholt wird: Eine behobene Ursache nimmt ihre Karte
+       dann ohne Neuladen mit. Das Skript steht ganz unten.
+
+       Woher sie kommen: webui/befunde.py. Was daraus leise wird:
+       webui/kenntnis.py. Warum so: docs/gestaltung.md, "Die Seitenkarte"
+       und "Eine Karte zur Kenntnis nehmen". #}
+    <div id="befunde">
+      {% include "_befunde.html" %}
+    </div>
+
+    {% block content %}{% endblock %}
+  </main>
+  {# Die Fusszeile beantwortet "welche Version ist das, und wo geht es
+     weiter" -- mehr nicht. Menue-Timeout und Standardauswahl standen hier
+     bis zum 02.09.2026; sie stehen unter Einrichtung in der Karte
+     Einstellungen, mit einer Zeile dazu, was sie bewirken. Die
+     Statusabfrage fuehrte auf JSON: nuetzlich fuer ein Skript, verwirrend
+     fuer einen Menschen, der darauf klickt.
+
+     Der Stand fehlt, wenn die Anwendung nicht ueber install.sh
+     hierhergekommen ist. Dann steht dort nichts -- lieber keine Angabe als
+     eine erfundene. Warum so: docs/gestaltung.md, "Was in der Fußzeile
+     steht". #}
+  <footer class="muted">
+    <p>
+      MARLEI Boot{% if stand_kurz %}
+      <span class="fusstrenner">&middot;</span> Version: <code>{{ stand_kurz }}</code>{% endif %}
+      <span class="fusstrenner">&middot;</span> <a href="/hilfe#lizenz">AGPL-3.0</a>
+      <span class="fusstrenner">&middot;</span> <a href="https://github.com/exmig/marlei-boot">Quelltext</a>
+    </p>
+  </footer>
+<script>
+// Die Befunde nachholen.
+//
+// Eine Seitenkarte entsteht beim Aufbau der Seite. Ohne dieses Stueck
+// stuende sie noch da, wenn ihre Ursache laengst behoben ist -- bis
+// jemand von sich aus neu laedt. Auf Server Health faellt das am
+// staerksten auf: Dort ticken die Zahlen weiter, waehrend die Karte
+// darueber einen Stand von vorhin zeigt.
+//
+// Zehn Sekunden, nicht fuenf: Die Auskuenfte dahinter sind ohnehin zehn
+// Sekunden gepuffert (dienste.zustaende, befunde.NETZ_TAKT), oefter zu
+// fragen brachte dieselbe Antwort.
+//
+// EINE KARTE, DIE JEMAND AUFGEKLAPPT HAT, WIRD NIE ERSETZT. Wer den Weg
+// hinaus im Kartenfuss abliest, soll den Text nicht unter dem Blick
+// weggenommen bekommen. Der Tausch wartet dann bis zum naechsten Takt.
+(function () {
+  var kasten = document.getElementById("befunde");
+  if (!kasten) { return; }
+
+  function holen() {
+    // Im Hintergrundtab nicht nachfragen -- das waere Last fuer niemanden.
+    if (document.hidden) { setTimeout(holen, 10000); return; }
+    // Liest gerade jemand? Dann diesmal nicht anfassen.
+    if (kasten.querySelector("details[open]")) { setTimeout(holen, 10000); return; }
+    fetch("/befunde.html?von=" + encodeURIComponent(location.pathname))
+      // Nur eine Antwort, die auch eine ist. Ohne diese Zeile landet der
+      // Inhalt JEDER Antwort im Kasten -- auch der einer Fehlerseite, und
+      // die traegt dann als Befund oben auf der Seite. Aufgefallen am
+      // 05.09.2026 an der veroeffentlichten Hilfe: Dort gibt es keinen
+      // Server, und nach zehn Sekunden stand die 404-Seite von GitHub im
+      // Kopf. Ein Server kann dasselbe liefern, wenn nginx steht und die
+      // Anwendung nicht.
+      .then(function (r) {
+        if (!r.ok) { throw new Error(r.status); }
+        return r.text();
+      })
+      .then(function (t) {
+        // Noch einmal nachsehen: Zwischen Frage und Antwort kann jemand
+        // eine Karte aufgeklappt haben.
+        if (!kasten.querySelector("details[open]")) { kasten.innerHTML = t; }
+        setTimeout(holen, 10000);
+      })
+      .catch(function () { setTimeout(holen, 30000); });
+  }
+  setTimeout(holen, 10000);
+})();
+
+// Wie hoch das klebt, was oben klebt.
+//
+// Die Reiterleiste bleibt beim Scrollen stehen, und die Befunde haengen
+// sich darunter. Alles andere, was ebenfalls klebt, muss UNTER beiden
+// halten statt dahinter -- heute die Kopfzeilen der langen Tabellen unter
+// Systeme. Die Hoehe schwankt gleich zweifach: Die sieben Reiter brauchen
+// je nach Fensterbreite eine bis vier Zeilen, und die Befunde kommen und
+// gehen. Statt Zahlen im Stylesheet zu pflegen, wird gemessen.
+//
+// --leiste-hoehe ist dabei die Leiste ALLEIN: Die Befunde haengen sich an
+// ihr auf und duerfen sich nicht selbst mitrechnen. Was darunter halten
+// soll, nimmt --klebt-hoehe.
+//
+// Die Werte in style.css bleiben als Rueckfall stehen und stimmen fuer die
+// einzeilige Leiste ohne Befund -- ohne dieses Stueck sieht die Seite also
+// richtig aus, nur beim schmalen Fenster oder bei einem Befund geraet eine
+// Tabellenkopfzeile darunter.
+(function () {
+  var leiste = document.querySelector(".reiterleiste");
+  if (!leiste) { return; }
+  var kasten = document.getElementById("befunde");
+
+  function melden() {
+    var oben = leiste.getBoundingClientRect().height;
+    var wurzel = document.documentElement.style;
+    wurzel.setProperty("--leiste-hoehe", oben + "px");
+    wurzel.setProperty("--klebt-hoehe",
+      (oben + (kasten ? kasten.getBoundingClientRect().height : 0)) + "px");
+  }
+  melden();
+  if (window.ResizeObserver) {
+    var wacht = new ResizeObserver(melden);
+    wacht.observe(leiste);
+    if (kasten) { wacht.observe(kasten); }
+  } else {
+    window.addEventListener("resize", melden);
+  }
+})();
+
+// Einen Befehl in die Zwischenablage legen.
+//
+// navigator.clipboard gibt es nur im "secure context" -- also unter https
+// oder auf localhost. Dieser Server laeuft unter http auf einer LAN-Adresse;
+// dort ist die API schlicht nicht vorhanden, und ein Knopf, der nur auf dem
+// Entwicklungsrechner funktioniert, ist schlimmer als keiner. Deshalb der
+// alte Weg als Rueckfall: ein Feld ausserhalb des Bildes, markieren,
+// execCommand. Veraltet, aber es tut genau das hier und ueberall.
+(function () {
+  function ablegen(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    var feld = document.createElement("textarea");
+    feld.value = text;
+    feld.setAttribute("readonly", "");
+    feld.style.position = "fixed";
+    feld.style.left = "-9999px";
+    document.body.appendChild(feld);
+    feld.select();
+    var ging = false;
+    try { ging = document.execCommand("copy"); } catch (e) { ging = false; }
+    document.body.removeChild(feld);
+    return ging ? Promise.resolve() : Promise.reject();
+  }
+
+  // Der Rueckfall, wenn das Kopieren nicht geht: den Text markieren, damit
+  // Strg+C ihn nimmt.
+  //
+  // **Warum es einen braucht.** Diese Oberflaeche laeuft ueber http, also
+  // ohne sicheren Kontext -- navigator.clipboard gibt es dort gar nicht.
+  // Es bleibt execCommand, und das ist seit Jahren abgekuendigt. Faellt es
+  // weg, waere der Knopf still tot, und der Naechste, der es merkt, ist
+  // ein Betreiber. Markieren geht immer und in jedem Kontext.
+  function markieren(element) {
+    try {
+      var bereich = document.createRange();
+      bereich.selectNodeContents(element);
+      var auswahl = window.getSelection();
+      auswahl.removeAllRanges();
+      auswahl.addRange(bereich);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  document.addEventListener("click", function (ereignis) {
+    var knopf = ereignis.target.closest(".kopierknopf");
+    if (!knopf) { return; }
+    var quelle = document.getElementById(knopf.dataset.quelle);
+    if (!quelle) { return; }
+    // Der Knopf sagt selbst, ob es geklappt hat -- eine Meldung an anderer
+    // Stelle sucht man, und eine, die nichts sagt, waere schlimmer als
+    // nichts.
+    var vorher = knopf.textContent;
+    // Beim Markieren laenger stehen lassen: Der Benutzer muss danach noch
+    // Strg+C druecken, und zwei Sekunden sind dafuer knapp.
+    var frist = 2000;
+    ablegen(quelle.textContent.trim()).then(function () {
+      knopf.textContent = "kopiert";
+    }, function () {
+      if (markieren(quelle)) {
+        knopf.textContent = "markiert — Strg+C";
+        frist = 6000;
+      } else {
+        knopf.textContent = "ging nicht";
+      }
+    }).finally(function () {
+      setTimeout(function () { knopf.textContent = vorher; }, frist);
+    });
+  });
+})();
+
+// Die Meldung ueberlebt das Neuladen nicht.
+//
+// Sie ist die Antwort auf einen Klick -- ein Ereignis, kein Zustand. Bis
+// A-021 hing sie an der Adresse: F5 holte sie zurueck, und auf Clients
+// ueberstand sie sogar das Selbst-Neuladen der Seite. Mit einer
+// Auspraegung waere das schlimmer geworden, nicht besser: eine rote
+// Zurueckweisung, die nach jedem Neuladen wieder dasteht, obwohl niemand
+// mehr etwas zurueckgewiesen hat.
+//
+// Deshalb wird sie nach dem Anzeigen aus der Adresse genommen -- die Seite
+// bleibt stehen, nur die Zeile kommt nicht wieder. Die Sprungmarke bleibt
+// erhalten, sonst springt der naechste Aufruf an den Seitenanfang.
+//
+// Ohne JavaScript bleibt es beim alten Verhalten. Das ist der richtige
+// Rueckfall: Die Meldung steht dann zu lange da, statt zu fehlen.
+(function () {
+  if (!window.history || !history.replaceState) { return; }
+  var adresse = new URL(window.location.href);
+  if (!adresse.searchParams.has("meldung")) { return; }
+  adresse.searchParams.delete("meldung");
+  adresse.searchParams.delete("art");
+  history.replaceState(null, "", adresse.toString());
+})();
+</script>
+</body>
+</html>

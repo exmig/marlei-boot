@@ -1,0 +1,567 @@
+{% extends "base.html" %}
+{% block title %}Einrichtung — MARLEI Boot{% endblock %}
+
+{% block content %}
+
+{# Was hier stand und jetzt woanders steht: die Belegung je Verzeichnis
+   (Server Health, "Speicherplatz -- Detailansicht", dort nach Eintraegen
+   aufgeschluesselt statt nach Ordnern) und die Dateien je Eintrag (in
+   jeder Eintragskarte unter Systeme, mit Pfad, Groesse und dem, was
+   fehlt). Was bleibt, aendert nichts und wird nur gelesen.
+
+   Ein Vorspann stand hier bis zum 04.09.2026 und ist weg: Er sagte, wo
+   die umgezogenen Sachen jetzt stehen -- nuetzlich in der Woche des
+   Umzugs, danach ein Absatz, den jeder ueberliest. Und diese Seite war
+   die einzige mit einem; die anderen vier fangen mit ihrer ersten Karte
+   an. Was die Seite ist, sagt der Reiter, und wofuer sie da ist, sagt die
+   Hilfe. #}
+
+{# Ganz oben, weil es die Frage vor allen anderen ist: Welcher Stand
+   redet hier eigentlich mit mir? Gestempelt hat ihn install.sh beim
+   Kopieren -- /opt/pxeweb ist eine rsync-Kopie ohne .git und kann
+   Git nicht selbst fragen. #}
+<section id="stand">
+  <div class="kartenkopf">
+    <h2>Stand</h2>
+    <a class="kartenhilfe" href="/hilfe#einrichtung-stand"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+  {% if stand.da %}
+  <p>
+    <strong>Version</strong> <code>{{ stand.stand }}</code>
+    &middot;
+    <strong>Letzte Aktualisierung</strong>
+    {{ stand.installiert or "unbekannt" }}
+  </p>
+  {# Beides steht nur da, wenn es etwas zu sagen gibt. Im Normalfall
+     traegt die Karte zwei Angaben und keinen Satz -- was sie bedeuten,
+     steht in der Hilfe unter Einrichtung. #}
+  {% if "-dirty" in stand.stand %}
+  <p class="muted small warnung">
+    Im Projektordner lag beim Installieren Ungespeichertes — dieser Stand
+    entspricht keinem Commit und lässt sich nicht wiederherstellen.
+  </p>
+  {% endif %}
+  {% if stand.zweig and stand.zweig != "main" %}
+  <p class="muted small">
+    Zweig <code>{{ stand.zweig }}</code> — nicht <code>main</code>. Keine
+    Störung, aber die häufigste Erklärung dafür, dass hier etwas anderes
+    steht als erwartet.
+  </p>
+  {% endif %}
+  {% else %}
+  <p class="muted">
+    Hier steht nichts — und das heißt nicht „Version 0“, sondern: Diese
+    Anwendung ist nicht über <code>install.sh</code> hierhergekommen. Auf
+    einem Server, der so aufgesetzt wurde, liegt der Stand in
+    <code>{{ stand.datei }}</code>. Geraten wird er nicht.
+  </p>
+  {% endif %}
+
+  {# Wie oft nachgesehen wird, ob es eine neuere Version gibt.
+
+     Diese Karte und nicht die Karte Einstellungen: Die zeigt, was in
+     /etc/pxeweb.env steht, und daran dreht die Oberflaeche nicht. Die
+     Frage, wie oft gesucht wird, steht bei der Frage, welche Version
+     laeuft. Warum ueberhaupt in der Oberflaeche und nicht in der
+     Umgebungsdatei: mappe/08-entscheidungen.md. #}
+  <hr class="kartentrenner">
+  {% if updatestand.gesperrt %}
+  <p class="muted small">
+    <strong>Es wird nicht nachgesehen.</strong> Auf diesem Server ist jede
+    Netzabfrage über <code>PXE_QUELLENWACHT</code> in
+    <code>/etc/pxeweb.env</code> abgeschaltet — daran dreht diese Seite
+    nicht.
+  </p>
+  {% else %}
+  <form method="post" action="/einrichtung/updatepruefung" class="sichernspalte">
+    <span>
+      <strong>Nach neuen Versionen suchen</strong>
+      <span class="muted small">— bei GitHub, nicht bei uns</span>
+    </span>
+    {# "war" traegt den Wert beim Aufbau der Seite -- daran erkennt das
+       Skript unten, ob sich etwas geaendert hat. Dieselbe Mechanik wie
+       unter Systeme, damit ein Speichern-Knopf ueberall dasselbe tut. #}
+    <select name="tage" data-war="{{ updatestand.intervall }}"
+            aria-label="Wie oft nach neuen Versionen gesucht wird">
+      {% for tage, wort in updateauswahl %}
+      <option value="{{ tage }}" {{ "selected" if tage == updatestand.intervall }}>{{ wort }}</option>
+      {% endfor %}
+    </select>
+    {# Ausgeliefert wird er aktiv: Ohne JavaScript muss sich speichern
+       lassen. Grau macht ihn erst das Skript. #}
+    <button type="submit" class="folgeknopf" id="stand-speichern"
+            title="Wie oft nach neuen Versionen gesucht wird">Speichern</button>
+  </form>
+  {# Fuenf Lagen, und jede sagt etwas anderes. Bis zum 04.09.2026 waren es
+     vier: "keine Antwort" und "eine Antwort, die keine Auskunft war"
+     standen beide unter "nicht erreichbar" -- und behaupteten damit auf
+     einem Server mit tadelloser Leitung etwas Falsches. #}
+  {# Sechs Lagen, und jede sagt etwas anderes. Gezaehlt werden
+     Aenderungen und keine Versionsnummern -- warum, steht in
+     webui/updatewacht.py. #}
+  <p class="muted small">
+    {% if updatestand.laeuft %}
+    Wird gerade gesucht …
+    {% elif not updatestand.intervall %}
+    Es wird nicht gesucht.
+    {% elif updatestand.kein_stempel %}
+    Verglichen wird nicht: Diese Anwendung ist nicht über
+    <code>install.sh</code> hierhergekommen, es fehlt der Stand, von dem
+    aus gezählt würde.
+    {% elif updatestand.ohne_netz and updatestand.erreicht %}
+    Beim letzten Versuch hat GitHub geantwortet, aber keine Auskunft
+    gegeben. Das ist keine Störung dieses Servers; beim nächsten Mal wird
+    es wieder versucht.
+    {% elif updatestand.ohne_netz %}
+    Beim letzten Versuch war GitHub nicht erreichbar. Das ist keine
+    Störung dieses Servers; beim nächsten Mal wird es wieder versucht.
+    {% elif updatestand.voraus %}
+    <strong>{{ updatestand.voraus }}
+    {{ "Änderung liegt" if updatestand.voraus == 1 else "Änderungen liegen" }}
+    bereit</strong> — dazugekommen, seit dieser Server eingespielt wurde.
+    {% elif updatestand.gesucht %}
+    Auf dem neuesten Stand{% if updatestand.zurueck %} — und
+    {{ updatestand.zurueck }}
+    {{ "Änderung" if updatestand.zurueck == 1 else "Änderungen" }} weiter,
+    die es im Repository nicht gibt{% endif %}.
+    {% else %}
+    Noch nicht gesucht.
+    {% endif %}
+  </p>
+  {% endif %}
+</section>
+
+{# Der Fehlerbericht. Eigene Karte und nicht ein Anhaengsel an "Stand":
+   Dort steht, WAS laeuft; hier entsteht etwas, das man weggibt.
+
+   Erzeugt wird er erst auf Klick -- er kostet ein halbes Dutzend Aufrufe
+   nach draussen (dpkg, systemd, journalctl). Siehe webui/bericht.py. #}
+<section id="fehlerbericht">
+  <div class="kartenkopf">
+    <h2>Fehlerbericht</h2>
+    <a class="kartenhilfe" href="/hilfe#einrichtung-fehlerbericht"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+
+  <p class="muted">
+    Etwas funktioniert nicht? Schreiben Sie eine E-Mail an
+    <a href="mailto:{{ bericht_adresse }}?subject=MARLEI%20Boot"><code>{{ bericht_adresse }}</code></a>.
+    Im Betreff bitte folgendes einfügen: <strong>MARLEI Boot</strong>
+  </p>
+  <p class="muted">
+    Bitte beschreiben Sie den Fehler so genau wie möglich.
+  </p>
+  <ul class="muted">
+    <li>Wann tritt er auf bzw. was war die letzte Aktion davor</li>
+    <li>Betrifft es nur einen Dienst oder den ganzen Server</li>
+  </ul>
+  <p class="muted">
+    Erzeugen Sie einen Fehlerbericht. Dieser Bericht sammelt, was bei einer
+    Rückfrage sonst einzeln erfragt werden müsste — worauf der Server
+    läuft, welche Version, welche Dienste.
+    <strong>Der Server verschickt nichts</strong>: Er erzeugt den Text, Sie
+    lesen ihn und schicken ihn an uns.
+  </p>
+
+  <form method="get" action="/einrichtung" class="sichernspalte">
+    <span>
+      <label>
+        <input type="checkbox" name="umgebung_mit" value="1"
+               {{ "checked" if bericht_umgebung }}>
+        Freiwillige Angaben zur Serverumgebung
+      </label>
+      <span class="muted small">— Ablageorte, Belegung, Zahl der Rechner,
+        Journal-Auszug</span>
+    </span>
+    <input type="hidden" name="fehlerbericht" value="1">
+    <button type="submit" class="folgeknopf">Bericht erzeugen</button>
+  </form>
+
+  {% if bericht_text %}
+  <div class="befehlszeile">
+    <pre class="ipxe" id="berichttext">{{ bericht_text }}</pre>
+    <button type="button" class="kopierknopf" data-quelle="berichttext"
+            title="Bericht kopieren" aria-label="Bericht kopieren">kopieren</button>
+  </div>
+  <p class="muted small">
+    <a href="/einrichtung/bericht.txt?umgebung_mit={{ '1' if bericht_umgebung else '0' }}">Als
+    Datei herunterladen</a> — zum Anhängen an eine Mail. Auf dem Server
+    bleibt nichts liegen.
+  </p>
+  {% else %}
+  <p class="muted small">
+    Ohne den Haken enthält der Bericht nur Angaben, die auf jedem Server
+    gleich aussehen — nichts aus Ihrem Netz.
+  </p>
+  {% endif %}
+
+</section>
+
+{# Zweite Karte und kein Absatz in der ersten: Die Karte Fehlerbericht
+   behandelt Fehler, und ein Kartenfuss gilt der ganzen Karte -- ein
+   zweites Thema darin waere gegen die eigene Regel. Getrennte Anliegen,
+   getrennte Karten, dieselbe Adresse. #}
+<section id="verbesserungen">
+  <div class="kartenkopf">
+    <h2>Verbesserungen</h2>
+    <a class="kartenhilfe" href="/hilfe#einrichtung-verbesserungen"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+
+  <p class="muted">
+    Sie haben Ideen oder Vorschläge, die unser Produkt verbessern könnten?
+    Schreiben Sie eine E-Mail an
+    <a href="mailto:{{ bericht_adresse }}?subject=MARLEI%20Boot%20-%20Verbesserungen"><code>{{ bericht_adresse }}</code></a>.
+    Im Betreff bitte folgendes einfügen:
+    <strong>MARLEI Boot - Verbesserungen</strong>
+  </p>
+  <p class="muted">
+    Beschreiben Sie uns, was wir noch besser machen können. Wenn Sie Fragen
+    zu unserem Produkt haben, dann können Sie denselben Weg verwenden.
+  </p>
+</section>
+
+<section id="ablageorte">
+  <div class="kartenkopf">
+    <h2>Ablageorte</h2>
+    <a class="kartenhilfe" href="/hilfe#einrichtung-ablageorte"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+  <table>
+    <thead>
+      <tr><th>Was</th><th>Pfad</th><th>Zustand</th></tr>
+    </thead>
+    <tbody>
+      {% for o in orte %}
+      <tr>
+        <td>
+          <strong>{{ o.was }}</strong>
+          {% if o.hinweis %}<div class="muted small">{{ o.hinweis }}</div>{% endif %}
+        </td>
+        <td><code>{{ o.pfad }}</code></td>
+        <td class="nowrap">
+          {% if o.zustand.da %}
+            <span class="badge ok">vorhanden</span>
+            {% if o.schreiben %}
+              {% if o.zustand.schreibbar %}
+                <div class="muted small">beschreibbar</div>
+              {% else %}
+                <div class="muted small warnung">nicht beschreibbar</div>
+              {% endif %}
+            {% endif %}
+          {% else %}
+            <span class="badge missing">fehlt</span>
+            {% if o.optional %}<div class="muted small">nur bei Bedarf</div>{% endif %}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section id="einstellungen">
+  <div class="kartenkopf">
+    <h2>Einstellungen</h2>
+    <a class="kartenhilfe" href="/hilfe#einrichtung-einstellungen"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+  <table>
+    <tbody>
+      {% for e in einstellungen %}
+      <tr>
+        <td class="nowrap"><code>{{ e.name }}</code></td>
+        <td>
+          {% if e.wert %}<code>{{ e.wert }}</code>{% else %}<span class="muted">leer</span>{% endif %}
+          <div class="muted small">{{ e.wofuer }}</div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {# Fusszeile der Karte: woher die Werte stammen. Dass die Datei ein
+     Update uebersteht und was nach dem Aendern zu tun ist, stand bis zum
+     27.08.2026 hier und steht jetzt in der Hilfe unter Einrichtung. #}
+  <p class="kartenfuss">
+    Gelesen aus <code>/etc/pxeweb.env</code> beim Start des Dienstes.
+  </p>
+</section>
+
+{# Die Firewall. Sie steht hinter den Einstellungen und vor der
+   Ersteinrichtung: Es ist die letzte Angabe ueber diese Maschine, und
+   danach kommt nur noch der Knopf, der alles loescht.
+
+   **Diese Karte meldet und prueft nicht.** Der Bootserver richtet keine
+   Firewall ein -- sie gehoert der Maschine, auf der er laeuft, dieselbe
+   Grenze wie bei der Netzkonfiguration. Und pruefen koennte er sie ohne
+   root ohnehin nicht; warum, steht im Kopf von webui/firewall.py. #}
+<section id="firewall">
+  <div class="kartenkopf">
+    <h2>Firewall</h2>
+    <a class="kartenhilfe" href="/hilfe#einrichtung-firewall"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+
+  {% if firewall.gefunden %}
+  <table class="schmal">
+    <tbody>
+      {# Dieselbe Ampel wie unter den Diensten auf Server Health, und sie
+         beantwortet dieselbe Frage: Laeuft dieser Posten? Gruen heisst
+         "sie laeuft", grau "installiert, aber aus". **Rot kommt nicht
+         vor** -- eine abgeschaltete Firewall ist kein Ausfall dieses
+         Servers, und ob das gut oder schlecht ist, entscheidet nicht er. #}
+      {% for f in firewall.gefunden %}
+      <tr>
+        <td class="nowrap">
+          <span class="ampel {{ 'an' if f.an else 'unklar' }}"></span>
+          <strong>{{ f.name }}</strong>
+        </td>
+        <td>
+          {% if f.an %}
+          <span class="badge ok">aktiv</span>
+          {% else %}
+          <span class="muted small">installiert, aber aus</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">
+    <strong>Auf dieser Maschine ist keine Firewall installiert.</strong>
+    Dann steht dem Netzstart von hier aus nichts im Weg — und die Liste
+    unten ist die Antwort auf die Frage, was zu öffnen wäre, falls sich das
+    ändert.
+  </p>
+  {% endif %}
+
+  {% if firewall.aktiv %}
+  <p class="hint">
+    <strong>Hier läuft eine Firewall, und dieser Server weiß nicht, was sie
+    durchlässt.</strong> Er fasst sie nicht an — sie gehört Ihrer Maschine,
+    nicht ihm. Was er nicht kann, ist nachsehen: Die Regeln liegen nur für
+    <code>root</code> lesbar, und diese Anwendung läuft ohne. <strong>Ein
+    blockierter Port fällt nirgends auf</strong>: Die Dienste laufen weiter,
+    der Server meldet sich gesund, und beim bootenden Rechner kommt nichts
+    an. Die Liste unten ist deshalb das, was Sie selbst prüfen müssen.
+  </p>
+  {% endif %}
+
+  <h3>Was der Bootweg braucht</h3>
+  <p class="muted small">
+    Reine Auskunft — abgelesen an den Diensten dieses Servers, nicht
+    geprüft. Ob Ihre Firewall das durchlässt, sehen nur Sie.
+  </p>
+  <table>
+    <tbody>
+      {% for p in firewall_ports %}
+      <tr>
+        <td class="nowrap"><code>{{ p.port }}</code></td>
+        <td class="nowrap muted small">{{ p.dienst }}</td>
+        <td class="muted">{{ p.wofuer }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="hint">
+    <strong>NFS ist die Falle in dieser Liste.</strong> {{ firewall_nfs }}
+  </p>
+  <p class="muted small">{{ firewall_zu }}</p>
+
+  <p class="kartenfuss">
+    Nachgesehen in <code>{{ firewall.quelle }}</code> und bei
+    <code>systemctl</code> — nicht in den Regeln selbst.
+  </p>
+</section>
+
+{# Zuletzt, und mit Absicht ganz unten: Wer die Seite überfliegt, soll
+   nicht als Erstes über einen Knopf stolpern, der alles löscht.
+
+   Drei Schritte, und keiner davon findet nur im Browser statt. Das
+   Eingabefeld steht leer und trägt das Wort als grauen Hinweis — wäre es
+   vorbelegt, genügte ein Druck auf die Eingabetaste, und die Abfrage wäre
+   Zierde. Geprüft wird beide Male auf dem Server. #}
+<section id="ersteinrichtung">
+  <div class="kartenkopf">
+    <h2>Ersteinrichtung</h2>
+    <a class="kartenhilfe" href="/hilfe#einrichtung-ersteinrichtung"
+       title="Hilfe zu dieser Karte" aria-label="Hilfe zu dieser Karte">?</a>
+  </div>
+
+  {% if schritt != "sicher" %}
+  <p class="muted">
+    Setzt diesen Server auf den Zustand zurück, in dem er ausgeliefert
+    wurde: ohne Abbilder, ohne angemeldete Rechner, ohne eigene Adressen.
+    Gedacht für einen Server, der weitergegeben wird oder von vorn
+    anfangen soll.
+  </p>
+
+  {% if schritt not in ("wort", "ip") %}
+  {# Die Sprungmarke gehoert in die Adresse des Formulars: Ein GET-Formular
+     ersetzt beim Abschicken den Abfrageteil, den Anker laesst es stehen.
+     Ohne ihn beginnt die neue Seite ganz oben -- und diese Karte steht
+     unten, man muesste sich also jedes Mal zurueckscrollen. #}
+  <div class="row spaced">
+    <form method="get" action="/einrichtung#ersteinrichtung">
+      <input type="hidden" name="schritt" value="wort">
+      <button type="submit" class="danger">Werkseinstellung</button>
+    </form>
+    <form method="get" action="/einrichtung#ersteinrichtung">
+      <input type="hidden" name="schritt" value="ip">
+      <button type="submit" class="ghost">IP-Adresse übernehmen</button>
+    </form>
+  </div>
+  {# Der Befund selbst steht seit dem 28.08.2026 als Seitenkarte ueber
+     dieser Seite -- hier stuende er ein zweites Mal, zwei Handbreit
+     darunter. Was bleibt, ist der Arbeitsschritt: der Knopf oben und der
+     Befehl im Schritt "IP-Adresse uebernehmen". #}
+
+  {% elif schritt == "ip" %}
+  {# Bis August 2026 standen hier drei Eingabefelder: Diese Karte schrieb
+     die Adresse in /etc/network/interfaces. Sie tut es nicht mehr -- die
+     Netzkonfiguration des Hosts ist Sache des Betreibers. Uebrig bleibt
+     das Ablesen und der eine Befehl, der die abgelesene Adresse in die
+     vier Stellen des Bootservers uebernimmt.
+
+     Vollzogen wird weiterhin an der Konsole: Der Dienst laeuft mit
+     NoNewPrivileges und darf /etc nicht schreiben. #}
+  <h3>IP-Adresse übernehmen</h3>
+
+  {% if netz.fehler %}
+  <p class="hint">
+    Die Netzkonfiguration dieses Hosts ist nicht lesbar: {{ netz.fehler }}
+  </p>
+  {% else %}
+  <table class="eng">
+    <tbody>
+      <tr><td class="nowrap muted">Netzwerkkarte</td>
+        <td><code>{{ netz.karte }}</code></td></tr>
+      <tr><td class="nowrap muted">IP-Adresse</td>
+        <td><code>{{ netz.ip }}</code>{% if abweichung %}
+          <span class="badge missing">weicht ab</span>{% endif %}</td></tr>
+      <tr><td class="nowrap muted">Netzmaske</td>
+        <td><code>{{ netz.maske }}</code> <span class="muted small">(/{{ netz.praefix }})</span></td></tr>
+      <tr><td class="nowrap muted">Gateway</td>
+        <td><code>{{ netz.gateway }}</code></td></tr>
+      <tr><td class="nowrap muted">Herkunft</td>
+        <td class="muted">{% if netz.dynamisch %}vom Router vergeben — in Ordnung,
+          solange sie diesem Server reserviert ist{% else %}fest am Host
+          eingetragen{% endif %}</td></tr>
+    </tbody>
+  </table>
+  {% endif %}
+
+  <p class="hint">
+    <strong>Die Netzkonfiguration dieses Hosts ändert dieser Server
+    nicht.</strong> Sie gehört dem Betreiber — diese Karte liest sie nur ab.
+    Wer die Adresse ändern will, tut das auf dem Weg seines Systems; hier
+    wird sie danach übernommen.
+  </p>
+
+  {% if abweichung %}
+  <p class="muted">
+    Eingerichtet ist <code>{{ jetzige_ip }}</code>, der Host läuft unter
+    <code>{{ abweichung }}</code>. Auf dem Server ausführen:
+  </p>
+  {% else %}
+  <p class="muted">
+    Eingerichtet und tatsächlich sind dasselbe — es ist gerade nichts
+    nachzuziehen. Nach einer Änderung am Host auf dem Server ausführen:
+  </p>
+  {% endif %}
+
+  {# Kopieren statt abtippen: Der Befehl wird auf einer anderen Maschine
+     eingegeben, meist in einer SSH-Sitzung daneben. #}
+  <div class="befehlszeile">
+    <pre class="ipxe" id="uebernahme">{{ uebernehmen }}</pre>
+    <button type="button" class="kopierknopf" data-quelle="uebernahme"
+            title="Befehl kopieren" aria-label="Befehl kopieren">kopieren</button>
+  </div>
+
+  <p class="muted small">
+    Der Befehl liest die Adresse selbst von der Netzwerkkarte ab und
+    schreibt sie in dnsmasq, nginx, <code>pxeweb.env</code> und den
+    NFS-Export. Es ist derselbe Aufruf wie bei der Installation; ein
+    zweiter Lauf schadet nie.
+  </p>
+  <p class="muted small">
+    <a href="/einrichtung#ersteinrichtung">Schließen</a>
+  </p>
+
+  {% else %}
+  {# Enter im Feld schickt das Formular ab -- ein eigener Knopf daneben
+     wäre der zweite Weg für denselben Schritt. #}
+  <form method="post" action="/einrichtung/werkseinstellung" class="row">
+    <label for="losungswort" class="muted small">
+      Zum Fortfahren <strong>{{ losung }}</strong> eintippen:
+    </label>
+    <input type="text" id="losungswort" name="wort" autocomplete="off"
+           placeholder="{{ losung }}" size="12" autofocus>
+    <button type="submit" class="ghost">Weiter</button>
+  </form>
+  {% endif %}
+
+  {% else %}
+  <p class="hint">
+    <strong>Der Server wird auf Werkseinstellung zurückgesetzt.</strong>
+    Das lässt sich nicht rückgängig machen.
+  </p>
+  <p class="muted">Gelöscht wird:</p>
+  <ul class="muted">
+    <li>alle Abbilder unter <code>{{ assets_dir }}</code> — geholte
+      Systeme, hochgeladene ISOs, selbst angelegte Einträge</li>
+    <li>alle angemeldeten Rechner samt ihrer Vorauswahl und dem
+      Startverlauf</li>
+    <li>eigene Adressen und Ausgabenlisten, die Freigaben, die Reihenfolge
+      der Gruppen, eigene Namen und die Installationsprotokolle</li>
+  </ul>
+  <p class="muted">Erhalten bleibt:</p>
+  <ul class="muted">
+    <li>die Einrichtung des Servers selbst — <code>/etc/pxeweb.env</code>
+      mit Adresse und NFS-Pfad, der iPXE-Bootloader und der Katalog</li>
+    <li><code>wimboot</code>, das für Windows-Abbilder gebraucht wird —
+      es gehört zur Installation, nicht zur Ablage</li>
+  </ul>
+  <p class="muted small">
+    Danach steht der Server da wie nach einem frischen
+    <code>install.sh</code>: Unter <a href="/quellen">Quellen</a> trägt
+    <em>Prüfen</em> die aktuellen Ausgaben ein, und geholt wird von vorn.
+  </p>
+  <form method="post" action="/einrichtung/werkseinstellung/bestaetigen"
+        class="row"
+        onsubmit="return confirm('Wirklich alles löschen? Das lässt sich nicht rückgängig machen.')">
+    {# Das Wort noch einmal mit: Der Server prüft es auch hier, damit ein
+       einzelner Aufruf dieses Pfades nichts ausrichtet. #}
+    <input type="hidden" name="wort" value="{{ losung }}">
+    <button type="submit" class="danger">Bestätigen</button>
+    <a href="/einrichtung#ersteinrichtung" class="muted small">Abbrechen</a>
+  </form>
+  {% endif %}
+</section>
+
+<script>
+// Der Speichern-Knopf wird erst dunkel, wenn etwas anders dasteht als
+// beim Aufbau der Seite -- dieselbe Regel und derselbe Wortlaut wie unter
+// Systeme. Ein Knopf, der immer dunkel ist, sagt bei jedem Blick
+// "hier ist etwas zu tun", und das stimmt fast nie.
+(function () {
+  var feld = document.querySelector('form[action="/einrichtung/updatepruefung"] select');
+  var knopf = document.getElementById("stand-speichern");
+  if (!feld || !knopf) { return; }
+
+  function pruefen() {
+    var offen = feld.value !== feld.dataset.war;
+    knopf.disabled = !offen;
+    knopf.title = offen
+      ? "Wie oft nach neuen Versionen gesucht wird"
+      : "Nichts geändert — es gibt nichts zu speichern";
+  }
+
+  feld.addEventListener("change", pruefen);
+  pruefen();
+})();
+</script>
+
+{% endblock %}

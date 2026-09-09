@@ -1,0 +1,484 @@
+# ===========================================================================
+# Katalog der Bootmenue-Eintraege
+#
+# Diese Datei wird im laufenden Betrieb neu eingelesen -- nach dem Speichern
+# einfach den Browser neu laden, kein Dienst-Neustart noetig.
+#
+# Ein Eintrag erscheint im Menue des bootenden Rechners nur dann, wenn
+#   a) seine Plattform passt (pcbios = Legacy/CSM, efi = UEFI) und
+#   b) alle unter kernel/initrd/assets genannten Dateien wirklich unter
+#      /srv/pxe/assets liegen. Geholt werden sie von sync-images.sh.
+#
+# ---------------------------------------------------------------------------
+# Die eine Regel, an der alles haengt
+# ---------------------------------------------------------------------------
+# Jeder Eintrag besitzt genau ein Verzeichnis, und es heisst wie seine
+# Kennung. Deshalb faengt jeder Pfad mit "{slug}/" an -- ausgeschrieben
+# steht dort dann /srv/pxe/assets/ubuntu-server-26-04/vmlinuz.
+#
+# Daran haengen die Belegung je Eintrag, die Meldung verwaister Ordner und
+# "Dateien loeschen". Wer einen Pfad danebenlegt, merkt es nicht sofort:
+# Die Anwendung schlaegt den Ordner dann entweder einem anderen Eintrag zu
+# oder bietet ihn zum Loeschen an. tests/test_katalog.py prueft es deshalb
+# bei jedem Lauf.
+#
+# Ausgenommen ist einzig wimboot/ -- das gehoert allen Windows-Abbildern
+# gemeinsam und keinem allein.
+#
+# ---------------------------------------------------------------------------
+# Platzhalter
+# ---------------------------------------------------------------------------
+#   {slug}      Die Kennung dieses Eintrags, also auch sein Verzeichnis.
+#               Bei einem mehrversionigen Eintrag mit der Ausgabe dahinter:
+#               aus "gparted-live" und "1.8.1-3" wird
+#               "gparted-live-1-8-1-3". Punkte werden dabei zu Bindestrichen,
+#               denn die Kennung ist auch Sprungmarke im iPXE-Menue.
+#   {version}   Die Ausgabe, wie sie in der Liste steht (also "26.04", nicht
+#               "26-04"). Nur noch fuer Adressen nach draussen noetig --
+#               fuer Ablageorte nimmt man {slug}.
+#
+#   ${base} ${assets} ${srvip}   setzt iPXE beim Start ein, damit die Datei
+#               unabhaengig von der IP des Servers bleibt. ${srvip} ist die
+#               nackte Adresse ohne "http://" -- noetig fuer Angaben wie
+#               nfsroot=, die keine URL sind.
+#
+# ---------------------------------------------------------------------------
+# Felder
+# ---------------------------------------------------------------------------
+#   slug        Eindeutige Kennung. Nur a-z, 0-9, "-". Sie erscheint in der
+#               URL, ist Sprungmarke im Bootmenue und benennt das
+#               Verzeichnis des Eintrags -- drei Gruende, warum sie sich
+#               nicht mehr aendern sollte, sobald Dateien da liegen.
+#               Reserviert (nicht verwenden): local, shell, reboot,
+#               poweroff, start, netboot, fehler
+#   name        Anzeigetext im Menue
+#   description Wofuer diese Distribution gut ist -- ausfuehrlich, in
+#               ganzen Saetzen, Umlaute erwuenscht. Sie steht in der Karte
+#               unter Quellen und hilft beim Auswaehlen: Wer vor dieser
+#               Liste sitzt, hat sich noch nicht entschieden. Der bootende
+#               Rechner bekommt sie nie zu sehen. Laenge nach Bedarf; ein
+#               Faltblock ">-" haelt die Datei lesbar.
+#   menue_info  Was im Bootmenue hinter Name und Version steht -- die
+#               Angabe, die vor der Maschine zaehlt: eine Warnung
+#               ("braucht 6 GB RAM am Client"), ein Unterschied zum
+#               Nachbarn ("BIOS-Variante") oder der Zweck ("Partitionen
+#               bearbeiten"). Hoechstens 29 Zeichen und **ohne Umlaute**:
+#               iPXE zeigt das auf einer nackten Konsole. Wer den Satz
+#               ersetzen will, tippt ihn unter Quellen ins Feld
+#               "Menue-Info"; das gewinnt gegen diese Vorgabe.
+#
+#               Beide beantworten verschiedene Fragen und lassen sich
+#               nicht zusammenlegen: "wofuer nehme ich das" beim
+#               Auswaehlen, "worauf lasse ich mich ein" vor der Maschine.
+#   category    Ueberschrift, unter der gruppiert wird
+#   versionen_aus  Macht den Eintrag mehrversionig: Statt einer Ausgabe
+#               steht hier der Name einer Liste (z.B. UBUNTU_VERSIONS). Aus
+#               jeder Ausgabe darin wird ein eigener Menuepunkt mit eigener
+#               Kennung und eigenem Verzeichnis. Gepflegt wird die Liste
+#               unter "Quellen" im Browser; ihre Vorgabe steht in
+#               setup/sync-images.sh. So bleibt das Medium einer aelteren
+#               Ausgabe verfuegbar, solange Rechner damit im Betrieb sind --
+#               und eine neue aufzunehmen ist ein Eintrag in der Liste,
+#               keine Aenderung an dieser Datei.
+#   platforms   Normalerweise NICHT eintragen: Der Server liest an dem ab,
+#               was der Eintrag laedt, fuer welche Firmware er taugt --
+#               ".efi" nur UEFI, ".lkrn"/".bin"/".0" nur BIOS, Kernel und
+#               Initrd beides. Eine Zeile, die man beim naechsten Eintrag
+#               vergessen kann, ist der haeufigere Fehler. Nur wenn eine
+#               Bauart sich am Namen nicht ablesen laesst: [pcbios] oder
+#               [efi] hier eintragen, das gewinnt dann.
+#   type        kernel  = Kernel + Initrd laden (der Normalfall)
+#               chain   = anderes iPXE-Skript/EFI-Binary uebernehmen
+#               sanboot = ISO als virtuelles Laufwerk anbieten
+#   kernel      Pfad unter /srv/pxe/assets, beginnt mit {slug}/
+#   initrd      Ebenso -- einzeln oder als Liste, in Ladereihenfolge
+#               (Mikrocode zuerst)
+#   url         Bei type chain/sanboot: worauf uebergeben wird. Entweder
+#               ${assets}/{slug}/... von hier oder eine Adresse nach
+#               draussen (netboot.xyz).
+#   assets      Optional, aber Vorsicht: Steht das Feld da, ist es die
+#               vollstaendige Liste dessen, was vorhanden sein muss --
+#               kernel und initrd werden dann nicht mehr eigens geprueft
+#               und muessen hier mit aufgefuehrt sein. Gedacht ist es fuer
+#               Dateien, die erst der laufende Installer nachlaedt (etwa
+#               das Squashfs) und die im Bootskript deshalb nirgends
+#               auftauchen. Wer sie nur ergaenzen will und Kernel und
+#               Initrd weglaesst, macht den Eintrag startbereit, obwohl der
+#               Kernel fehlt.
+#   cmdline     Kernel-Parameter. Der Weg OHNE NFS -- er muss immer
+#               funktionieren, denn NFS ist auf diesem Server abschaltbar.
+#   cmdline_nfs Der Weg MIT NFS, falls es fuer diese Bauart einen gibt.
+#               Steht ein NFS-Export bereit (PXE_NFS_ROOT), gewinnt diese
+#               Zeile; sonst gilt "cmdline". Darin gehoert der Platzhalter
+#               {nfsroot} an die Stelle des Servers samt Pfad -- er wird zu
+#               "${srvip}:<PXE_NFS_ROOT>/<slug>". Den Pfad hier
+#               auszuschreiben waere falsch: Exportiert wird, was
+#               install.sh aus PXE_ROOT gebaut hat, und wer die Ablage
+#               verlegt, haette sonst Eintraege, die ins Leere zeigen.
+#               Hat ein Eintrag NUR diese Zeile, ist er ohne NFS nicht
+#               startbereit -- und sagt das unter Systeme.
+#
+# Live-Systeme werden ueber NFS eingehaengt statt in den Arbeitsspeicher
+# geladen: der bootende Rechner liest nur, was er gerade braucht, und die
+# Groesse des Abbilds ist egal. Dafuer muss der NFS-Export laufen -- den
+# richtet install.sh ein (siehe docs/03).
+#
+# Die Ablageorte hier muessen zu denen in setup/sync-images.sh passen: Was
+# dieses Skript hinlegt, sucht die Anwendung hier. Dort baut ablage() den
+# Verzeichnisnamen nach derselben Regel wie {slug}.
+# ===========================================================================
+
+entries:
+
+  # ------------------------------------------------------------------ #
+  # Installer
+  # ------------------------------------------------------------------ #
+
+  - slug: debian
+    name: "Debian"
+    description: >-
+      Der Ursprung vieler anderer Distributionen und selbst betont
+      konservativ: Ein Paket kommt erst herein, wenn es lange geprüft ist.
+      Gut für Server, die laufen sollen, statt aktuell zu sein. Der
+      Installer ist winzig und holt alles Weitere aus dem Netz.
+    menue_info: "braucht Internet am Client"
+    category: "Online-Installationen"
+    type: kernel
+    # Mehrversionig wie die anderen Netz-Installer: Die Ausgaben stehen
+    # bei den Quellen (DEBIAN_VERSIONS) und werden im Browser gepflegt.
+    # Debian war hier lange der einzige mit fest eingebauter Ausgabe --
+    # wer auf die naechste wechseln wollte, musste sync-images.sh
+    # bearbeiten, waehrend bei allen anderen eine Zahl im Browser reicht.
+    #
+    # Eingetragen wird der Codename, nicht die Nummer: Debians Pfade
+    # kennen nur ihn. "dists/trixie/" gibt es, "dists/13/" nicht. Die
+    # Nummer steht dafuer im Namen, den man sich unter Quellen setzen
+    # kann -- "Debian" + "13 (Trixie)" statt "Debian" + "trixie".
+    versionen_aus: DEBIAN_VERSIONS
+    kernel: "{slug}/linux"
+    initrd: "{slug}/initrd.gz"
+    cmdline: "vga=788"
+
+  - slug: ubuntu-server
+    name: "Ubuntu Server"
+    description: >-
+      Ubuntu ohne grafische Oberfläche. Alle zwei Jahre erscheint eine
+      LTS-Ausgabe mit fünf Jahren Unterstützung; was dazwischen liegt,
+      wird nur neun Monate gepflegt. Hier läuft der Live-Installer: Der
+      Client lädt das vollständige Abbild in den Arbeitsspeicher, weshalb
+      er mindestens 6 GB davon braucht.
+    menue_info: "braucht 6 GB RAM am Client"
+    category: "Offline-Installationen"
+    type: kernel
+    # Mehrversionig: die Liste steht bei den Quellen (UBUNTU_VERSIONS) und
+    # wird ueber die Weboberflaeche gepflegt. Aus jedem Eintrag darin wird
+    # ein eigener Menuepunkt mit eigenem Verzeichnis -- damit bleibt das
+    # Installationsmedium verfuegbar, solange Rechner mit dieser Ausgabe
+    # im Betrieb sind. {slug} heisst dann "ubuntu-server-26-04".
+    versionen_aus: UBUNTU_VERSIONS
+    kernel: "{slug}/vmlinuz"
+    initrd: "{slug}/initrd"
+    # Einziges Live-System, das nicht per NFS eingehaengt wird: der
+    # Server-Installer stapelt mehrere Squashfs-Schichten, und wie die
+    # oberste heisst ("layerfs-path"), aendert sich von Ausgabe zu Ausgabe.
+    # Der Weg ueber "url=" ist der offiziell dokumentierte und kommt ohne
+    # diese Angabe aus -- er laedt das Abbild aber komplett in den
+    # Arbeitsspeicher, der Rechner braucht also etwa 6 GB RAM.
+    cmdline: "ip=dhcp url=${assets}/{slug}/ubuntu-server-amd64.iso cloud-config-url=/dev/null"
+    assets:
+      - "{slug}/vmlinuz"
+      - "{slug}/initrd"
+      - "{slug}/ubuntu-server-amd64.iso"
+
+  - slug: mint-cinnamon
+    name: "Linux Mint"
+    description: >-
+      Ein fertig eingerichteter Arbeitsplatz auf Ubuntu-Grundlage, gedacht
+      für Leute, die von Windows kommen. Einen Netz-Installer gibt es
+      nicht -- gestartet wird das Live-System, und installiert wird daraus
+      heraus über das Symbol auf dem Desktop.
+    menue_info: "Live-System vom Server"
+    category: "Offline-Installationen"
+    type: kernel
+    kernel: "{slug}/vmlinuz"
+    initrd: "{slug}/initrd"
+    # Mint hat keinen Netz-Installer, gestartet wird das Live-System.
+    # casper haengt sein Dateisystem per NFS ein, statt das ganze Abbild in
+    # eine RAM-Disk zu laden -- deshalb laeuft Mint auch auf Rechnern mit
+    # wenig Speicher. Installiert wird wie von einem USB-Stick ueber das
+    # Symbol auf dem Desktop.
+    #
+    # Der einzige Eintrag ohne Weg ohne NFS: casper holt ueber HTTP das
+    # ganze Abbild ("netboot=url url=...iso"), und eine ISO liegt hier
+    # nicht -- der Abgleich holt nur die drei Dateien. Ohne NFS-Export ist
+    # Mint deshalb nicht startbereit und sagt das, statt einen Menuepunkt
+    # anzubieten, der vor der Maschine scheitert.
+    cmdline_nfs: "boot=casper netboot=nfs nfsroot={nfsroot} ip=dhcp locale=de_DE.UTF-8 keyboard-configuration/layoutcode=de"
+    assets:
+      - "{slug}/vmlinuz"
+      - "{slug}/initrd"
+      - "{slug}/casper/filesystem.squashfs"
+
+  - slug: debian-live
+    name: "Debian Live"
+    description: >-
+      Debian mit fertiger Oberfläche, ohne etwas zu installieren: Der
+      Rechner startet hinein, man arbeitet, und nach dem Neustart ist er
+      wieder, wie er war. Zum Ausprobieren, für einen fremden Rechner, den
+      man nicht anfassen will, oder um eine Platte zu retten, bevor man
+      neu aufsetzt. Wer bleiben will, findet auf dem Desktop den Installer.
+      Mitgeliefert wird die Xfce-Ausgabe, weil sie am schnellsten startet;
+      die Adresse unter Quellen lässt sich auf gnome, kde, mate, cinnamon,
+      lxde, lxqt oder standard umstellen.
+    menue_info: "Live-System vom Server"
+    category: "Offline-Installationen"
+    type: kernel
+    versionen_aus: DEBIAN_LIVE_VERSIONS
+    kernel: "{slug}/live/vmlinuz"
+    initrd: "{slug}/live/initrd.img"
+    # Dieselbe Bauart wie GParted und Clonezilla -- beide sind selbst
+    # Debian-Live-Abkoemmlinge. "findiso=" aus Debians eigener grub.cfg
+    # faellt weg: Das ist fuer den Start von einer Datei auf der Platte.
+    # Ohne NFS holt live-boot das Wurzeldateisystem einzeln ueber HTTP in
+    # den Arbeitsspeicher ("fetch="); mit NFS wird es gestreamt.
+    #
+    # KEIN "ip=dhcp" -- bei live-boot heisst das nicht, was es zu heissen
+    # scheint. 9990-cmdline-old macht daraus STATICIP="dhcp" UND
+    # NODHCP="true"; do_netmount nimmt daraufhin den Zweig fuer statische
+    # Adressen, zerlegt "dhcp" an Doppelpunkten, die es nicht gibt, und
+    # setzt "ip addr add dhcp/dhcp dev dhcp". do_netsetup, wo DHCP
+    # stattfaende, wird nie erreicht. Der Start scheitert dann in Sekunden
+    # mit "connect: Network is unreachable -- NFS over TCP not available".
+    # Jeder Wert tut das, auch "ip=" und "ip=frommedia": NODHCP wird bei
+    # jedem "ip=" gesetzt, unabhaengig davon, was dahinter steht. Ohne die
+    # Angabe holt live-boot die Adresse von selbst per DHCP.
+    # Andere Familien sind nicht betroffen -- casper, archiso und Anaconda
+    # verstehen "ip=dhcp" richtig, dort bleibt es stehen.
+    #
+    # Die beiden Timeouts sind zwei verschiedene Dinge, die sich leicht
+    # verwechseln lassen:
+    #   ethdevice-timeout       ETHDEV_TIMEOUT       ipconfig wartet so
+    #                                                lange auf eine
+    #                                                DHCP-Antwort
+    #   ethdevice-link-timeout  ETHDEV_LINK_TIMEOUT  so lange wird auf
+    #                                                Link/Carrier der
+    #                                                Karte gewartet
+    # Beide stehen sonst auf 15 Sekunden. iPXE hatte die Verbindung
+    # laengst offen; der Kernel baut sie beim Treiberwechsel neu auf, und
+    # ein Switch mit Spanning Tree oder eine 2,5-GBit-Karte brauchen
+    # dafuer laenger. Es sind Obergrenzen: Steht die Verbindung frueher,
+    # wartet niemand laenger.
+    cmdline: "boot=live components quiet splash ethdevice-timeout=60 ethdevice-link-timeout=60 locales=de_DE.UTF-8 keyboard-layouts=de fetch=${assets}/{slug}/live/filesystem.squashfs"
+    cmdline_nfs: "boot=live components quiet splash netboot=nfs nfsroot={nfsroot} ethdevice-timeout=60 ethdevice-link-timeout=60 locales=de_DE.UTF-8 keyboard-layouts=de"
+    assets:
+      - "{slug}/live/vmlinuz"
+      - "{slug}/live/initrd.img"
+      - "{slug}/live/filesystem.squashfs"
+
+  - slug: fedora-server
+    name: "Fedora Server"
+    description: >-
+      Die Distribution, in der Red Hat Neues zuerst ausprobiert: aktuelle
+      Kernel, aktuelle Bibliotheken, kurze Ausgabezyklen. Eine Ausgabe
+      wird etwa dreizehn Monate gepflegt, danach muss aktualisiert werden.
+      Gut, um zu sehen, was später in RHEL landet -- weniger gut für
+      Rechner, die drei Jahre unangetastet stehen.
+    menue_info: "braucht Internet am Client"
+    category: "Online-Installationen"
+    type: kernel
+    versionen_aus: FEDORA_VERSIONS
+    kernel: "{slug}/vmlinuz"
+    initrd: "{slug}/initrd.img"
+    cmdline: "inst.repo=https://download.fedoraproject.org/pub/fedora/linux/releases/{version}/Everything/x86_64/os/ ip=dhcp"
+
+  - slug: opensuse-leap
+    name: "openSUSE Leap"
+    description: >-
+      Die stabile Reihe von openSUSE, aus denselben Paketen gebaut wie
+      SUSE Linux Enterprise. Ausgaben erscheinen jährlich und werden lange
+      gepflegt. YaST nimmt viel Einrichtungsarbeit ab, was den Einstieg
+      erleichtert; wer alles selbst von Hand setzt, empfindet es als
+      Umweg.
+    menue_info: "braucht Internet am Client"
+    category: "Online-Installationen"
+    type: kernel
+    versionen_aus: LEAP_VERSIONS
+    kernel: "{slug}/linux"
+    initrd: "{slug}/initrd"
+    # openSUSE benutzt linuxrc: "install=" nennt die Paketquelle,
+    # "netsetup=dhcp" konfiguriert das Netzwerk ohne Rueckfrage.
+    cmdline: "install=https://download.opensuse.org/distribution/leap/{version}/repo/oss/ netsetup=dhcp"
+
+  - slug: opensuse-tumbleweed
+    name: "openSUSE Tumbleweed"
+    description: >-
+      Dieselbe Herkunft wie Leap, aber ohne Ausgaben: Aktualisierungen
+      kommen laufend, nachdem sie automatisch geprüft wurden. Damit ist
+      immer alles aktuell -- und es gibt keinen Zeitpunkt, an dem eine
+      Ausgabe zu Ende benutzt ist. Für Arbeitsplätze interessant, für
+      Server selten die richtige Wahl.
+    menue_info: "braucht Internet am Client"
+    category: "Online-Installationen"
+    type: kernel
+    kernel: "{slug}/linux"
+    initrd: "{slug}/initrd"
+    cmdline: "install=https://download.opensuse.org/tumbleweed/repo/oss/ netsetup=dhcp"
+
+  - slug: rocky
+    name: "Rocky Linux"
+    description: >-
+      Ein Nachbau von Red Hat Enterprise Linux aus denselben Quellen,
+      kostenlos. Gedacht für Server, die zehn Jahre laufen sollen: In
+      dieser Zeit ändert sich fast nichts, Sicherheitskorrekturen werden
+      in die alte Fassung zurückportiert. Wer Software einsetzt, die
+      ausdrücklich RHEL verlangt, bekommt hier deren Unterbau.
+    menue_info: "braucht Internet am Client"
+    category: "Online-Installationen"
+    type: kernel
+    versionen_aus: ROCKY_VERSIONS
+    kernel: "{slug}/vmlinuz"
+    initrd: "{slug}/initrd.img"
+    cmdline: "inst.repo=https://dl.rockylinux.org/pub/rocky/{version}/BaseOS/x86_64/os/ ip=dhcp"
+
+  # ------------------------------------------------------------------ #
+  # Rettung und Wartung
+  # ------------------------------------------------------------------ #
+
+  - slug: systemrescue
+    name: "SystemRescue"
+    description: >-
+      Ein Arch-basiertes Live-System zum Reparieren: Partitionswerkzeuge,
+      Dateisystemprüfung, Datenrettung, Netzwerkwerkzeuge, ein Editor.
+      Installiert wird nichts -- der Rechner startet damit, man arbeitet,
+      danach bootet er wieder normal. Das erste, wonach man greift, wenn
+      ein System nicht mehr hochkommt.
+    menue_info: "Rettungssystem"
+    category: "Rettung und Wartung"
+    type: kernel
+    # Mehrversionig wie die Distributionen: Jede Ausgabe bekommt ihr
+    # eigenes Verzeichnis, damit zwei nebeneinander liegen koennen.
+    versionen_aus: SYSRESC_VERSIONS
+    kernel: "{slug}/sysresccd/boot/x86_64/vmlinuz"
+    initrd:
+      - "{slug}/sysresccd/boot/intel_ucode.img"
+      - "{slug}/sysresccd/boot/amd_ucode.img"
+      - "{slug}/sysresccd/boot/x86_64/sysresccd.img"
+    # archiso kann beides: Wurzeldateisystem ueber HTTP holen oder per NFS
+    # einhaengen. Zwei Namen fuer dieselbe Sache, deshalb zwei Zeilen.
+    cmdline: "archisobasedir=sysresccd archiso_http_srv=${assets}/{slug}/ ip=dhcp setkmap=de"
+    cmdline_nfs: "archisobasedir=sysresccd archiso_nfs_srv={nfsroot} ip=dhcp setkmap=de"
+
+  - slug: gparted-live
+    name: "GParted Live"
+    description: >-
+      Ein Live-System mit genau einem Zweck: Partitionen anlegen,
+      verschieben, vergrößern, verkleinern, kopieren. Also das, was man
+      vom laufenden System aus mit dessen eigener Systempartition nicht
+      tun kann. Klein und schnell gestartet.
+    menue_info: "Partitionen bearbeiten"
+    category: "Rettung und Wartung"
+    type: kernel
+    versionen_aus: GPARTED_VERSIONS
+    kernel: "{slug}/live/vmlinuz"
+    initrd: "{slug}/live/initrd.img"
+    # Siehe Debian Live zu "ip=" und den beiden Timeouts: Genau hier ist
+    # es aufgefallen -- GParted scheiterte auf einem Lenovo mit "Network
+    # is unreachable", waehrend Mint auf demselben Rechner ueber dasselbe
+    # NFS startete. Mint benutzt nicht live-boot, sondern casper, und das
+    # versteht "ip=dhcp" als DHCP.
+    cmdline: "boot=live config components union=overlay noswap noeject ethdevice-timeout=60 ethdevice-link-timeout=60 keyboard-layouts=de fetch=${assets}/{slug}/live/filesystem.squashfs"
+    cmdline_nfs: "boot=live config components union=overlay noswap noeject ethdevice-timeout=60 ethdevice-link-timeout=60 keyboard-layouts=de netboot=nfs nfsroot={nfsroot}"
+    assets:
+      - "{slug}/live/vmlinuz"
+      - "{slug}/live/initrd.img"
+      - "{slug}/live/filesystem.squashfs"
+
+  - slug: clonezilla
+    name: "Clonezilla Live"
+    description: >-
+      Sichert und überträgt ganze Festplatten oder einzelne Partitionen
+      als Abbild. Gedacht für den Fall, dass zwanzig gleiche Rechner
+      denselben Stand bekommen sollen -- oder dass man vor einem Eingriff
+      eine Rückfahrkarte will. Kopiert nur belegte Blöcke und ist dadurch
+      schneller als ein Abbild Block für Block.
+    menue_info: "Festplatten sichern/klonen"
+    category: "Rettung und Wartung"
+    type: kernel
+    versionen_aus: CLONEZILLA_VERSIONS
+    kernel: "{slug}/live/vmlinuz"
+    initrd: "{slug}/live/initrd.img"
+    cmdline: "boot=live config noswap nolocales edd=on nomodeset noeject ocs_live_run=ocs-live-general ocs_live_batch=no ethdevice-timeout=60 ethdevice-link-timeout=60 keyboard-layouts=de locales=de_DE.UTF-8 net.ifnames=0 nosplash fetch=${assets}/{slug}/live/filesystem.squashfs"
+    cmdline_nfs: "boot=live config noswap nolocales edd=on nomodeset noeject ocs_live_run=ocs-live-general ocs_live_batch=no ethdevice-timeout=60 ethdevice-link-timeout=60 keyboard-layouts=de locales=de_DE.UTF-8 net.ifnames=0 nosplash netboot=nfs nfsroot={nfsroot}"
+    assets:
+      - "{slug}/live/vmlinuz"
+      - "{slug}/live/initrd.img"
+      - "{slug}/live/filesystem.squashfs"
+
+  - slug: memtest-bios
+    name: "Memtest86+ (Arbeitsspeicher testen)"
+    description: >-
+      Prüft den Arbeitsspeicher, indem es Muster hineinschreibt und wieder
+      liest. Läuft ohne Betriebssystem und stundenlang, wenn man es lässt.
+      Der erste Verdacht bei Abstürzen ohne erkennbares Muster. Diese
+      Ausgabe startet auf Rechnern im BIOS- oder CSM-Modus.
+    menue_info: "BIOS-Variante"
+    category: "Rettung und Wartung"
+    type: kernel
+    versionen_aus: MEMTEST_VERSIONS
+    kernel: "{slug}/memtest.bin"
+    initrd: []
+    assets:
+      - "{slug}/memtest.bin"
+
+  - slug: memtest-efi
+    name: "Memtest86+ (Arbeitsspeicher testen)"
+    description: >-
+      Dieselbe Prüfung des Arbeitsspeichers, als EFI-Programm. Diese
+      Ausgabe startet auf Rechnern mit UEFI-Firmware -- also auf allem,
+      was in den letzten zehn Jahren gebaut wurde.
+    menue_info: "UEFI-Variante"
+    category: "Rettung und Wartung"
+    type: chain
+    versionen_aus: MEMTEST_VERSIONS
+    url: "${assets}/{slug}/memtest.efi"
+    assets:
+      - "{slug}/memtest.efi"
+
+  - slug: shredos
+    name: "ShredOS"
+    description: >-
+      Löscht Datenträger endgültig, bevor ein Rechner weitergegeben oder
+      entsorgt wird. Der lebende Nachfolger von DBAN: nwipe ist ein Fork
+      genau der Löschmaschine aus DBAN, wird weiter gepflegt und startet
+      auch per UEFI. Wichtig bei SSDs und NVMe — dort reicht Überschreiben
+      nicht, weil die Firmware Schreibzugriffe umverteilt und Reserveblöcke
+      zurückhält; nwipe kann stattdessen die Löschbefehle der Firmware
+      auslösen. Es gibt kein Zurück: Was hier läuft, ist danach weg.
+    menue_info: "Datentraeger sicher loeschen"
+    category: "Rettung und Wartung"
+    type: kernel
+    # Der einfachste Eintrag im Katalog: eine Datei, kein Initrd. ShredOS
+    # steckt vollstaendig im Kernel (rund 97 MB), einschliesslich
+    # EFI-Stub -- damit startet dieselbe Datei unter BIOS und UEFI.
+    kernel: "{slug}/bzImage"
+    initrd: []
+    # So startet es auch von seinem eigenen Abbild: Kernelmeldungen nach
+    # tty3, damit die Oberflaeche von nwipe den ersten Bildschirm behaelt.
+    cmdline: "console=tty3 loglevel=3"
+
+  # ------------------------------------------------------------------ #
+  # Braucht ebenfalls Internet am Client -- selbe Gruppe wie oben
+  # ------------------------------------------------------------------ #
+
+  - slug: netbootxyz
+    name: "netboot.xyz"
+    description: >-
+      Kein eigenes System, sondern ein zweites Bootmenü, das aus dem
+      Internet geladen wird und Dutzende Distributionen und Werkzeuge
+      anbietet. Nützlich, um etwas auszuprobieren, das hier nicht
+      eingerichtet ist. Dieser Server weiß nicht, was dort angeboten wird,
+      und kann es auch nicht bereithalten.
+    menue_info: "braucht Internet am Client"
+    category: "Online-Installationen"
+    type: chain
+    url: "https://boot.netboot.xyz/menu.ipxe"

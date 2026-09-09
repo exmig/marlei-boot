@@ -1,0 +1,23 @@
+#!ipxe
+# ---------------------------------------------------------------------------
+# Uebergabe an ein anderes iPXE-Skript, z.B. netboot.xyz im Internet.
+# Setzt voraus, dass der bootende Rechner ins Internet kommt.
+# ---------------------------------------------------------------------------
+
+set base {{ base }}
+set assets {{ base }}/assets
+
+echo
+echo   Lade {{ entry.name }} ...
+echo
+
+chain {{ entry.url }} || goto fehler
+
+:fehler
+echo
+echo   {{ entry.name }} konnte nicht geladen werden.
+echo   Adresse: {{ entry.url }}
+echo   Besteht vom Client aus eine Internetverbindung?
+echo
+prompt --timeout 20000 Taste druecken fuer das Menue...
+chain ${base}/menu.ipxe?mac={{ mac }}&platform=${platform}&arch=${buildarch} || shell

@@ -1,0 +1,25 @@
+{# Ein Dienst des Bootwegs laeuft nicht -- nginx, dnsmasq oder pxeweb.
+   Welcher es ist, aendert nichts am Ergebnis: Es kommt kein Rechner mehr
+   durch. Der Satz sagt deshalb zuerst die Folge und dann den Grund.
+
+   Stand bis zum 28.08.2026 als hint in der Dienste-Karte, wo er nur
+   sichtbar war, wenn man ohnehin schon nachsah. Siehe webui/befunde.py. #}
+<p>
+  {% if befund.dienste | length == 1 %}
+  {% set d = befund.dienste[0] %}
+  <code>{{ d.name }}</code> läuft nicht — der Dienst {{ d.wofuer }}.
+  {% else %}
+  Diese Dienste laufen nicht:
+  {% for d in befund.dienste %}<code>{{ d.name }}</code>{{ ", " if not loop.last }}{% endfor %}.
+  {% endif %}
+  Ein Rechner, der jetzt über das Netz startet, bekommt keine Antwort und
+  fällt nach einigen Sekunden auf seine eigene Festplatte zurück — ohne eine
+  Meldung, die das erklärt.
+</p>
+<p class="kartenfuss">
+  Was los ist, zeigt auf dem Server
+  <code>sudo journalctl -u {{ befund.dienste[0].name }} -n 40</code>
+  &middot; <a href="/protokoll?einheit={{ befund.dienste[0].name }}">Protokoll
+  ansehen &rarr;</a>
+  &middot; <a href="/#dienste">Alle Dienste &rarr;</a>
+</p>

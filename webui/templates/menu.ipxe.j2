@@ -1,0 +1,64 @@
+#!ipxe
+# ---------------------------------------------------------------------------
+# Das Auswahlmenue auf dem Bildschirm des bootenden Rechners.
+# Es enthaelt nur Eintraege, die zu dieser Firmware passen und deren
+# Dateien tatsaechlich auf dem Server liegen.
+# ---------------------------------------------------------------------------
+
+set base {{ base }}
+set mac {{ mac }}
+
+:start
+# Die Titelzeile kommt aus bezeichnungen.menue_titel() -- die Vorschau
+# unter Systeme liest dieselbe. Ein Bild ginge hier ohnehin nicht: Ein
+# Hintergrund braucht einen iPXE-Bau mit Bildunterstuetzung, und
+# fetch-ipxe.sh laedt fertige Binaerdateien von boot.ipxe.org.
+menu {{ titel }}
+{%- for category, items in categories.items() %}
+item --gap --   {{ category }}
+{%- for e in items %}
+item {{ e.slug }}   {{ e | menuezeile }}
+{%- endfor %}
+{%- endfor %}
+item --gap --   System
+item local      Von der lokalen Festplatte starten
+item shell      iPXE-Eingabeaufforderung
+item reboot     Neu starten
+item poweroff   Ausschalten
+
+choose --default {{ default }} --timeout {{ timeout_ms }} target || goto local
+
+# Trifft ein Sprungziel unten zu (local, shell, ...), springen wir dorthin.
+# Sonst ist es ein Katalog-Eintrag und wird ueber HTTP nachgeladen.
+goto ${target} || goto netboot
+
+:netboot
+chain ${base}/boot/${target}.ipxe?mac=${mac} || goto fehler
+
+:local
+echo Starte von der lokalen Festplatte...
+# "exit 0" gibt die Kontrolle an die Firmware zurueck, die dann das
+# naechste Geraet in der Bootreihenfolge nimmt. Sollte ein Rechner
+# stattdessen erneut ins Netzwerk booten, hilft in der Regel:
+#   sanboot --no-describe --drive 0x80
+exit 0
+
+:shell
+echo Mit "exit" geht es zurueck ins Menue.
+shell
+goto start
+
+:reboot
+reboot
+
+:poweroff
+poweroff
+
+:fehler
+echo
+echo   Start von "${target}" ist fehlgeschlagen.
+echo   Meist fehlt eine Datei -- auf dem Server pruefen:
+echo     sudo /opt/pxe-setup/sync-images.sh
+echo
+prompt --timeout 20000 Taste druecken fuer das Menue...
+goto start

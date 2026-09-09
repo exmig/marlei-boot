@@ -1,0 +1,16 @@
+{# Fusszeile der vier Karten auf Quellen: was auf diesem Weg hereingekommen
+   ist und jetzt auf der Platte liegt.
+
+   Ein Parameter, damit der Satz einmal geschrieben steht:
+       {% include "_belegt.html" %}   nach   {% set weg = "geholt" %}
+
+   Gerechnet wird mit derselben Funktion wie die Zahl in der Eintragskarte
+   und in der Detailansicht auf Server Health -- die vier zusammen ergeben
+   deshalb genau die Zeile "n Eintraege zusammen" von dort. Nicht "Abbilder
+   gesamt": Darin stecken auch verwaiste Ordner und Sonstiges.
+
+   Stand bis zum 27.08.2026 neben dem Knopf und sah damit aus wie eine
+   Angabe zu ihm. Sie gilt aber der ganzen Karte. #}
+<p class="kartenfuss">
+  Aktuell belegter Speicherplatz: {{ belegt[weg] | groesse }}
+</p>

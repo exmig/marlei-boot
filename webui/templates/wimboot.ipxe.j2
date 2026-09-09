@@ -1,0 +1,70 @@
+#!ipxe
+# ---------------------------------------------------------------------------
+# Windows-Vorstartumgebung (WinPE) ueber wimboot starten.
+#
+# Anders als bei Linux gibt es hier keinen Kernel und keine Initrd. Als
+# Kernel laedt iPXE das Hilfsprogramm wimboot; die eigentlichen Dateien
+# kommen als "initrd" dazu -- jede mit dem Namen, unter dem der
+# Windows-Bootmanager sie sucht. Deshalb steht hinter jedem Pfad noch ein
+# zweites Wort: der Zielname. Genau das kann die Vorlage fuer Linux nicht,
+# und deshalb gibt es diese hier.
+#
+# BIOS und UEFI starten aus verschiedenen Dateien und haben je eine eigene
+# Startkonfiguration (BCD) im Abbild. Welcher Satz genommen wird, entscheidet
+# sich erst auf dem bootenden Rechner -- iPXE weiss es, wir hier nicht.
+# ---------------------------------------------------------------------------
+
+set base {{ base }}
+set assets {{ base }}/assets
+
+echo
+echo   Lade {{ entry.name }} ...
+echo   Das Abbild ist mehrere hundert MB gross und wird komplett in den
+echo   Arbeitsspeicher geladen -- das dauert einen Moment.
+echo
+
+{% set bios = entry.wimboot.bios | default({}) %}
+{%- set efi = entry.wimboot.efi | default({}) %}
+{#- In der boot.wim stecken zwei Systeme: die Konsole und das Windows-Setup.
+    Ohne Angabe nimmt wimboot das, was im Kopf der Datei als startbar
+    markiert ist -- auf einem Installationsmedium ist das das Setup, und das
+    endet ueber das Netz in der Meldung "Medientreiber fehlt". Deshalb wird
+    die Nummer der Konsole hier ausdruecklich mitgegeben. #}
+{%- set wahl = " index=" ~ entry.wimboot_index if entry.wimboot_index else "" %}
+iseq ${platform} efi && goto efi ||
+goto bios
+
+:efi
+{% if efi %}
+kernel ${assets}/{{ entry.wimboot_loader }}{{ wahl }} || goto fehler
+{%- for name, pfad in efi.items() %}
+initrd ${assets}/{{ pfad }} {{ name }} || goto fehler
+{%- endfor %}
+boot || goto fehler
+{%- else %}
+echo   {{ entry.name }} enthaelt keinen UEFI-Startsatz.
+echo   Im Abbild fehlen efi/boot/bootx64.efi und efi/microsoft/boot/bcd.
+{%- endif %}
+goto fehler
+
+:bios
+{% if bios %}
+kernel ${assets}/{{ entry.wimboot_loader }}{{ wahl }} || goto fehler
+{%- for name, pfad in bios.items() %}
+initrd ${assets}/{{ pfad }} {{ name }} || goto fehler
+{%- endfor %}
+boot || goto fehler
+{%- else %}
+echo   {{ entry.name }} enthaelt keinen BIOS-Startsatz.
+echo   Im Abbild fehlen bootmgr und boot/bcd.
+{%- endif %}
+goto fehler
+
+:fehler
+echo
+echo   {{ entry.name }} konnte nicht gestartet werden.
+echo   Fehlt eine Datei? Auf dem Server pruefen:
+echo     ls -l /srv/pxe/assets/{{ entry.wimboot_loader }}
+echo
+prompt --timeout 20000 Taste druecken fuer das Menue...
+chain ${base}/menu.ipxe?mac={{ mac }}&platform=${platform}&arch=${buildarch} || shell

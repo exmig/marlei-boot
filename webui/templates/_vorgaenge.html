@@ -1,0 +1,19 @@
+{# Was der Server gerade holt oder entgegennimmt -- gehoert zur Auslastung,
+   weil beides Bandbreite kostet. Frischt sich mit ihr auf. #}
+{% set herein = vorgaenge.herein | length %}
+<p class="kennzeile">
+  <span class="zahl">{{ herein }}</span>
+  {{ "Abbild" if herein == 1 else "Abbilder" }} im Upload,
+  <span class="zahl">{{ vorgaenge.hinaus | length }}</span> im Download.
+</p>
+
+{% if vorgaenge.herein or vorgaenge.hinaus %}
+<ul class="vorgangsliste">
+  {% for v in vorgaenge.herein %}
+  <li>&uarr; {{ v.was }} <span class="muted small">— {{ v.zustand }}</span></li>
+  {% endfor %}
+  {% for v in vorgaenge.hinaus %}
+  <li>&darr; {{ v.was }} <span class="muted small">— {{ v.zustand }}</span></li>
+  {% endfor %}
+</ul>
+{% endif %}
