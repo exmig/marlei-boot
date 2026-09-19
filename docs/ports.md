@@ -10,7 +10,7 @@ alle Module.
 | Modul | außen | innen | Stand |
 |---|---|---|---|
 | MARLEI Boot | 80 | 8080 | so installiert |
-| MARLEI Tasks | 8081 | 18081 | außen so installiert; innen noch 8000, zieht nach |
+| MARLEI Tasks | 8081 | 18081 | so gebaut; eine ältere Installation zieht beim nächsten Update nach |
 
 Das nächste Modul bekommt 8082 und 18082.
 
@@ -31,9 +31,9 @@ Dateien über Port 80, und Boots vhost hält die 80 als `default_server`.
 Boot läuft produktiv; ein Umzug brächte nichts und bräche jeden Client,
 der die Adresse kennt.
 
-**Die innere 8000 von Tasks wird abgelöst**, weil sie der Port ist, den
-halb Python als Vorgabe nimmt — neben einem fremden Dienst ist das die
-erste Stelle, an der es kracht.
+**Die innere 8000 von Tasks ist abgelöst** (September 2026), weil sie der
+Port ist, den halb Python als Vorgabe nimmt — neben einem fremden Dienst
+ist das die erste Stelle, an der es kracht.
 
 ## Fest heißt nicht unveränderlich
 
