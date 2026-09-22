@@ -24,6 +24,25 @@ diesen Ausschnitt vergrößert, ist mehr wert als eine Zeile Code:
   sondern was du erreichen wolltest und woran es scheiterte. Das Zweite
   lässt sich vielleicht anders lösen.
 
+## Wohin damit
+
+**Am besten aus der Oberfläche heraus: Reiter *Einrichtung*, Karte
+*Fehlerbericht*.** Der Knopf dort erzeugt einen Text mit System, Version
+und dem, was der Server von sich meldet — genau das, was bei einer
+Rückfrage sonst einzeln erfragt werden müsste. **Der Server verschickt
+nichts:** Sie lesen den Bericht, und was Sie davon mitschicken,
+entscheiden Sie. Er geht an
+**[support@exmig.de](mailto:support@exmig.de)**, Betreff *MARLEI Boot*.
+Für einen Vorschlag steht die Karte *Verbesserungen* daneben.
+
+**Wer gar nicht bis zur Oberfläche kommt** — die Installation klemmt, der
+Dienst startet nicht —, schreibt an dieselbe Adresse, dann eben ohne
+Bericht.
+
+Ein Issue geht auch, und wer ohnehin hier ist, macht gern eines auf. **Der
+Weg über die Oberfläche ist nur der bessere**, weil der Bericht schon
+dabei ist.
+
 ## Warum ich Code derzeit nicht annehmen kann
 
 Der Server steht unter der **AGPL-3.0**, und das bleibt so. Unabhängig

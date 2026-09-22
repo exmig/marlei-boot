@@ -201,7 +201,11 @@ ihr bitte einen eigenen Namen.
 
 **Rückmeldungen sind willkommen, Code kann ich derzeit nicht annehmen** —
 warum, und womit du stattdessen am meisten hilfst, steht in
-[CONTRIBUTING.md](CONTRIBUTING.md).
+[CONTRIBUTING.md](CONTRIBUTING.md). **Am besten aus der Oberfläche heraus,
+Reiter *Einrichtung*, Karte *Fehlerbericht*:** Der Knopf dort erzeugt
+einen Text mit System, Version und dem, was der Server von sich meldet,
+und der geht an [support@exmig.de](mailto:support@exmig.de). Wer noch gar
+nicht so weit gekommen ist, schreibt an dieselbe Adresse.
 
 ## Wenn dieser Server bei Ihnen im Betrieb läuft
 
